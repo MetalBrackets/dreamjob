@@ -191,7 +191,7 @@
       "2. Add hardFiltersStatus array (filter, status, evidence objects), matchedKeywords, missingKeywords, formatFlags, recommendations arrays",
       "3. Export static TypeScript type"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Type Definitions",

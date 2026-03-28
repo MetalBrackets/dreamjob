@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **ATSReview TypeBox Schema**: Created src/schemas/ats-review.ts defining HardFilterStatusSchema (filter, status enum: pass/fail/unknown, evidence) and full ATSReviewSchema with id, cvId, jobPostId, score (0-100), passed boolean, hardFiltersStatus array, matchedKeywords array, missingKeywords array, formatFlags array, recommendations array. Exported static TypeScript types HardFilterStatus and ATSReview. Verified: tsc --noEmit passes, schema validates valid data (true), missing fields (false), and out-of-range score (false).
+
+### 2026-03-28
 - **GeneratedCV TypeBox Schema**: Created src/schemas/generated-cv.ts defining CvHeaderSchema (fullName, headline, contact object, optional links), ExperienceSelectedSchema (experienceId, rewrittenBullets array), and full GeneratedCVSchema with id, profileId, jobPostId, version, language, title, header, summary, skillsHighlighted array, experiencesSelected array, educationSelected array, certificationsSelected array, keywordsCovered array, omittedItems array, generationNotes array. Exported static TypeScript types CvHeader, ExperienceSelected, and GeneratedCV. Verified: tsc --noEmit passes, schema validates valid data (true) and missing fields (false).
 
 ### 2026-03-28
