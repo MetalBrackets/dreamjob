@@ -357,7 +357,7 @@
       "6. Handle API errors, return meaningful error messages",
       "7. Verify: send sample resume text, confirm output matches Profile schema with confidence scores"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Extraction Service",

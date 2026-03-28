@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **AI Structured Extraction (extractProfileFromText)**: Created src/services/ai/openai.ts implementing extractProfileFromText(text) which sends resume text to OpenAI GPT-4o with JSON mode, using a detailed system prompt that maps output to the exact ProfileData and ConfidenceMap schemas. Returns { data: ProfileData, confidence: ConfidenceMap }. Uses lazy client initialization so the module loads without OPENAI_API_KEY (throws descriptive error only when called). Handles API errors: missing API key throws "OPENAI_API_KEY is not set", empty response throws "OpenAI returned an empty response", malformed JSON throws parse error, missing keys throws descriptive error. Ensures required ProfileData fields have defaults (empty identity, empty arrays). Verified: function exports correctly, missing API key throws correct error, tsc --noEmit passes.
+
+### 2026-03-28
 - **PDF Text Extraction Service**: Created src/services/extraction.ts implementing extractTextFromPDF(filePath) which reads a PDF file, validates it's non-empty, uses pdf-parse to extract plain text, and validates text is non-empty. Handles errors gracefully: empty PDFs throw "PDF file is empty (0 bytes)", corrupt/invalid PDFs throw "Failed to parse PDF: <reason>", and empty-text PDFs throw "PDF contains no extractable text". Updated src/services/extraction-pipeline.ts to use the new dedicated extraction function instead of inline pdf-parse calls. Verified: valid PDF extracts text correctly, empty PDF throws descriptive error, corrupt PDF throws descriptive error, missing file throws ENOENT, tsc --noEmit passes, upload endpoint still works end-to-end.
 
 ### 2026-03-28
