@@ -400,7 +400,7 @@
       "6. Return 201 with created JobOfferRaw and normalized JobPost",
       "7. Verify: POST raw job data, confirm both raw and normalized entries created"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Job Posts - Raw Routes",

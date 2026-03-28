@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **POST /api/jobs/raw Endpoint**: Created src/routes/jobs.ts as a Fastify plugin implementing POST /api/jobs/raw. Accepts JSON body with source, sourceUrl, rawText (required), and optional rawFields/htmlSnapshotRef. Assigns auto-generated sequential IDs (raw_01, raw_02...), sets capturedAt to current ISO-8601 timestamp, appends to data/jobs-raw.json collection. Auto-triggers normalization via new src/services/normalize.ts which maps raw fields to a JobPost (job_01, job_02...) and appends to data/jobs.json. Returns 201 with both the created JobOfferRaw and normalized JobPost. Returns 400 if required fields are missing. Registered route in src/server.ts. Verified: valid POST returns 201 with correct raw and normalized entries, sequential IDs increment correctly, missing fields return 400, tsc --noEmit passes.
+
+### 2026-03-28
 - **Completeness Scoring Pure Function Verification**: Verified src/services/completeness.ts implements all required functionality: (1) progress calculation (reviewed/total * 100), (2) strengthScore with exact point allocation (identity 15, 1+ exp 15, 2+ exp 25, exp with 2+ achievements 5 each max 15, 1+ education 10, 5+ skills 10, 10+ skills 15, certifications 5, projects 5, languages 5, summary 5), (3) missingSections listing sections with no data, (4) unresolvedSections listing sections with unreviewed items, (5) checklist array with label/met pairs, (6) canMarkComplete logic (identity + all experiences + all education + all skills reviewed). Verified: empty profile returns 0 progress, 0 strength, canMarkComplete false, 11 missing sections; complete profile with all reviewed returns 100 progress, 120 strength, canMarkComplete true, no missing/unresolved sections; tsc --noEmit passes.
 
 ### 2026-03-28
