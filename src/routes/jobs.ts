@@ -62,6 +62,19 @@ export async function jobsRoutes(app: FastifyInstance) {
     return reply.send(item);
   });
 
+  app.put("/api/jobs/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const collection = await readCollection<JobPost>(JOBS_PATH);
+    const index = collection.findIndex((entry) => entry.id === id);
+    if (index === -1) {
+      return reply.code(404).send({ error: "Job post not found" });
+    }
+    const updates = request.body as Partial<JobPost>;
+    collection[index] = { ...collection[index], ...updates, id };
+    await writeCollection(JOBS_PATH, collection);
+    return reply.send(collection[index]);
+  });
+
   app.get("/api/jobs/raw", async (_request, reply) => {
     const collection = await readCollection<JobOfferRaw>(JOBS_RAW_PATH);
     return reply.send(collection);

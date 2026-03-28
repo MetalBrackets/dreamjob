@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **PUT /api/jobs/:id Endpoint**: Added PUT /api/jobs/:id to src/routes/jobs.ts. Accepts JSON body with partial JobPost fields, finds the job by id in data/jobs.json, merges updates (preserving the original id), writes back to collection. Returns 200 with the updated job post, or 404 with `{"error":"Job post not found"}` if not found. Verified: PUT /api/jobs/job_01 with updated title/company returns 200 with merged fields, PUT /api/jobs/job_99 returns 404, persistence confirmed via subsequent GET, tsc --noEmit passes.
+
+### 2026-03-28
 - **GET /api/jobs and GET /api/jobs/:id Endpoints**: Added two GET endpoints to src/routes/jobs.ts for normalized job posts. GET /api/jobs reads data/jobs.json via readCollection and returns the full array. GET /api/jobs/:id finds a specific normalized job post by id in the collection, returns 200 with the item or 404 with `{"error":"Job post not found"}` if not found. Verified: GET /api/jobs returns populated array with existing normalized jobs, GET /api/jobs/job_01 returns correct entry with 200, GET /api/jobs/job_99 returns 404, tsc --noEmit passes.
 
 ### 2026-03-28

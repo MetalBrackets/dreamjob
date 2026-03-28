@@ -433,7 +433,7 @@
       "4. Return 200 with updated job post, or 404 if not found",
       "5. Verify: update a job post field, confirm persistence"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Job Posts - Normalized Routes",
