@@ -1,460 +1,306 @@
-# DreamJob Backend Design
-
-## Tech Stack
-
-| Layer | Choice |
-|---|---|
-| Runtime | Node.js (TypeScript) |
-| Framework | Fastify or Express |
-| Database | PostgreSQL |
-| ORM | Prisma |
-| Validation | Zod |
-| Job Parsing | LLM-assisted extraction (Claude API) |
-| Resume Tailoring | LLM-assisted rewriting (Claude API) |
-
----
+# Backend Design — DreamJob
 
 ## Overview
 
-Single-user, self-hosted backend for a resume-tailoring application. The user builds a master profile containing all career information, then generates targeted resumes matched to job posts. Designed as an open-source tool that anyone can download and run locally for their own use. Single profile, no authentication.
+DreamJob helps users tailor their resume to LinkedIn job posts. This document describes the backend architecture for the single-user, open-source demo.
+
+**Goals:** minimal setup friction (`git clone && npm install && npm run dev`), no authentication, local-first.
 
 ---
 
-## Database Schema
+## Stack
 
-**Database:** PostgreSQL
-**ORM:** Prisma
-
-All foreign keys use `ON DELETE CASCADE` unless noted otherwise. Deleting master profile data removes associated child records (e.g. deleting an experience deletes its bullets). Exception: tailored resume tables use `ON DELETE SET NULL` for references back to master data -- this prevents edits to the master profile from silently destroying saved tailored resumes (see Key Design Decisions).
-
-**Sort order convention:** `sort_order` is client-provided on create/update. When omitted, the backend defaults to max+1 within the parent scope.
-
----
-
-### Master Profile Tables
-
-#### `profile`
-
-Top-level personal/contact info. Exactly one row -- the app seeds this on first run and the row is never deleted, only updated.
-
-| Column | Type | Notes |
-|---|---|---|
-| id | int | PK, always 1 |
-| first_name | varchar(100) | |
-| last_name | varchar(100) | |
-| headline | varchar(300) | professional headline |
-| summary | text | career summary / bio |
-| email_contact | varchar(255) | contact email |
-| phone | varchar(30) | |
-| location_city | varchar(100) | |
-| location_state | varchar(100) | |
-| location_country | varchar(100) | |
-| willing_to_relocate | boolean | default false |
-| remote_preference | enum | `remote`, `hybrid`, `onsite`, `flexible` |
-| linkedin_url | varchar(500) | |
-| github_url | varchar(500) | |
-| website_url | varchar(500) | |
-| portfolio_url | varchar(500) | |
-| avatar_url | varchar(500) | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `experiences`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| company | varchar(200) | not null |
-| title | varchar(200) | not null |
-| employment_type | enum | `full_time`, `part_time`, `contract`, `freelance`, `internship` |
-| location | varchar(200) | |
-| is_remote | boolean | |
-| start_date | date | not null |
-| end_date | date | null = current |
-| description | text | full role description |
-| sort_order | int | user-defined ordering |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `experience_bullets`
-
-Individual bullet points per experience, stored separately so the user can select/deselect them per tailored resume.
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| experience_id | int | FK -> experiences |
-| content | text | single accomplishment/responsibility |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `skills`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| name | varchar(100) | not null |
-| category | varchar(100) | e.g. "Languages", "Frameworks", "Soft Skills" |
-| proficiency | enum | `beginner`, `intermediate`, `advanced`, `expert` |
-| years_experience | smallint | |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-Unique constraint on `(name)`.
-
-#### `education`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| institution | varchar(200) | not null |
-| degree | varchar(200) | e.g. "B.S. Computer Science" |
-| field_of_study | varchar(200) | |
-| start_date | date | |
-| end_date | date | null = in progress |
-| gpa | varchar(10) | optional |
-| description | text | honors, activities, thesis |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `certifications`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| name | varchar(200) | not null |
-| issuing_org | varchar(200) | |
-| issue_date | date | |
-| expiry_date | date | null = no expiry |
-| credential_url | varchar(500) | |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `achievements`
-
-Awards, publications, patents, talks, or anything notable.
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| title | varchar(300) | not null |
-| category | enum | `award`, `publication`, `patent`, `talk`, `open_source`, `other` |
-| description | text | |
-| date | date | |
-| url | varchar(500) | |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `projects`
-
-Portfolio / side projects.
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| name | varchar(200) | not null |
-| description | text | |
-| url | varchar(500) | live link |
-| repo_url | varchar(500) | source code |
-| tech_stack | text[] | array of techs used |
-| start_date | date | |
-| end_date | date | |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `profile_references`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| name | varchar(200) | not null |
-| relationship | varchar(200) | e.g. "Former Manager at Acme" |
-| email | varchar(255) | |
-| phone | varchar(30) | |
-| linkedin_url | varchar(500) | |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `languages`
-
-Spoken/written languages.
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| name | varchar(100) | not null |
-| proficiency | enum | `basic`, `conversational`, `professional`, `native` |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `volunteer_experience`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| organization | varchar(200) | not null |
-| role | varchar(200) | |
-| description | text | |
-| start_date | date | |
-| end_date | date | |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+| Layer      | Choice                  | Why                                         |
+| ---------- | ----------------------- | ------------------------------------------- |
+| Runtime    | Node.js + TypeScript    | Widely known, great tooling                 |
+| Framework  | Fastify                 | Fast, plugin-based, first-class TS support  |
+| Database   | SQLite via Prisma       | Zero config — single file, no server needed |
+| AI         | Claude API + OpenAI API | Abstraction layer, user picks via env var   |
 
 ---
 
-### Job Post Tables
+## Data Models
 
-#### `job_posts`
+All models use auto-increment integer IDs and `createdAt`/`updatedAt` timestamps.
 
-Represents a job post captured from a listing. The exact ingestion method is TBD -- options include browser extension capture, page scraping, or manual paste. Regardless of method, the backend accepts either a raw job description (text) or structured fields. When raw text is provided, the backend uses LLM-assisted extraction (Claude API) to parse it into structured fields and populate `job_post_skills`.
+### Profile
 
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| source_url | varchar(500) | job listing URL |
-| raw_input | text | original pasted/scraped text before LLM extraction |
-| title | varchar(300) | null until parsed |
-| company | varchar(200) | |
-| location | varchar(200) | |
-| remote_type | enum | `remote`, `hybrid`, `onsite` |
-| employment_type | enum | `full_time`, `part_time`, `contract`, `freelance`, `internship` |
-| salary_min | int | |
-| salary_max | int | |
-| salary_currency | varchar(3) | e.g. "USD" |
-| experience_level | enum | `entry`, `mid`, `senior`, `lead`, `executive` |
-| description | text | full job description |
-| requirements | text | extracted requirements section |
-| posted_at | timestamptz | |
-| status | enum | `saved`, `applying`, `applied`, `interviewing`, `offered`, `rejected`, `withdrawn` |
-| notes | text | user's private notes |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+Single master record representing the user's complete professional identity.
 
-#### `job_post_skills`
+| Field     | Type   | Notes                    |
+| --------- | ------ | ------------------------ |
+| id        | Int    | Always 1 (single user)   |
+| name      | String |                          |
+| email     | String |                          |
+| phone     | String | Optional                 |
+| location  | String | City, State / Remote     |
+| summary   | String | Professional summary     |
+| linkedin  | String | LinkedIn profile URL     |
+| github    | String | GitHub profile URL       |
+| website   | String | Personal website URL     |
 
-Skills extracted from the job post (used for matching).
+### Experience
 
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| job_post_id | int | FK -> job_posts |
-| skill_name | varchar(100) | |
-| is_required | boolean | required vs nice-to-have |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+| Field       | Type     | Notes                          |
+| ----------- | -------- | ------------------------------ |
+| id          | Int      |                                |
+| profileId   | Int      | FK → Profile                   |
+| title       | String   | Job title                      |
+| company     | String   |                                |
+| location    | String   | Optional                       |
+| startDate   | DateTime |                                |
+| endDate     | DateTime | Null = current                 |
+| description | String   | Role description               |
+| highlights  | String[] | Key accomplishments (JSON col) |
 
----
+### Education
 
-### Tailored Resume Tables
+| Field       | Type     | Notes          |
+| ----------- | -------- | -------------- |
+| id          | Int      |                |
+| profileId   | Int      | FK → Profile   |
+| institution | String   |                |
+| degree      | String   | e.g. B.S., MBA |
+| field       | String   | Field of study |
+| startDate   | DateTime |                |
+| endDate     | DateTime | Optional       |
+| gpa         | Float    | Optional       |
 
-#### `tailored_resumes`
+### Skill
 
-A resume generated from the master profile, customized for a specific job post.
+| Field       | Type   | Notes                              |
+| ----------- | ------ | ---------------------------------- |
+| id          | Int    |                                    |
+| profileId   | Int    | FK → Profile                       |
+| name        | String | e.g. "TypeScript"                  |
+| category    | String | e.g. "Language", "Framework", "Tool" |
+| proficiency | String | Optional: beginner/intermediate/advanced/expert |
 
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| job_post_id | int | FK -> job_posts, not null |
-| name | varchar(200) | user-given label |
-| tailored_headline | varchar(300) | |
-| tailored_summary | text | |
-| match_score | smallint | 0-100, computed by backend |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+### Achievement
 
-#### `tailored_resume_experiences`
+| Field       | Type     | Notes        |
+| ----------- | -------- | ------------ |
+| id          | Int      |              |
+| profileId   | Int      | FK → Profile |
+| title       | String   |              |
+| description | String   |              |
+| date        | DateTime | Optional     |
 
-Which experiences and bullets are included in this version.
+### Project
 
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| tailored_resume_id | int | FK -> tailored_resumes |
-| experience_id | int | FK -> experiences, nullable, `ON DELETE SET NULL` |
-| company | varchar(200) | copied from master on generate; user may edit |
-| tailored_title | varchar(200) | copied from master on generate; user may edit |
-| tailored_description | text | copied from master on generate; user may edit |
-| employment_type | enum | `full_time`, `part_time`, `contract`, `freelance`, `internship`; copied from master |
-| location | varchar(200) | copied from master on generate; user may edit |
-| is_remote | boolean | copied from master on generate; user may edit |
-| start_date | date | copied from master on generate; user may edit |
-| end_date | date | copied from master on generate; user may edit |
-| sort_order | int | |
-| included | boolean | default true |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+| Field        | Type     | Notes                   |
+| ------------ | -------- | ----------------------- |
+| id           | Int      |                         |
+| profileId    | Int      | FK → Profile            |
+| name         | String   |                         |
+| description  | String   |                         |
+| url          | String   | Live demo or repo link  |
+| technologies | String[] | Tech used (JSON col)    |
 
-#### `tailored_resume_bullets`
+### Reference
 
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| tailored_resume_experience_id | int | FK -> tailored_resume_experiences |
-| experience_bullet_id | int | FK -> experience_bullets, nullable, `ON DELETE SET NULL` |
-| content | text | copied from master on generate; user may edit |
-| sort_order | int | |
-| included | boolean | default true |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+| Field        | Type   | Notes                      |
+| ------------ | ------ | -------------------------- |
+| id           | Int    |                            |
+| profileId    | Int    | FK → Profile               |
+| name         | String |                            |
+| title        | String | Their job title            |
+| company      | String |                            |
+| email        | String | Optional                   |
+| phone        | String | Optional                   |
+| relationship | String | e.g. "Former Manager"      |
 
-#### `tailored_resume_skills`
+### JobPost
 
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| tailored_resume_id | int | FK -> tailored_resumes |
-| skill_id | int | FK -> skills, nullable, `ON DELETE SET NULL` |
-| name | varchar(100) | |
-| category | varchar(100) | copied from master on generate; user may edit |
-| proficiency | enum | `beginner`, `intermediate`, `advanced`, `expert`; copied from master |
-| included | boolean | default true |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+Saved LinkedIn job posts the user wants to tailor their resume for.
 
-#### `tailored_resume_education`
+| Field           | Type     | Notes                                  |
+| --------------- | -------- | -------------------------------------- |
+| id              | Int      |                                        |
+| title           | String   | Job title                              |
+| company         | String   |                                        |
+| description     | String   | Full job description text              |
+| url             | String   | LinkedIn post URL                      |
+| salary          | String   | Optional, as posted                    |
+| location        | String   |                                        |
+| contractType    | String   | full-time / part-time / contract / internship |
+| experienceLevel | String   | entry / mid / senior / lead / executive |
+| postedDate      | DateTime | Optional                               |
 
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| tailored_resume_id | int | FK -> tailored_resumes |
-| education_id | int | FK -> education, nullable, `ON DELETE SET NULL` |
-| institution | varchar(200) | copied from master on generate; user may edit |
-| degree | varchar(200) | copied from master on generate; user may edit |
-| field_of_study | varchar(200) | copied from master on generate; user may edit |
-| description | text | copied from master on generate; user may edit |
-| start_date | date | copied from master on generate; user may edit |
-| end_date | date | copied from master on generate; user may edit |
-| gpa | varchar(10) | copied from master on generate; user may edit |
-| included | boolean | default true |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+### TailoredResume
 
-#### `tailored_resume_certifications`
+Generated output from the AI tailoring process.
 
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| tailored_resume_id | int | FK -> tailored_resumes |
-| certification_id | int | FK -> certifications, nullable, `ON DELETE SET NULL` |
-| name | varchar(200) | copied from master on generate; user may edit |
-| issuing_org | varchar(200) | copied from master on generate; user may edit |
-| issue_date | date | copied from master on generate; user may edit |
-| expiry_date | date | copied from master on generate; user may edit |
-| credential_url | varchar(500) | copied from master on generate; user may edit |
-| included | boolean | default true |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `tailored_resume_achievements`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| tailored_resume_id | int | FK -> tailored_resumes |
-| achievement_id | int | FK -> achievements, nullable, `ON DELETE SET NULL` |
-| title | varchar(300) | copied from master on generate; user may edit |
-| category | enum | `award`, `publication`, `patent`, `talk`, `open_source`, `other`; copied from master |
-| description | text | copied from master on generate; user may edit |
-| date | date | copied from master on generate; user may edit |
-| url | varchar(500) | copied from master on generate; user may edit |
-| included | boolean | default true |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-#### `tailored_resume_projects`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | serial | PK, auto-increment |
-| tailored_resume_id | int | FK -> tailored_resumes |
-| project_id | int | FK -> projects, nullable, `ON DELETE SET NULL` |
-| name | varchar(200) | copied from master on generate; user may edit |
-| description | text | copied from master on generate; user may edit |
-| url | varchar(500) | copied from master on generate; user may edit |
-| repo_url | varchar(500) | copied from master on generate; user may edit |
-| tech_stack | text[] | copied from master on generate; user may edit |
-| start_date | date | copied from master on generate; user may edit |
-| end_date | date | copied from master on generate; user may edit |
-| included | boolean | default true |
-| sort_order | int | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-> **Note:** Volunteer experience, languages, and references do not have tailored resume join tables. These sections rarely appear on resumes and are excluded by design. They can be added later if needed.
+| Field     | Type     | Notes                       |
+| --------- | -------- | --------------------------- |
+| id        | Int      |                             |
+| jobPostId | Int      | FK → JobPost                |
+| content   | String   | The tailored resume content |
+| format    | String   | "markdown" or "json"        |
+| provider  | String   | Which AI generated it       |
+| createdAt | DateTime |                             |
 
 ---
 
-## API Structure
+## API Routes
+
+Base path: `/api`
+
+### Profile
+
+| Method | Route                            | Description                    |
+| ------ | -------------------------------- | ------------------------------ |
+| GET    | `/api/profile`                   | Get the user profile           |
+| PUT    | `/api/profile`                   | Update the user profile        |
+
+### Profile Sub-resources
+
+Each sub-resource follows the same CRUD pattern:
+
+| Method | Route                            | Description          |
+| ------ | -------------------------------- | -------------------- |
+| GET    | `/api/profile/{resource}`        | List all             |
+| POST   | `/api/profile/{resource}`        | Create one           |
+| GET    | `/api/profile/{resource}/:id`    | Get one              |
+| PUT    | `/api/profile/{resource}/:id`    | Update one           |
+| DELETE | `/api/profile/{resource}/:id`    | Delete one           |
+
+Where `{resource}` is one of: `experience`, `education`, `skills`, `achievements`, `projects`, `references`.
+
+### Job Posts
+
+| Method | Route             | Description            |
+| ------ | ----------------- | ---------------------- |
+| GET    | `/api/jobs`       | List saved job posts   |
+| POST   | `/api/jobs`       | Save a new job post    |
+| GET    | `/api/jobs/:id`   | Get a job post         |
+| PUT    | `/api/jobs/:id`   | Update a job post      |
+| DELETE | `/api/jobs/:id`   | Delete a job post      |
+
+### Tailoring
+
+| Method | Route                      | Description                        |
+| ------ | -------------------------- | ---------------------------------- |
+| POST   | `/api/tailor`              | Generate a tailored resume         |
+| GET    | `/api/tailored-resumes`    | List all tailored resumes          |
+| GET    | `/api/tailored-resumes/:id`| Get a specific tailored resume     |
+| DELETE | `/api/tailored-resumes/:id`| Delete a tailored resume           |
+
+**POST `/api/tailor` request body:**
+
+```json
+{
+  "jobPostId": 1,
+  "provider": "claude",
+  "format": "markdown"
+}
+```
+
+The endpoint fetches the full profile + job post, sends them to the selected AI provider, and stores the result as a TailoredResume.
+
+---
+
+## AI Abstraction Layer
 
 ```
-/api
-├── /profile
-│   ├── GET    /                              # get profile
-│   └── PUT    /                              # update profile
-│
-├── /experiences                               # CRUD
-├── /experiences/:id/bullets                   # CRUD
-├── /skills                                    # CRUD
-├── /education                                 # CRUD
-├── /certifications                            # CRUD
-├── /achievements                              # CRUD
-├── /projects                                  # CRUD
-├── /references                                # CRUD
-├── /languages                                 # CRUD
-├── /volunteer                                 # CRUD
-│
-├── /jobs                                      # CRUD
-├── /jobs/:id/skills                           # view/correct extracted skills
-├── /jobs/:id/status                           # PATCH update application status
-├── /jobs/:id/parse                            # POST re-run LLM extraction
-├── /jobs/:id/analyze                          # POST match analysis
-│
-├── /resumes                                   # GET list tailored resumes
-├── /resumes/generate                          # POST generate a tailored resume (body: { job_post_id })
-├── /resumes/:id                               # GET, PUT, DELETE
-├── /resumes/:id/experiences                   # CRUD
-├── /resumes/:id/experiences/:expId/bullets    # CRUD
-├── /resumes/:id/skills                        # CRUD
-├── /resumes/:id/education                     # CRUD
-├── /resumes/:id/certifications                # CRUD
-├── /resumes/:id/achievements                  # CRUD
-├── /resumes/:id/projects                      # CRUD
-└── /resumes/:id/selections                    # PATCH bulk toggle
+services/ai/
+  index.ts    — AIProvider interface + getProvider() factory
+  claude.ts   — Claude implementation (Anthropic SDK)
+  openai.ts   — OpenAI implementation (OpenAI SDK)
+```
+
+### Interface
+
+```typescript
+interface AIProvider {
+  tailorResume(profile: FullProfile, jobPost: JobPost): Promise<string>;
+}
+```
+
+### Provider Selection
+
+- `AI_PROVIDER` env var: `"claude"` (default) or `"openai"`
+- `ANTHROPIC_API_KEY` — required when using Claude
+- `OPENAI_API_KEY` — required when using OpenAI
+
+The factory function reads `AI_PROVIDER` and returns the corresponding implementation. The tailoring prompt is shared across providers — only the API call differs.
+
+---
+
+## Project Structure
+
+```
+src/
+  server.ts              — Fastify app setup, plugin registration
+  routes/
+    profile.ts           — Profile + sub-resource CRUD
+    jobs.ts              — Job post CRUD
+    tailor.ts            — Tailoring endpoints
+  services/
+    ai/
+      index.ts           — Provider interface + factory
+      claude.ts          — Claude implementation
+      openai.ts          — OpenAI implementation
+    tailor.ts            — Orchestrates profile fetch + AI call + save
+prisma/
+  schema.prisma          — All data models
+  seed.ts                — Demo profile data
+.env.example             — Template with required env vars
+package.json
+tsconfig.json
 ```
 
 ---
 
-## Key Design Decisions
+## Setup & Configuration
 
-1. **Single user, single profile** -- The app assumes one user running it locally. The `profile` table always has exactly one row (seeded on first run). There is no authentication, no profile picker, and no multi-tenancy. Anyone who needs the tool downloads it and runs their own instance.
+### Environment Variables
 
-2. **Bullets as separate rows** -- Allows granular include/exclude per tailored resume without duplicating text. The user can toggle individual accomplishments on or off for each application.
+```env
+# Required — at least one AI key
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
 
-3. **Content snapshot on generate** -- When a tailored resume is generated, all content columns in tailored tables are populated by copying from the master profile. This makes each tailored resume self-contained. Subsequent edits to master data do not alter existing tailored resumes. The FK back to master data is retained for UI convenience (e.g. showing "derived from" links) but is not required for the tailored resume to render completely.
+# Optional
+AI_PROVIDER=claude          # "claude" or "openai" (default: claude)
+PORT=3000                   # Server port (default: 3000)
+DATABASE_URL=file:./dev.db  # SQLite path (default: file:./dev.db)
+```
 
-4. **SET NULL for tailored resume FKs back to master data** -- `tailored_resume_experiences.experience_id`, `tailored_resume_bullets.experience_bullet_id`, and similar FKs use `ON DELETE SET NULL` instead of `CASCADE`. Because all tailored tables snapshot content at generation time (see #3), deleting a master record nullifies the FK but the tailored resume retains all its content and continues to render correctly.
+### Getting Started
 
-5. **Job post ingestion & skill extraction** -- Job ingestion method is TBD (browser extension, scraping, or manual paste). The backend accepts raw job description text or structured fields. When raw text is provided, LLM-assisted extraction parses it into structured fields and populates `job_post_skills` for matching. `POST /jobs/:id/parse` allows re-running extraction on an existing job post if the initial results are unsatisfactory.
+```bash
+git clone <repo-url>
+cd dreamjob
+cp .env.example .env       # Add your API key(s)
+npm install
+npx prisma db push          # Create SQLite DB + tables
+npx prisma db seed           # Load demo profile data
+npm run dev                  # Start Fastify on :3000
+```
 
-6. **Match score** -- `POST /jobs/:id/analyze` compares the job's extracted skills and requirements against the user's profile and returns: match score (0-100), matched skills, skill gaps, and improvement suggestions. `POST /resumes/generate` also runs the analysis during generation and stores the resulting score on the new `tailored_resumes` row. The score on a tailored resume is a snapshot from generation time and is not automatically updated if the profile or job post changes.
+### Scripts
 
-7. **Application tracking built in** -- The `status` field on `job_posts` lets the user track where they are in the pipeline without needing a separate tool.
+| Script          | Command                | Purpose                    |
+| --------------- | ---------------------- | -------------------------- |
+| `dev`           | `tsx watch src/server.ts` | Dev server with hot reload |
+| `build`         | `tsc`                  | Compile TypeScript         |
+| `start`         | `node dist/server.js`  | Production start           |
+| `db:push`       | `prisma db push`       | Sync schema to DB          |
+| `db:seed`       | `prisma db seed`       | Seed demo data             |
+| `db:studio`     | `prisma studio`        | Visual DB browser          |
 
-8. **Cascade deletes for parent-child** -- Direct parent-child relationships (e.g. experience -> bullets, job_post -> job_post_skills, tailored_resume -> tailored_resume_experiences) use `ON DELETE CASCADE`. Cross-reference FKs from tailored resume tables back to master data use `SET NULL` (see #4).
+---
 
-9. **Bulk selections** -- `PATCH /resumes/:id/selections` accepts an array of `{ type, id, included }` toggles (where `type` is `experience`, `bullet`, `skill`, `education`, `certification`, `achievement`, or `project`). This avoids N individual requests when customizing which items appear on a tailored resume.
+## Seed Data
 
-10. **Table naming** -- `profile_references` is used instead of `references` to avoid the PostgreSQL reserved word. The API route remains `/references` for cleanliness.
+The seed script creates a single demo profile with:
+- Basic info (name, contact, links)
+- 2-3 work experiences with highlights
+- 1-2 education entries
+- 8-10 skills across categories
+- 2-3 achievements
+- 2-3 portfolio projects
+- 1-2 references
+
+This lets users immediately try the tailoring feature without manual data entry.
