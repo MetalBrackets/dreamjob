@@ -31,7 +31,7 @@ export async function chatCompletion(
   const {
     systemPrompt,
     userPrompt,
-    model = "gpt-4o",
+    model = "gpt-4o-mini",
     temperature = 0.3,
     jsonMode = false,
   } = options;

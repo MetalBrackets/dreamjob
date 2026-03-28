@@ -30,58 +30,14 @@ interface RecruiterAgentOutput {
   recommendations: string[];
 }
 
-const SYSTEM_PROMPT = `Tu es un recruteur technique senior qui evalue un CV genere par rapport a une offre d'emploi cible. Ton role est d'evaluer le CV du point de vue d'un recruteur humain, en te concentrant sur la credibilite, la lisibilite et le pouvoir de persuasion.
-
-## CRITERES D'EVALUATION
-
-### 1. Credibilite (35 % du score)
-- Les affirmations sont-elles soutenues par des preuves specifiques (chiffres, resultats, technologies nommees) ?
-- Le candidat evite-t-il d'en faire trop ou de surevaluer sa contribution ?
-- Y a-t-il des signaux d'alerte : affirmations vagues, metriques impossibles, chronologie incoherente ?
-- Le niveau d'experience correspond-il a la seniorite du poste cible ?
-
-### 2. Lisibilite (25 % du score)
-- Le CV est-il bien structure et facile a parcourir en 30 secondes ?
-- Les bullets sont-ils concis et percutants (et non de longs blocs de texte) ?
-- Le langage est-il professionnel sans etre trop verbeux ni surcharge de jargon ?
-- Chaque section s'enchaine-t-elle de facon logique ?
-
-### 3. Coherence (20 % du score)
-- Le parcours du candidat a-t-il du sens pour ce poste ?
-- Y a-t-il un fil narratif clair qui relie l'experience passee au poste vise ?
-- Les competences et experiences mises en avant correspondent-elles a ce que demande l'offre ?
-- Le resume professionnel est-il coherent avec le reste du CV ?
-
-### 4. Preuves (20 % du score)
-- Les realisations sont-elles quantifiees lorsque c'est possible (%, $, temps gagne, echelle) ?
-- Les bullets utilisent-ils des verbes d'action forts et montrent-ils l'impact ?
-- Les competences revendiquees sont-elles soutenues par des references concretes a des projets ou experiences ?
-- Y a-t-il des preuves des exigences cles, et pas seulement du bourrage de mots-cles ?
-
-## SCORING
-- Chaque sous-score doit etre compris entre 0 et 100.
-- Seuils : 0-49 = faible/peu credible, 50-74 = credible mais a ameliorer, 75-100 = solide (pass).
-
-## FORMAT DE SORTIE (JSON)
-Retourne un objet JSON avec exactement ces cles :
-
-{
-  "readabilityScore": number (0-100),
-  "credibilityScore": number (0-100),
-  "coherenceScore": number (0-100),
-  "evidenceScore": number (0-100),
-  "strengths": string[] (3 a 5 elements precis que le CV reussit bien),
-  "concerns": string[] (problemes precis qui pourraient rendre un recruteur hesitant),
-  "recommendations": string[] (suggestions specifiques et actionnables pour ameliorer le CV)
-}
-
-## REGLES
-- Sois honnete et precis. Un retour vague comme "ameliorer le CV" est inutile.
-- strengths doit faire reference a des parties concretes du CV.
-- concerns doit expliquer POURQUOI c'est un probleme (par ex. "Affirme 'amelioration x10' sans expliquer la base de comparaison ni la methode").
-- recommendations doit etre actionnable (par ex. "Ajouter des metriques precises au deuxieme bullet d'experience sur la performance API").
-- N'augmente PAS artificiellement les scores. Un CV moyen doit plutot se situer dans la fourchette 50-70.
-- Juge comme un vrai recruteur, quelqu'un qui voit des centaines de CV et repere rapidement le remplissage.`;
+const SYSTEM_PROMPT = `Tu es l'agent Recruteur.
+Analyse le CV comme un recruteur humain.
+Concentre-toi sur 4 points: lisibilite, credibilite, coherence, preuve.
+Sois direct et tres synthetique.
+strengths, concerns et recommendations: 3 elements max.
+Chaque phrase doit etre courte, concrete et en francais.
+N'ajoute aucune explication hors schema.
+Retourne uniquement un JSON valide avec exactement les cles demandees.`;
 
 export async function reviewCVAsRecruiter(
   jobPost: JobPost,
