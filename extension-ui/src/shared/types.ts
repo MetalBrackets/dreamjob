@@ -136,15 +136,21 @@ export interface ResumeMaster {
   sourceDocument?: ResumeSourceDocument
 }
 
-export interface CapturedJobOffer {
-  sourceUrl: string
+export interface CapturedJobOfferRawFields {
   title: string
-  pageTitle?: string
   company: string
   location: string
-  description: string
-  missingFields?: Array<'title' | 'company' | 'location' | 'description'>
-  capturedAt: string
+  employment_type: string
+}
+
+export interface CapturedJobOffer {
+  source: 'linkedin'
+  source_url: string
+  captured_at: string
+  html_snapshot_ref?: string
+  raw_text: string
+  raw_fields: CapturedJobOfferRawFields
+  missing_fields?: Array<keyof CapturedJobOfferRawFields>
 }
 
 export interface ApplicationItem {

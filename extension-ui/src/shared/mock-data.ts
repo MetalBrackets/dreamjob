@@ -120,14 +120,19 @@ export const mockResumeMaster: ResumeMaster = {
 }
 
 export const mockCapturedJob: CapturedJobOffer = {
-  sourceUrl: 'https://www.linkedin.com/jobs/view/123456789',
-  title: 'Frontend Developer',
-  pageTitle: 'Frontend Developer at Shift Labs | LinkedIn',
-  company: 'Shift Labs',
-  location: 'Nantes, France',
-  description:
-    'We are looking for a frontend developer comfortable with React, TypeScript, UX polish, and collaboration with AI-backed services.',
-  capturedAt: '2026-03-28T10:00:00.000Z',
+  source: 'linkedin',
+  source_url: 'https://www.linkedin.com/jobs/view/123456789',
+  captured_at: '2026-03-28T10:00:00.000Z',
+  html_snapshot_ref: 'mock-linkedin-job-123456789',
+  raw_text:
+    'Frontend Developer at Shift Labs. Nantes, France. Full-time. We are looking for a frontend developer comfortable with React, TypeScript, UX polish, and collaboration with AI-backed services.',
+  raw_fields: {
+    title: 'Frontend Developer',
+    company: 'Shift Labs',
+    location: 'Nantes, France',
+    employment_type: 'Full-time',
+  },
+  missing_fields: [],
 }
 
 export const mockApplications: ApplicationItem[] = [

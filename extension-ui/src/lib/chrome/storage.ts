@@ -6,7 +6,39 @@ const RESUME_MASTER_KEY = 'resumeMaster'
 export const chromeStorage = {
   async getCapturedJob(): Promise<CapturedJobOffer> {
     const result = await chrome.storage.local.get('capturedJob')
-    return (result.capturedJob as CapturedJobOffer | undefined) ?? mockCapturedJob
+    const capturedJob = result.capturedJob as
+      | (Partial<CapturedJobOffer> & {
+          sourceUrl?: string
+          capturedAt?: string
+          title?: string
+          company?: string
+          location?: string
+          description?: string
+          missingFields?: string[]
+        })
+      | undefined
+
+    if (!capturedJob) {
+      return mockCapturedJob
+    }
+
+    if ('raw_fields' in capturedJob && 'raw_text' in capturedJob && 'source_url' in capturedJob) {
+      return capturedJob as CapturedJobOffer
+    }
+
+    return {
+      source: 'linkedin',
+      source_url: capturedJob.sourceUrl ?? '',
+      captured_at: capturedJob.capturedAt ?? new Date().toISOString(),
+      raw_text: capturedJob.description ?? '',
+      raw_fields: {
+        title: capturedJob.title ?? '',
+        company: capturedJob.company ?? '',
+        location: capturedJob.location ?? '',
+        employment_type: '',
+      },
+      missing_fields: (capturedJob.missingFields as CapturedJobOffer['missing_fields']) ?? [],
+    }
   },
 
   async getResumeMaster(): Promise<ResumeMaster> {

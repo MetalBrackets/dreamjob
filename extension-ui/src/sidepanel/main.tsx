@@ -1888,8 +1888,11 @@ function SelectedOfferPage() {
 
   if (!offer) return <div className="panel">{t.common.loadingJob}</div>
 
-  const displayTitle = offer.pageTitle || offer.title
-  const missingFieldsText = offer.missingFields?.join(', ')
+  const displayTitle = offer.raw_fields.title || offer.source_url
+  const offerMeta = [offer.raw_fields.company, offer.raw_fields.location]
+    .filter(Boolean)
+    .join(' | ')
+  const missingFieldsText = offer.missing_fields?.join(', ')
   const getCaptureErrorMessage = (reason: CaptureCurrentJobFailureReason) => {
     switch (reason) {
       case 'no-active-tab':
@@ -1931,7 +1934,7 @@ function SelectedOfferPage() {
       <section className="hero-card compact">
         <span className="eyebrow">{t.selectedOffer.eyebrow}</span>
         <h1>{displayTitle}</h1>
-        <p>{`${offer.company} | ${offer.location}`}</p>
+        <p>{offerMeta}</p>
         {missingFieldsText ? (
           <p className="panel-note">
             {`${t.selectedOffer.missingFieldsLabel}: ${missingFieldsText}`}
@@ -1942,7 +1945,7 @@ function SelectedOfferPage() {
       <section className="grid two-col">
         <article className="panel">
           <h2>{t.selectedOffer.descriptionTitle}</h2>
-          <p>{offer.description}</p>
+          <p>{offer.raw_text}</p>
         </article>
 
         <article className="panel">

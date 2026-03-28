@@ -56,12 +56,17 @@ const locationSelectors = [
 ]
 
 const descriptionSelectors = [
+  '[data-sdui-component*="aboutTheJob"] [data-testid="expandable-text-box"]',
+  '[componentkey*="JobDetails_AboutTheJob"] [data-testid="expandable-text-box"]',
+  '[data-sdui-component*="aboutTheJob"]',
+  '[componentkey*="JobDetails_AboutTheJob"]',
   '.jobs-description-content__text',
   '.jobs-box__html-content',
 ]
 
-const locationPattern =
-  /^(?<location>.+?),\s*(?<region>.+?),\s*(?<country>.+)$/
+const employmentTypeSelectors = ['a[aria-disabled="false"] span']
+
+const locationPattern = /^(?<location>.+?),\s*(?<region>.+?),\s*(?<country>.+)$/
 
 const extractLocationFromMetadata = () => {
   for (const paragraph of document.querySelectorAll('p')) {
@@ -79,6 +84,37 @@ const extractLocationFromMetadata = () => {
   return ''
 }
 
+const extractEmploymentType = () => {
+  const tokens = Array.from(
+    document.querySelectorAll(
+      'a[aria-disabled="false"] span, button span, p span',
+    ),
+  )
+    .map((node) => cleanText(node.textContent))
+    .filter(Boolean)
+
+  return (
+    tokens.find((text) =>
+      [
+        'Full-time',
+        'Part-time',
+        'Contract',
+        'Internship',
+        'Temporary',
+        'Temps plein',
+        'Temps partiel',
+        'Freelance',
+        'Stage',
+        'CDI',
+        'CDD',
+      ].includes(text),
+    ) ?? ''
+  )
+}
+
+const extractRawText = () =>
+  readText(descriptionSelectors) || cleanText(document.body?.innerText)
+
 const getCaptureDebugPayload = (): CaptureDebugPayload => ({
   url: window.location.href,
   documentTitle: document.title.trim(),
@@ -91,31 +127,45 @@ const getCaptureDebugPayload = (): CaptureDebugPayload => ({
 })
 
 const extractJobOffer = (): CapturedJobOffer | null => {
-  const title = readText(titleSelectors)
+  const title = document.title.trim()
   const company = readText(companySelectors)
   const location = readText(locationSelectors) || extractLocationFromMetadata()
-  const description = readText(descriptionSelectors)
-  const pageTitle = document.title.trim()
+  const employmentType =
+    readText(employmentTypeSelectors) || extractEmploymentType()
+  const rawText = extractRawText()
   const missingFields = [
     !title ? 'title' : null,
     !company ? 'company' : null,
     !location ? 'location' : null,
-    !description ? 'description' : null,
-  ].filter((field): field is NonNullable<CapturedJobOffer['missingFields']>[number] => Boolean(field))
+    !employmentType ? 'employment_type' : null,
+  ].filter(
+    (field): field is NonNullable<CapturedJobOffer['missing_fields']>[number] =>
+      Boolean(field),
+  )
 
-  if (!title && !company && !location && !description && !pageTitle) {
+  if (
+    !title &&
+    !company &&
+    !location &&
+    !employmentType &&
+    !rawText &&
+    !document.title.trim()
+  ) {
     return null
   }
 
   return {
-    sourceUrl: window.location.href,
-    title,
-    pageTitle,
-    company,
-    location,
-    description,
-    missingFields,
-    capturedAt: new Date().toISOString(),
+    source: 'linkedin',
+    source_url: window.location.href,
+    captured_at: new Date().toISOString(),
+    raw_text: rawText,
+    raw_fields: {
+      title,
+      company,
+      location,
+      employment_type: employmentType,
+    },
+    missing_fields: missingFields,
   }
 }
 
