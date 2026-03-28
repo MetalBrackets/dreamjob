@@ -270,7 +270,7 @@
       "3. On failure: update resume-upload.json status to 'failed' with error, return error response",
       "4. Verify: upload a PDF, confirm extraction triggers and response includes extracted data"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Resume Upload & Extraction Routes",

@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Extraction Pipeline Trigger in POST /api/resume/upload**: Created src/services/extraction-pipeline.ts implementing runExtractionPipeline() which reads the uploaded PDF via pdf-parse, extracts raw text, builds a scaffold ExtractionResult (with empty ProfileData, empty confidence/reviewStatus, and completionStatus), persists to data/extraction.json, and updates resume-upload.json status through uploaded→extracting→extracted transitions. Updated src/routes/resume.ts to call the pipeline after file save: on success returns { id, status: 'extracted', extractedData }, on failure updates status to 'failed' with error message and returns 500. Added src/pdf-parse.d.ts type declarations. Verified: valid PDF upload returns 200 with extracted rawText and scaffold data, corrupt PDF returns 500 with status 'failed' and error, resume-upload.json and extraction.json persist correctly, tsc --noEmit passes.
+
+### 2026-03-28
 - **ResumeUpload Document Management**: Updated src/routes/resume.ts to create/update a ResumeUpload document in data/resume-upload.json after each file upload. Generates a UUID id, records originalFilename, storagePath, uploadedAt (ISO-8601), and sets status to 'uploaded'. The response now returns the full ResumeUpload document instead of a plain message. Re-uploads overwrite the previous document. Verified: upload creates resume-upload.json with correct fields and status 'uploaded', re-upload overwrites with new id and filename, tsc --noEmit passes.
 
 ### 2026-03-28

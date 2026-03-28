@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { UPLOADS_DIR, RESUME_UPLOAD_PATH } from "../services/paths.js";
 import { writeJSON } from "../services/store.js";
 import type { ResumeUpload } from "../schemas/resume-upload.js";
+import { runExtractionPipeline } from "../services/extraction-pipeline.js";
 
 export async function resumeRoutes(app: FastifyInstance) {
   app.post("/api/resume/upload", async (request, reply) => {
@@ -41,6 +42,23 @@ export async function resumeRoutes(app: FastifyInstance) {
 
     await writeJSON<ResumeUpload>(RESUME_UPLOAD_PATH, resumeUpload);
 
-    return reply.code(200).send(resumeUpload);
+    // Trigger extraction pipeline
+    try {
+      const extractionResult = await runExtractionPipeline(resumeUpload);
+      return reply.code(200).send({
+        id: resumeUpload.id,
+        status: "extracted",
+        extractedData: extractionResult,
+      });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Extraction failed";
+      const failed: ResumeUpload = { ...resumeUpload, status: "failed", error: errorMessage };
+      await writeJSON<ResumeUpload>(RESUME_UPLOAD_PATH, failed);
+      return reply.code(500).send({
+        id: resumeUpload.id,
+        status: "failed",
+        error: errorMessage,
+      });
+    }
   });
 }
