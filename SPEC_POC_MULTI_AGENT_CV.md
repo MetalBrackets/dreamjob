@@ -10,7 +10,8 @@ Construire un POC simple capable de :
 4. faire valider ce CV par 2 agents d'évaluation :
    - un agent ATS ;
    - un agent Recruteur ;
-5. produire un CV final uniquement si les 2 agents sont d'accord.
+5. produire un CV final uniquement si les 2 agents évaluateurs sont d'accord.
+6. retourner à l'addon un résultat standardisé, que le CV soit accepté ou rejeté.
 
 Le système doit rester très simple pour une demo.
 
@@ -21,9 +22,9 @@ Le système doit rester très simple pour une demo.
 - Une offre d'emploi à la fois
 - Une base master candidat au format JSON
 - Trois agents logiques :
-  - `Candidat`
-  - `ATS`
-  - `Recruteur`
+  - `Candidat` : génération du CV
+  - `ATS` : validation machine
+  - `Recruteur` : validation humaine
 - Un orchestrateur simple pour chaîner les agents
 - Un maximum de 2 boucles de révision avant échec
 
@@ -72,6 +73,7 @@ Pour ce POC, `MCP` est optionnel.
 Recommandation simple :
 
 - garder 3 agents logiques avec des contrats d'entrée/sortie clairs ;
+- considérer `ATS` et `Recruteur` comme les 2 agents dont l'accord déclenche la validation finale ;
 - exposer chaque agent plus tard comme un outil MCP si besoin ;
 - commencer avec un orchestrateur backend classique.
 
@@ -83,7 +85,7 @@ Si vous voulez une implémentation MCP plus tard, chaque agent peut être expos�
 
 ## 5. Modélisation des données
 
-Le POC repose sur 7 objets principaux.
+Le POC repose sur 8 objets principaux.
 
 ### 5.1 JobOfferRaw
 
@@ -201,7 +203,8 @@ Base master JSON du candidat. Source unique pour générer des CV adaptés.
     "must_not_claim": ["Team management if not proven"],
     "preferred_cv_language": "fr",
     "max_cv_pages": 1
-  }
+  },
+  "free_text_notes": "Optional recruiter-facing notes stored in master profile"
 }
 ```
 
@@ -305,20 +308,51 @@ Sortie de l'agent Recruteur.
 }
 ```
 
-### 5.7 AgentAgreement
+### 5.7 ReviewAgreement
 
-Objet de décision final porté par l'orchestrateur.
+Objet de décision finale porté par l'orchestrateur.
 
 ```json
 {
   "job_id": "job_123",
   "cv_id": "cv_001",
-  "candidate_agent_ok": true,
+  "cv_generation_ok": true,
   "ats_ok": true,
   "recruiter_ok": true,
+  "review_agreement_ok": true,
   "final_status": "FINAL_APPROVED",
   "rejection_reasons": [],
   "iteration_count": 1
+}
+```
+
+### 5.8 AddonResult
+
+Objet de réponse retourné à l'addon, quel que soit le résultat final.
+
+```json
+{
+  "job_id": "job_123",
+  "cv_id": "cv_001",
+  "status": "accepted",
+  "overall_score": 80,
+  "scores": {
+    "ats_score": 82,
+    "recruiter_score": 78
+  },
+  "strengths": [
+    "Good keyword coverage for the target job",
+    "Strong quantified experience evidence"
+  ],
+  "weaknesses": [
+    "Stakeholder management not explicit enough",
+    "Summary is still slightly generic"
+  ],
+  "recommendations": [
+    "Add stakeholder management wording in one experience bullet",
+    "Make the summary more specific to the target company context"
+  ],
+  "returned_at": "2026-03-28T10:05:00Z"
 }
 ```
 
@@ -464,16 +498,19 @@ Mesurer la compatibilité machine/ATS entre le CV généré et l'offre.
 
 Le CV final est validé si :
 
-- l'agent Candidat a généré un CV valide ;
+- l'agent Candidat a généré un CV exploitable ;
 - le score ATS est supérieur ou égal au seuil ;
 - le score Recruteur est supérieur ou égal au seuil ;
-- aucun agent ne remonte de `blocking_issue`.
+- aucun agent de review ne remonte de `blocking_issue`.
 
-Traduction dans l'objet `AgentAgreement` :
+L'accord final porte uniquement sur les 2 agents évaluateurs : `ATS` et `Recruteur`.
 
-- `candidate_agent_ok = true`
+Traduction dans l'objet `ReviewAgreement` :
+
+- `cv_generation_ok = true`
 - `ats_ok = true`
 - `recruiter_ok = true`
+- `review_agreement_ok = true`
 - `final_status = FINAL_APPROVED`
 
 ### Politique de révision
@@ -483,6 +520,17 @@ Traduction dans l'objet `AgentAgreement` :
 - Si les deux échouent, retour unique vers `Candidat` avec feedback consolidé.
 - Maximum `2` itérations de correction.
 - Après 2 échecs, le workflow se termine en `REJECTED_FOR_REVIEW`.
+
+### Retour à l'addon
+
+Quel que soit le résultat final, l'orchestrateur retourne un objet `AddonResult` à l'addon avec :
+
+- un `status` final : `accepted` ou `rejected` ;
+- un `overall_score` ;
+- les scores détaillés ATS et Recruteur ;
+- les `strengths` ;
+- les `weaknesses` ;
+- les `recommendations`.
 
 ## 8. Mermaid chart
 
@@ -494,17 +542,17 @@ flowchart TD
     D --> E[Agent Candidat<br/>génère CV ciblé]
     E --> F[Agent ATS<br/>score + keywords manquants]
     E --> G[Agent Recruteur<br/>score crédibilité + lisibilité]
-    F --> H{ATS OK ?}
-    G --> I{Recruteur OK ?}
-    H -->|Non| J[Feedback consolidé]
-    I -->|Non| J
-    J --> K{Itérations < 2 ?}
-    K -->|Oui| E
-    K -->|Non| L[Statut: REJECTED_FOR_REVIEW]
-    H -->|Oui| M{Les 2 agents sont d'accord ?}
-    I -->|Oui| M
-    M -->|Oui| N[CV FINAL VALIDÉ]
-    M -->|Non| J
+    F --> H[Consolidation des reviews]
+    G --> H
+    H --> I{ATS OK et Recruteur OK ?}
+    I -->|Oui| J[Statut: FINAL_APPROVED]
+    I -->|Non| K[Feedback consolidé]
+    K --> L{Itérations < 2 ?}
+    L -->|Oui| E
+    L -->|Non| M[Statut: REJECTED_FOR_REVIEW]
+    J --> N[Construction AddonResult]
+    M --> N
+    N --> O[Retour résultat à l'addon]
 ```
 
 ## 9. États de workflow
@@ -519,7 +567,8 @@ flowchart TD
     "RECRUITER_REVIEWED",
     "REVISION_REQUESTED",
     "FINAL_APPROVED",
-    "REJECTED_FOR_REVIEW"
+    "REJECTED_FOR_REVIEW",
+    "RESULT_SENT_TO_ADDON"
   ]
 }
 ```
@@ -544,8 +593,20 @@ flowchart TD
   "generated_cv": "GeneratedCV",
   "ats_review": "ATSReview",
   "recruiter_review": "RecruiterReview",
-  "agent_agreement": "AgentAgreement",
+  "review_agreement": "ReviewAgreement",
+  "addon_result": "AddonResult",
   "iterations": 1
+}
+```
+
+### Mapping de statut pour l'addon
+
+```json
+{
+  "status_mapping": {
+    "FINAL_APPROVED": "accepted",
+    "REJECTED_FOR_REVIEW": "rejected"
+  }
 }
 ```
 
@@ -581,7 +642,7 @@ Recruiter Score = 35% crédibilité + 25% lisibilité + 20% cohérence + 20% pre
 - Le CV généré doit être personnalisé, mais jamais mensonger.
 - L'agent ATS optimise pour le matching machine.
 - L'agent Recruteur protège la qualité perçue par un humain.
-- Le résultat final n'est livré que si l'ensemble converge.
+- Le résultat final n'est livré que si `ATS` et `Recruteur` convergent.
 
 ## 13. MVP technique recommandé
 
