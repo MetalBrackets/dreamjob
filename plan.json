@@ -493,7 +493,7 @@
       "3. Return 204 on success, 404 if not found",
       "4. Verify: delete a CV, confirm associated reviews also removed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Review Routes",

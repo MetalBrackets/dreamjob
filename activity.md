@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **DELETE /api/cvs/:id Endpoint**: Added DELETE /api/cvs/:id to src/routes/cvs.ts. Finds the CV by id in data/cvs.json, removes it from the collection, and also cleans up all associated records: removes matching entries (by cvId) from data/ats-reviews.json, data/recruiter-reviews.json, and data/review-agreements.json. Returns 204 on success, 404 with `{"error":"CV not found"}` if not found. Verified: DELETE /api/cvs/cv_01 returns 204 and CV is removed, associated ats-reviews/recruiter-reviews/review-agreements are also removed, DELETE /api/cvs/cv_99 returns 404, tsc --noEmit passes.
+
+### 2026-03-28
 - **GET /api/cvs and GET /api/cvs/:id Endpoints**: Added two GET endpoints to src/routes/cvs.ts for generated CVs. GET /api/cvs reads data/cvs.json via readCollection and returns the full array. GET /api/cvs/:id finds a specific generated CV by id in the collection, returns 200 with the item or 404 with `{"error":"CV not found"}` if not found. Verified: GET /api/cvs returns populated array with existing CVs, GET /api/cvs/:id returns correct entry with 200, GET /api/cvs/nonexistent returns 404, tsc --noEmit passes.
 
 ### 2026-03-28
