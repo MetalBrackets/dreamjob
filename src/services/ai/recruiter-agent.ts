@@ -30,58 +30,25 @@ interface RecruiterAgentOutput {
   recommendations: string[];
 }
 
-const SYSTEM_PROMPT = `You are a senior technical recruiter evaluating a generated CV against a target job posting. Your job is to assess the CV from a human recruiter's perspective — focusing on credibility, readability, and persuasiveness.
-
-## EVALUATION CRITERIA
-
-### 1. Credibility (35% of score)
-- Are claims backed by specific evidence (numbers, outcomes, named technologies)?
-- Does the candidate avoid over-promising or inflating their contributions?
-- Are there any red flags: vague claims, impossible metrics, inconsistent timelines?
-- Does the experience level match the seniority of the target role?
-
-### 2. Readability (25% of score)
-- Is the CV well-organized and easy to scan in 30 seconds?
-- Are bullet points concise and impactful (not walls of text)?
-- Is language professional without being overly verbose or jargon-heavy?
-- Does each section flow logically?
-
-### 3. Coherence (20% of score)
-- Does the candidate's career trajectory make sense for this role?
-- Is there a clear narrative connecting past experience to the target position?
-- Do the highlighted skills and experiences align with what the job requires?
-- Is the professional summary consistent with the rest of the CV?
-
-### 4. Evidence (20% of score)
-- Are achievements quantified where possible (%, $, time saved, scale)?
-- Do bullet points use strong action verbs and show impact?
-- Are skills claims supported by concrete project/experience references?
-- Is there proof of the key requirements, not just keyword-stuffing?
-
-## SCORING
-- Each sub-score should be 0-100.
-- Thresholds: 0-49 = low credibility/weak, 50-74 = credible but needs improvement, 75-100 = strong (pass).
-
-## OUTPUT FORMAT (JSON)
-Return a JSON object with these exact keys:
-
-{
-  "readabilityScore": number (0-100),
-  "credibilityScore": number (0-100),
-  "coherenceScore": number (0-100),
-  "evidenceScore": number (0-100),
-  "strengths": string[] (3-5 specific things the CV does well),
-  "concerns": string[] (specific issues that would make a recruiter hesitant),
-  "recommendations": string[] (specific, actionable suggestions to improve the CV)
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof value === "string" && value.trim()) {
+    return [value];
+  }
+  return [];
 }
 
-## RULES
-- Be honest and specific. Vague feedback like "improve the CV" is useless.
-- Strengths should reference specific parts of the CV.
-- Concerns should explain WHY something is a problem (e.g., "Claims '10x improvement' without explaining the baseline or methodology").
-- Recommendations should be actionable (e.g., "Add specific metrics to the second experience bullet about API performance").
-- Do NOT inflate scores. A mediocre CV should score in the 50-70 range.
-- Judge as a real recruiter would — someone who sees hundreds of CVs and can spot filler quickly.`;
+const SYSTEM_PROMPT = `Tu es l'agent Recruteur.
+Analyse le CV comme un recruteur humain.
+Concentre-toi sur 4 points: lisibilite, credibilite, coherence, preuve.
+Sois direct et tres synthetique.
+strengths, concerns et recommendations: 3 elements max.
+Chaque phrase doit etre courte, concrete et en francais.
+N'ajoute aucune explication hors schema.
+Tous les textes de valeur doivent etre en francais, meme si l'offre est en anglais.
+Retourne uniquement un JSON valide avec exactement les cles demandees.`;
 
 export async function reviewCVAsRecruiter(
   jobPost: JobPost,
@@ -90,49 +57,37 @@ export async function reviewCVAsRecruiter(
 ): Promise<RecruiterReview> {
   const rules = { ...DEFAULT_SCORING_RULES, ...scoringRules };
 
-  const userPrompt = `## TARGET JOB POSTING
-Title: ${jobPost.title}
-Company: ${jobPost.company}
-Seniority: ${jobPost.seniority}
-Location: ${jobPost.location} (${jobPost.remoteMode})
-Employment: ${jobPost.employmentType}
+  const userPrompt = `Offre:
+${JSON.stringify({
+  title: jobPost.title,
+  seniority: jobPost.seniority,
+  jobSummary: jobPost.jobSummary,
+  requirementsMustHave: jobPost.requirementsMustHave,
+  requirementsNiceToHave: jobPost.requirementsNiceToHave,
+  keywords: jobPost.keywords,
+})}
 
-Job Summary: ${jobPost.jobSummary}
+CV:
+${JSON.stringify({
+  title: cv.title,
+  summary: cv.summary,
+  skillsHighlighted: cv.skillsHighlighted,
+  experiencesSelected: cv.experiencesSelected,
+  educationSelected: cv.educationSelected,
+  certificationsSelected: cv.certificationsSelected,
+  keywordsCovered: cv.keywordsCovered,
+})}
 
-Responsibilities:
-${jobPost.responsibilities.map((r) => `- ${r}`).join("\n")}
+Regles:
+${JSON.stringify({
+  passingScore: rules.passingScore,
+  weightCredibility: rules.weightCredibility,
+  weightReadability: rules.weightReadability,
+  weightCoherence: rules.weightCoherence,
+  weightEvidence: rules.weightEvidence,
+})}
 
-Must-Have Requirements:
-${jobPost.requirementsMustHave.map((r) => `- ${r}`).join("\n")}
-
-Nice-to-Have Requirements:
-${jobPost.requirementsNiceToHave.map((r) => `- ${r}`).join("\n")}
-
-Keywords: ${jobPost.keywords.join(", ")}
-
-## GENERATED CV TO REVIEW
-Title: ${cv.title}
-Summary: ${cv.summary}
-
-Skills Highlighted: ${cv.skillsHighlighted.join(", ")}
-
-Experiences:
-${cv.experiencesSelected
-  .map(
-    (exp) =>
-      `- Experience ${exp.experienceId}:\n${exp.rewrittenBullets.map((b) => `  • ${b}`).join("\n")}`,
-  )
-  .join("\n")}
-
-Education: ${cv.educationSelected.join("; ")}
-Certifications: ${cv.certificationsSelected.join("; ")}
-Keywords Covered: ${cv.keywordsCovered.join(", ")}
-
-## SCORING RULES
-- Passing score: ${rules.passingScore}
-- Weights: Credibility ${rules.weightCredibility * 100}%, Readability ${rules.weightReadability * 100}%, Coherence ${rules.weightCoherence * 100}%, Evidence ${rules.weightEvidence * 100}%
-
-Evaluate this CV from a recruiter's perspective now.`;
+Retourne le JSON maintenant.`;
 
   const output = await chatCompletionJSON<RecruiterAgentOutput>({
     systemPrompt: SYSTEM_PROMPT,
@@ -166,8 +121,8 @@ Evaluate this CV from a recruiter's perspective now.`;
     credibilityScore,
     coherenceScore,
     evidenceScore,
-    strengths: output.strengths || [],
-    concerns: output.concerns || [],
-    recommendations: output.recommendations || [],
+    strengths: toStringArray(output.strengths),
+    concerns: toStringArray(output.concerns),
+    recommendations: toStringArray(output.recommendations),
   };
 }
