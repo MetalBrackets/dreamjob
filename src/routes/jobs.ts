@@ -1,26 +1,63 @@
 import type { FastifyInstance } from "fastify";
+import { Type, type Static } from "@sinclair/typebox";
 import type { JobOfferRaw } from "../schemas/job-offer-raw.js";
 import type { JobPost } from "../schemas/job-post.js";
+import {
+  RemoteModeEnum,
+  EmploymentTypeEnum,
+  SeniorityEnum,
+  IdParamsSchema,
+} from "../schemas/shared.js";
 import { readCollection, writeCollection } from "../services/store.js";
 import { JOBS_RAW_PATH, JOBS_PATH } from "../services/paths.js";
 import { normalizeJobOffer } from "../services/normalize.js";
 
-export async function jobsRoutes(app: FastifyInstance) {
-  app.post("/api/jobs/raw", async (request, reply) => {
-    const body = request.body as {
-      source: string;
-      sourceUrl: string;
-      rawText: string;
-      htmlSnapshotRef?: string;
-      rawFields?: Record<string, string | undefined>;
-    };
+const RawJobBodySchema = Type.Object({
+  source: Type.String({ minLength: 1 }),
+  sourceUrl: Type.String({ minLength: 1 }),
+  rawText: Type.String({ minLength: 1 }),
+  htmlSnapshotRef: Type.Optional(Type.String()),
+  rawFields: Type.Optional(
+    Type.Object({
+      title: Type.Optional(Type.String()),
+      company: Type.Optional(Type.String()),
+      location: Type.Optional(Type.String()),
+      employment_type: Type.Optional(Type.String()),
+      salary: Type.Optional(Type.String()),
+      description: Type.Optional(Type.String()),
+      requirements: Type.Optional(Type.String()),
+      posted_date: Type.Optional(Type.String()),
+    })
+  ),
+});
+type RawJobBody = Static<typeof RawJobBodySchema>;
 
-    if (!body || !body.source || !body.sourceUrl || !body.rawText) {
-      return reply.code(400).send({
-        error:
-          "Missing required fields: source, sourceUrl, and rawText are required",
-      });
-    }
+const PutJobBodySchema = Type.Object({
+  title: Type.Optional(Type.String({ maxLength: 200 })),
+  company: Type.Optional(Type.String({ maxLength: 200 })),
+  description: Type.Optional(Type.String({ maxLength: 10000 })),
+  url: Type.Optional(Type.String()),
+  salary: Type.Optional(Type.String()),
+  location: Type.Optional(Type.String({ maxLength: 200 })),
+  remoteMode: Type.Optional(RemoteModeEnum),
+  employmentType: Type.Optional(EmploymentTypeEnum),
+  seniority: Type.Optional(SeniorityEnum),
+  jobSummary: Type.Optional(Type.String({ maxLength: 10000 })),
+  responsibilities: Type.Optional(Type.Array(Type.String())),
+  requirementsMustHave: Type.Optional(Type.Array(Type.String())),
+  requirementsNiceToHave: Type.Optional(Type.Array(Type.String())),
+  keywords: Type.Optional(Type.Array(Type.String())),
+  tools: Type.Optional(Type.Array(Type.String())),
+  languages: Type.Optional(Type.Array(Type.String())),
+  yearsExperienceMin: Type.Optional(Type.Number()),
+  postedDate: Type.Optional(Type.String()),
+});
+
+export async function jobsRoutes(app: FastifyInstance) {
+  app.post("/api/jobs/raw", {
+    schema: { body: RawJobBodySchema },
+  }, async (request, reply) => {
+    const body = request.body as RawJobBody;
 
     const existing = await readCollection<JobOfferRaw>(JOBS_RAW_PATH);
     const nextNum = existing.length + 1;
@@ -33,7 +70,7 @@ export async function jobsRoutes(app: FastifyInstance) {
       capturedAt: new Date().toISOString(),
       htmlSnapshotRef: body.htmlSnapshotRef,
       rawText: body.rawText,
-      rawFields: body.rawFields ?? {},
+      rawFields: body.rawFields ?? {} as JobOfferRaw["rawFields"],
     };
 
     existing.push(rawEntry);
@@ -52,7 +89,9 @@ export async function jobsRoutes(app: FastifyInstance) {
     return reply.send(collection);
   });
 
-  app.get("/api/jobs/:id", async (request, reply) => {
+  app.get("/api/jobs/:id", {
+    schema: { params: IdParamsSchema },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const collection = await readCollection<JobPost>(JOBS_PATH);
     const item = collection.find((entry) => entry.id === id);
@@ -62,7 +101,9 @@ export async function jobsRoutes(app: FastifyInstance) {
     return reply.send(item);
   });
 
-  app.put("/api/jobs/:id", async (request, reply) => {
+  app.put("/api/jobs/:id", {
+    schema: { params: IdParamsSchema, body: PutJobBodySchema },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const collection = await readCollection<JobPost>(JOBS_PATH);
     const index = collection.findIndex((entry) => entry.id === id);
@@ -75,7 +116,9 @@ export async function jobsRoutes(app: FastifyInstance) {
     return reply.send(collection[index]);
   });
 
-  app.delete("/api/jobs/:id", async (request, reply) => {
+  app.delete("/api/jobs/:id", {
+    schema: { params: IdParamsSchema },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const collection = await readCollection<JobPost>(JOBS_PATH);
     const index = collection.findIndex((entry) => entry.id === id);
@@ -92,7 +135,9 @@ export async function jobsRoutes(app: FastifyInstance) {
     return reply.send(collection);
   });
 
-  app.get("/api/jobs/raw/:id", async (request, reply) => {
+  app.get("/api/jobs/raw/:id", {
+    schema: { params: IdParamsSchema },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const collection = await readCollection<JobOfferRaw>(JOBS_RAW_PATH);
     const item = collection.find((entry) => entry.id === id);

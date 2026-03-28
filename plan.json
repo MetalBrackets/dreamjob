@@ -706,7 +706,7 @@
       "3. Add params schema to /api/jobs/raw/:id and /api/jobs/:id routes",
       "4. Verify: invalid jobs requests return 400 with descriptive errors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Validation",
