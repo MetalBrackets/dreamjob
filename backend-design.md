@@ -301,8 +301,6 @@ Where `{resource}` is one of: `experiences`, `educations`, `skills`, `certificat
 | ------ | -------------------------------------------- | ---------------------------------- |
 | GET    | `/api/tailored-resumes/:id/ats-review`       | Get ATS review for a CV            |
 | GET    | `/api/tailored-resumes/:id/recruiter-review`  | Get recruiter review for a CV      |
-| GET    | `/api/tailored-resumes/:id/agreement`         | Get review agreement for a CV      |
-| GET    | `/api/jobs/:id/result`                        | Get AddonResult (aggregated response for the extension) |
 
 **POST `/api/tailor` request body:**
 
