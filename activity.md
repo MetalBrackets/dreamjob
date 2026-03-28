@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **GET /api/resume/status Endpoint**: Added GET /api/resume/status to src/routes/resume.ts. Reads data/resume-upload.json via store service, returns 200 with the full ResumeUpload document (id, originalFilename, storagePath, uploadedAt, status, and error if any), or 404 if no resume has been uploaded. Verified: returns 404 with `{"error":"No resume has been uploaded"}` when no resume-upload.json exists, returns 200 with correct document after upload, shows error field when extraction failed, tsc --noEmit passes.
+
+### 2026-03-28
 - **Extraction Pipeline Trigger in POST /api/resume/upload**: Created src/services/extraction-pipeline.ts implementing runExtractionPipeline() which reads the uploaded PDF via pdf-parse, extracts raw text, builds a scaffold ExtractionResult (with empty ProfileData, empty confidence/reviewStatus, and completionStatus), persists to data/extraction.json, and updates resume-upload.json status through uploaded→extracting→extracted transitions. Updated src/routes/resume.ts to call the pipeline after file save: on success returns { id, status: 'extracted', extractedData }, on failure updates status to 'failed' with error message and returns 500. Added src/pdf-parse.d.ts type declarations. Verified: valid PDF upload returns 200 with extracted rawText and scaffold data, corrupt PDF returns 500 with status 'failed' and error, resume-upload.json and extraction.json persist correctly, tsc --noEmit passes.
 
 ### 2026-03-28

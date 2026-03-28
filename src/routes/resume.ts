@@ -3,11 +3,19 @@ import { join } from "node:path";
 import { writeFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { UPLOADS_DIR, RESUME_UPLOAD_PATH } from "../services/paths.js";
-import { writeJSON } from "../services/store.js";
+import { readJSON, writeJSON } from "../services/store.js";
 import type { ResumeUpload } from "../schemas/resume-upload.js";
 import { runExtractionPipeline } from "../services/extraction-pipeline.js";
 
 export async function resumeRoutes(app: FastifyInstance) {
+  app.get("/api/resume/status", async (_request, reply) => {
+    const resumeUpload = await readJSON<ResumeUpload>(RESUME_UPLOAD_PATH);
+    if (!resumeUpload) {
+      return reply.code(404).send({ error: "No resume has been uploaded" });
+    }
+    return reply.code(200).send(resumeUpload);
+  });
+
   app.post("/api/resume/upload", async (request, reply) => {
     if (!request.isMultipart()) {
       return reply.code(400).send({ error: "Request must be multipart/form-data" });

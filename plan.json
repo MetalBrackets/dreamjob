@@ -281,7 +281,7 @@
       "3. Return 404 if no resume has been uploaded",
       "4. Verify: returns correct status after upload, shows error if extraction failed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Resume Upload & Extraction Routes",
