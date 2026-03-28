@@ -83,22 +83,23 @@ Le candidat de demonstration fourni dans [data/candidates.json](/c:/Users/devme/
 Exemple Bash :
 
 ```bash
-curl -X POST http://localhost:3000/api/addon/run \
+curl -X POST http://localhost:3000/api/workflows/run \
   -H "Content-Type: application/json" \
   -d '{
     "jobOfferRaw": {
       "source": "linkedin",
-      "source_url": "https://linkedin.com/jobs/view/123",
-      "raw_text": "Senior Product Designer. Company: Acme. Paris. Hybrid. Must have Figma, design systems, 5 years experience. Lead product design and collaborate with stakeholders. Nice to have B2B SaaS.",
+      "source_url": "https://linkedin.com/jobs/view/456",
+      "raw_text": "Product Designer senior. Entreprise : NovaTech. Paris. Hybride. Recherche 5 ans d experience minimum, maitrise de Figma, design systems, collaboration avec les equipes produit et engineering, animation d ateliers, bonne communication avec les parties prenantes. Un profil ayant deja travaille sur un produit SaaS B2B est un plus.",
       "raw_fields": {
-        "title": "Senior Product Designer",
-        "company": "Acme",
+        "title": "Product Designer senior",
+        "company": "NovaTech",
         "location": "Paris",
-        "employment_type": "Full-time"
+        "employment_type": "Temps plein"
       }
     },
     "candidateId": "cand_001"
   }'
+
 ```
 
 ## Endpoints principaux
