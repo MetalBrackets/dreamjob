@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **File Path Constants**: Created src/services/paths.ts defining constants for all data file paths (profile.json, resume-upload.json, extraction.json, jobs-raw.json, jobs.json, cvs.json, ats-reviews.json, recruiter-reviews.json, review-agreements.json) and UPLOADS_DIR. All paths use path.join relative to process.cwd()/data/. Verified: tsc --noEmit passes.
+
+### 2026-03-28
 - **JSON File Store Service**: Implemented src/services/store.ts with four generic functions — readJSON<T> (returns null if file missing), writeJSON<T> (formatted JSON with auto-mkdir), readCollection<T> (returns [] if missing), writeCollection<T>. All use fs/promises and auto-create parent directories on write. Verified: round-trip tests pass for all four functions.
 
 ### 2026-03-28

@@ -78,7 +78,7 @@
       "2. Define uploads directory path constant (data/uploads/)",
       "3. Export all path constants from store.ts or a dedicated paths module"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Type Definitions",
