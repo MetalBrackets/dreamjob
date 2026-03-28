@@ -15,7 +15,7 @@ DreamJob helps users tailor their resume to LinkedIn job posts. This document de
 | Runtime    | Node.js + TypeScript    | Widely known, great tooling                 |
 | Framework  | Fastify                 | Fast, plugin-based, first-class TS support  |
 | Database   | SQLite via Prisma       | Zero config — single file, no server needed |
-| AI         | Claude API + OpenAI API | Abstraction layer, user picks via env var   |
+| AI         | OpenAI API              | Powers all AI agent operations               |
 
 ---
 
@@ -25,104 +25,99 @@ All models use auto-increment integer IDs and `createdAt`/`updatedAt` timestamps
 
 ### Profile
 
-Single master record representing the user's complete professional identity (CandidateMasterProfile).
+Single document representing the user's complete professional identity (CandidateMasterProfile). Stored as one row with a single JSON column. Retrieved and updated as a whole via `GET` / `PUT /api/profile`.
 
-| Field                    | Type     | Notes                                          |
-| ------------------------ | -------- | ---------------------------------------------- |
-| id                       | Int      | Always 1 (single user)                         |
-| name                     | String   |                                                |
-| headline                 | String   | e.g. "Product Designer"                        |
-| email                    | String   |                                                |
-| phone                    | String   | Optional                                       |
-| location                 | String   | City, State / Remote                           |
-| links                    | Json     | `{linkedin, portfolio, github, ...}`           |
-| targetRoles              | String[] | Desired job titles (JSON col)                  |
-| professionalSummaryMaster | String  | Master professional summary                    |
-| preferredCvLanguage      | String   | Default "en"                                   |
-| maxCvPages               | Int      | Default 1                                      |
-| mustNotClaim             | String[] | Constraints — things not to claim (JSON col)   |
+| Field | Type | Notes                                    |
+| ----- | ---- | ---------------------------------------- |
+| id    | Int  | Always 1 (single user)                   |
+| data  | Json | Full CandidateMasterProfile — see below  |
 
-### Experience
+#### Profile JSON shape
 
-| Field        | Type     | Notes                                                    |
-| ------------ | -------- | -------------------------------------------------------- |
-| id           | Int      |                                                          |
-| profileId    | Int      | FK → Profile                                             |
-| experienceId | String   | Stable ref ID (e.g. "exp_01") for cross-references       |
-| title        | String   | Job title                                                |
-| company      | String   |                                                          |
-| location     | String   | Optional                                                 |
-| startDate    | DateTime |                                                          |
-| endDate      | DateTime | Null = current                                           |
-| description  | String   | Role description                                         |
-| achievements | Json     | `[{text, metric, proofLevel}]` — quantified accomplishments |
-| skillsUsed   | String[] | Skills applied in this role (JSON col)                   |
-
-### Education
-
-| Field     | Type   | Notes            |
-| --------- | ------ | ---------------- |
-| id        | Int    |                  |
-| profileId | Int    | FK → Profile     |
-| school    | String |                  |
-| degree    | String | e.g. B.S., MBA   |
-| field     | String | Field of study   |
-| year      | String | Graduation year  |
-
-### Skill
-
-| Field        | Type     | Notes                                              |
-| ------------ | -------- | -------------------------------------------------- |
-| id           | Int      |                                                    |
-| profileId    | Int      | FK → Profile                                       |
-| name         | String   | e.g. "TypeScript"                                  |
-| category     | String   | e.g. "language", "framework", "tool"               |
-| level        | String   | Optional: `beginner` / `intermediate` / `advanced` / `expert` |
-| years        | Int      | Optional — years of experience with this skill     |
-| evidenceRefs | String[] | IDs of experiences/projects as proof (JSON col)    |
-
-### Certification
-
-| Field     | Type     | Notes        |
-| --------- | -------- | ------------ |
-| id        | Int      |              |
-| profileId | Int      | FK → Profile |
-| name      | String   |              |
-| issuer    | String   | Optional     |
-| date      | DateTime | Optional     |
-
-### Language
-
-| Field     | Type   | Notes                                              |
-| --------- | ------ | -------------------------------------------------- |
-| id        | Int    |                                                    |
-| profileId | Int    | FK → Profile                                       |
-| name      | String | e.g. "French"                                      |
-| level     | String | `native` / `professional` / `intermediate` / `basic` |
-
-### Project
-
-| Field        | Type     | Notes                   |
-| ------------ | -------- | ----------------------- |
-| id           | Int      |                         |
-| profileId    | Int      | FK → Profile            |
-| name         | String   |                         |
-| description  | String   |                         |
-| url          | String   | Live demo or repo link  |
-| technologies | String[] | Tech used (JSON col)    |
-
-### Reference
-
-| Field        | Type   | Notes                      |
-| ------------ | ------ | -------------------------- |
-| id           | Int    |                            |
-| profileId    | Int    | FK → Profile               |
-| name         | String |                            |
-| title        | String | Their job title            |
-| company      | String |                            |
-| email        | String | Optional                   |
-| phone        | String | Optional                   |
-| relationship | String | e.g. "Former Manager"      |
+```json
+{
+  "identity": {
+    "name": "Jane Doe",
+    "headline": "Product Designer",
+    "email": "jane@example.com",
+    "phone": "+33...",
+    "location": "Paris",
+    "links": {
+      "linkedin": "https://linkedin.com/in/janedoe",
+      "portfolio": "https://janedoe.com",
+      "github": "https://github.com/janedoe"
+    }
+  },
+  "targetRoles": ["Senior Product Designer", "Lead Product Designer"],
+  "professionalSummaryMaster": "Master summary text",
+  "experiences": [
+    {
+      "experienceId": "exp_01",
+      "title": "Product Designer",
+      "company": "Company A",
+      "location": "Paris",
+      "startDate": "2021-01",
+      "endDate": "2024-02",
+      "description": "Owned core journeys",
+      "achievements": [
+        { "text": "Improved activation by 18%", "metric": "18%", "proofLevel": "strong" }
+      ],
+      "skillsUsed": ["Figma", "Design System", "UX Research"]
+    }
+  ],
+  "education": [
+    {
+      "school": "School X",
+      "degree": "Master in Design",
+      "field": "Design",
+      "year": "2020"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Figma",
+      "category": "tool",
+      "level": "advanced",
+      "years": 6,
+      "evidenceRefs": ["exp_01", "proj_03"]
+    }
+  ],
+  "certifications": [
+    {
+      "name": "AWS Solutions Architect",
+      "issuer": "Amazon",
+      "date": "2023-06"
+    }
+  ],
+  "languages": [
+    { "name": "French", "level": "native" },
+    { "name": "English", "level": "professional" }
+  ],
+  "projects": [
+    {
+      "name": "Portfolio Site",
+      "description": "Personal portfolio",
+      "url": "https://janedoe.com",
+      "technologies": ["React", "Next.js"]
+    }
+  ],
+  "references": [
+    {
+      "name": "John Smith",
+      "title": "Engineering Manager",
+      "company": "Company A",
+      "email": "john@example.com",
+      "phone": "+33...",
+      "relationship": "Former Manager"
+    }
+  ],
+  "constraints": {
+    "preferredCvLanguage": "fr",
+    "maxCvPages": 1,
+    "mustNotClaim": ["Team management if not proven"]
+  }
+}
+```
 
 ### JobOfferRaw
 
@@ -175,7 +170,6 @@ Structured, job-targeted CV generated by the Candidate Agent.
 | id                     | Int      |                                                    |
 | profileId              | Int      | FK → Profile                                       |
 | jobPostId              | Int      | FK → JobPost                                       |
-| provider               | String   | Which AI generated it                              |
 | version                | Int      | Iteration count                                    |
 | language               | String   | CV language (e.g. "fr", "en")                      |
 | title                  | String   | e.g. "CV ciblé - Senior Product Designer"          |
@@ -250,24 +244,10 @@ Base path: `/api`
 
 ### Profile
 
-| Method | Route                            | Description                    |
-| ------ | -------------------------------- | ------------------------------ |
-| GET    | `/api/profile`                   | Get the user profile           |
-| PUT    | `/api/profile`                   | Update the user profile        |
-
-### Profile Sub-resources
-
-Each sub-resource follows the same CRUD pattern:
-
-| Method | Route                            | Description          |
-| ------ | -------------------------------- | -------------------- |
-| GET    | `/api/profile/{resource}`        | List all             |
-| POST   | `/api/profile/{resource}`        | Create one           |
-| GET    | `/api/profile/{resource}/:id`    | Get one              |
-| PUT    | `/api/profile/{resource}/:id`    | Update one           |
-| DELETE | `/api/profile/{resource}/:id`    | Delete one           |
-
-Where `{resource}` is one of: `experiences`, `educations`, `skills`, `certifications`, `languages`, `projects`, `references`.
+| Method | Route            | Description                              |
+| ------ | ---------------- | ---------------------------------------- |
+| GET    | `/api/profile`   | Get the full profile document            |
+| PUT    | `/api/profile`   | Replace the full profile document        |
 
 ### Job Posts — Raw
 
@@ -307,7 +287,6 @@ Where `{resource}` is one of: `experiences`, `educations`, `skills`, `certificat
 ```json
 {
   "jobPostId": 1,
-  "provider": "claude",
   "language": "fr"
 }
 ```
@@ -330,9 +309,9 @@ Fastify has built-in request validation via JSON Schema. Each route defines a sc
 
 | Area         | Rules                                                                 |
 | ------------ | --------------------------------------------------------------------- |
-| Required fields | Reject missing required fields (e.g. Profile `name`, `email`)     |
+| Required fields | Reject missing required fields (e.g. `identity.name`, `identity.email`) |
 | Types        | Strings are strings, numbers are numbers, dates are ISO-8601 strings  |
-| Enums        | `employmentType`, `seniority`, `remoteMode`, `level`, `provider`, `finalStatus` must be one of the allowed values |
+| Enums        | `employmentType`, `seniority`, `remoteMode`, `level`, `finalStatus` must be one of the allowed values |
 | String limits | Reasonable max lengths (e.g. `name` ≤ 200, `description` ≤ 10000)   |
 | ID params    | Route `:id` params must be positive integers                          |
 
@@ -352,30 +331,14 @@ No custom error handler needed — the default format is clear enough for a demo
 
 ---
 
-## AI Abstraction Layer
+## AI Layer
 
 ```
 services/ai/
-  index.ts    — AIProvider interface + getProvider() factory
-  claude.ts   — Claude implementation (Anthropic SDK)
   openai.ts   — OpenAI implementation (OpenAI SDK)
 ```
 
-### Interface
-
-```typescript
-interface AIProvider {
-  tailorResume(profile: FullProfile, jobPost: JobPost): Promise<string>;
-}
-```
-
-### Provider Selection
-
-- `AI_PROVIDER` env var: `"claude"` (default) or `"openai"`
-- `ANTHROPIC_API_KEY` — required when using Claude
-- `OPENAI_API_KEY` — required when using OpenAI
-
-The factory function reads `AI_PROVIDER` and returns the corresponding implementation. The tailoring prompt is shared across providers — only the API call differs.
+All AI agent operations (normalization, CV generation, ATS review, recruiter review) use the OpenAI API via the official SDK. Requires `OPENAI_API_KEY` env var.
 
 ---
 
@@ -390,9 +353,7 @@ src/
     tailor.ts            — Tailoring + review endpoints
   services/
     ai/
-      index.ts           — Provider interface + factory
-      claude.ts          — Claude implementation
-      openai.ts          — OpenAI implementation
+      openai.ts          — OpenAI API calls
     tailor.ts            — Orchestrates the multi-agent pipeline
     normalize.ts         — Normalizes raw job data into JobPost
 prisma/
@@ -410,12 +371,10 @@ tsconfig.json
 ### Environment Variables
 
 ```env
-# Required — at least one AI key
-ANTHROPIC_API_KEY=sk-ant-...
+# Required
 OPENAI_API_KEY=sk-...
 
 # Optional
-AI_PROVIDER=claude          # "claude" or "openai" (default: claude)
 PORT=3000                   # Server port (default: 3000)
 DATABASE_URL=file:./dev.db  # SQLite path (default: file:./dev.db)
 ```
@@ -447,8 +406,9 @@ npm run dev                  # Start Fastify on :3000
 
 ## Seed Data
 
-The seed script creates a single demo profile with:
-- Basic info (name, headline, contact, links, target roles, constraints)
+The seed script creates a single Profile row with a full JSON document containing:
+- Identity (name, headline, contact, links)
+- Target roles and constraints
 - 2-3 work experiences with achievements (text, metric, proof level) and skills used
 - 1-2 education entries
 - 8-10 skills across categories with years and evidence refs
