@@ -537,7 +537,7 @@
       "4. Use OpenAI structured output to return GeneratedCV shape",
       "5. Verify: generates valid CV structure from sample profile+job"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "AI Layer - Candidate Agent",

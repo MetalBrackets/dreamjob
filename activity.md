@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Candidate Agent - generateTargetedCV (src/services/ai/candidate-agent.ts)**: Created src/services/ai/candidate-agent.ts implementing generateTargetedCV(profile, jobPost, rules) which uses OpenAI GPT-4o with JSON mode to generate a tailored GeneratedCV. Accepts GenerationRules interface (language, maxPages, tone, truthfulnessMode). Constructs a detailed system prompt enforcing business rules: never invent experience/skills, prioritize evidence-backed items, optimize for target job, rewrite bullets with strong action verbs. User prompt includes full profile data and structured job post details (responsibilities, must-have/nice-to-have requirements, keywords, tools). Returns a complete GeneratedCV with AI-generated title, summary, skillsHighlighted, experiencesSelected (with rewritten bullets), educationSelected, certificationsSelected, keywordsCovered, omittedItems, and generationNotes. Header is populated from profile identity. Verified: tsc --noEmit passes.
+
+### 2026-03-28
 - **OpenAI SDK Client Setup (src/services/ai/openai.ts)**: Refactored src/services/ai/openai.ts to export the lazy-initialized OpenAI client via getClient(), and added two reusable helper functions: chatCompletion() for plain text completions and chatCompletionJSON<T>() for JSON-mode completions with automatic parsing. Both accept a ChatCompletionOptions interface (systemPrompt, userPrompt, model, temperature, jsonMode). Refactored extractProfileFromText to use the new chatCompletionJSON helper internally. Error handling: missing API key throws descriptive error on first use (lazy init), empty responses throw, malformed JSON throws with preview. Verified: tsc --noEmit passes, server starts without errors, existing extraction pipeline unchanged.
 
 ### 2026-03-28
