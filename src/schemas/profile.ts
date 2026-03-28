@@ -103,3 +103,28 @@ export const ReferenceSchema = Type.Object({
   relationship: Type.Optional(Type.String()),
 });
 export type Reference = Static<typeof ReferenceSchema>;
+
+// --- Full Profile schema ---
+
+export const ProfileDataSchema = Type.Object({
+  identity: IdentitySchema,
+  targetRoles: TargetRolesSchema,
+  professionalSummaryMaster: Type.Optional(ProfessionalSummaryMasterSchema),
+  experiences: Type.Array(ExperienceSchema),
+  education: Type.Array(EducationSchema),
+  skills: Type.Array(SkillSchema),
+  certifications: Type.Optional(Type.Array(CertificationSchema)),
+  languages: Type.Optional(Type.Array(LanguageSchema)),
+  projects: Type.Optional(Type.Array(ProjectSchema)),
+  references: Type.Optional(Type.Array(ReferenceSchema)),
+  constraints: Type.Optional(ConstraintsSchema),
+});
+export type ProfileData = Static<typeof ProfileDataSchema>;
+
+export const ProfileSchema = Type.Object({
+  id: Type.String(),
+  data: ProfileDataSchema,
+  createdAt: Type.String(),
+  updatedAt: Type.String(),
+});
+export type Profile = Static<typeof ProfileSchema>;

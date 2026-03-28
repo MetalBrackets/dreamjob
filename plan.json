@@ -124,7 +124,7 @@
       "3. Export static TypeScript type",
       "4. Verify: full Profile schema validates complete sample profile"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Type Definitions",
