@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **PDF Text Extraction Service**: Created src/services/extraction.ts implementing extractTextFromPDF(filePath) which reads a PDF file, validates it's non-empty, uses pdf-parse to extract plain text, and validates text is non-empty. Handles errors gracefully: empty PDFs throw "PDF file is empty (0 bytes)", corrupt/invalid PDFs throw "Failed to parse PDF: <reason>", and empty-text PDFs throw "PDF contains no extractable text". Updated src/services/extraction-pipeline.ts to use the new dedicated extraction function instead of inline pdf-parse calls. Verified: valid PDF extracts text correctly, empty PDF throws descriptive error, corrupt PDF throws descriptive error, missing file throws ENOENT, tsc --noEmit passes, upload endpoint still works end-to-end.
+
+### 2026-03-28
 - **GET /api/resume/completeness Endpoint**: Added GET /api/resume/completeness to src/routes/resume.ts and created src/services/completeness.ts with pure function computeCompleteness(). Reads data/extraction.json, computes progress (reviewed/total items * 100), strengthScore (point-based: identity 15, 1+ exp 15, 2+ exp 25, exp with 2+ achievements 5 each max 15, 1+ education 10, 5+ skills 10, 10+ skills 15, certifications 5, projects 5, languages 5, summary 5), missingSections (sections with no data), unresolvedSections (sections with unreviewed items), checklist (label/met pairs), and canMarkComplete (identity + all experiences + all education + all skills reviewed). Returns 200 with computed result, 404 if no extraction exists. Verified: returns 404 when no extraction.json, returns correct 0% progress with all unreviewed, returns 100% progress and canMarkComplete true after marking all reviewed, tsc --noEmit passes.
 
 ### 2026-03-28

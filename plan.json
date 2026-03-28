@@ -343,7 +343,7 @@
       "4. Handle errors (corrupt PDF, empty PDF) gracefully with descriptive error messages",
       "5. Verify: extract text from a sample PDF, confirm output contains expected content"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Extraction Service",

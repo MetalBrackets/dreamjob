@@ -1,11 +1,10 @@
-import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import pdfParse from "pdf-parse";
 import type { ExtractionResult } from "../schemas/extraction-result.js";
 import type { ProfileData } from "../schemas/profile.js";
 import { writeJSON } from "./store.js";
 import { EXTRACTION_PATH, RESUME_UPLOAD_PATH } from "./paths.js";
 import type { ResumeUpload } from "../schemas/resume-upload.js";
+import { extractTextFromPDF } from "./extraction.js";
 
 /**
  * Run the extraction pipeline: read PDF, extract text, build an ExtractionResult,
@@ -19,9 +18,7 @@ export async function runExtractionPipeline(
   await writeJSON<ResumeUpload>(RESUME_UPLOAD_PATH, extracting);
 
   // Extract text from PDF
-  const pdfBuffer = await readFile(resumeUpload.storagePath);
-  const parsed = await pdfParse(pdfBuffer);
-  const rawText = parsed.text;
+  const rawText = await extractTextFromPDF(resumeUpload.storagePath);
 
   // Build empty profile data scaffold — AI parsing will populate this in a later step
   const data: ProfileData = {
