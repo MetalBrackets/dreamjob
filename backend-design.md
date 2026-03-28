@@ -25,66 +25,80 @@ All models use auto-increment integer IDs and `createdAt`/`updatedAt` timestamps
 
 ### Profile
 
-Single master record representing the user's complete professional identity.
+Single master record representing the user's complete professional identity (CandidateMasterProfile).
 
-| Field     | Type   | Notes                    |
-| --------- | ------ | ------------------------ |
-| id        | Int    | Always 1 (single user)   |
-| name      | String |                          |
-| email     | String |                          |
-| phone     | String | Optional                 |
-| location  | String | City, State / Remote     |
-| summary   | String | Professional summary     |
-| linkedin  | String | LinkedIn profile URL     |
-| github    | String | GitHub profile URL       |
-| website   | String | Personal website URL     |
+| Field                    | Type     | Notes                                          |
+| ------------------------ | -------- | ---------------------------------------------- |
+| id                       | Int      | Always 1 (single user)                         |
+| name                     | String   |                                                |
+| headline                 | String   | e.g. "Product Designer"                        |
+| email                    | String   |                                                |
+| phone                    | String   | Optional                                       |
+| location                 | String   | City, State / Remote                           |
+| links                    | Json     | `{linkedin, portfolio, github, ...}`           |
+| targetRoles              | String[] | Desired job titles (JSON col)                  |
+| professionalSummaryMaster | String  | Master professional summary                    |
+| preferredCvLanguage      | String   | Default "en"                                   |
+| maxCvPages               | Int      | Default 1                                      |
+| mustNotClaim             | String[] | Constraints — things not to claim (JSON col)   |
 
 ### Experience
 
-| Field       | Type     | Notes                          |
-| ----------- | -------- | ------------------------------ |
-| id          | Int      |                                |
-| profileId   | Int      | FK → Profile                   |
-| title       | String   | Job title                      |
-| company     | String   |                                |
-| location    | String   | Optional                       |
-| startDate   | DateTime |                                |
-| endDate     | DateTime | Null = current                 |
-| description | String   | Role description               |
-| highlights  | String[] | Key accomplishments (JSON col) |
+| Field        | Type     | Notes                                                    |
+| ------------ | -------- | -------------------------------------------------------- |
+| id           | Int      |                                                          |
+| profileId    | Int      | FK → Profile                                             |
+| experienceId | String   | Stable ref ID (e.g. "exp_01") for cross-references       |
+| title        | String   | Job title                                                |
+| company      | String   |                                                          |
+| location     | String   | Optional                                                 |
+| startDate    | DateTime |                                                          |
+| endDate      | DateTime | Null = current                                           |
+| description  | String   | Role description                                         |
+| achievements | Json     | `[{text, metric, proofLevel}]` — quantified accomplishments |
+| skillsUsed   | String[] | Skills applied in this role (JSON col)                   |
 
 ### Education
 
-| Field       | Type     | Notes          |
-| ----------- | -------- | -------------- |
-| id          | Int      |                |
-| profileId   | Int      | FK → Profile   |
-| institution | String   |                |
-| degree      | String   | e.g. B.S., MBA |
-| field       | String   | Field of study |
-| startDate   | DateTime |                |
-| endDate     | DateTime | Optional       |
-| gpa         | Float    | Optional       |
+| Field     | Type   | Notes            |
+| --------- | ------ | ---------------- |
+| id        | Int    |                  |
+| profileId | Int    | FK → Profile     |
+| school    | String |                  |
+| degree    | String | e.g. B.S., MBA   |
+| field     | String | Field of study   |
+| year      | String | Graduation year  |
 
 ### Skill
 
-| Field       | Type   | Notes                              |
-| ----------- | ------ | ---------------------------------- |
-| id          | Int    |                                    |
-| profileId   | Int    | FK → Profile                       |
-| name        | String | e.g. "TypeScript"                  |
-| category    | String | e.g. "Language", "Framework", "Tool" |
-| proficiency | String | Optional: beginner/intermediate/advanced/expert |
+| Field        | Type     | Notes                                              |
+| ------------ | -------- | -------------------------------------------------- |
+| id           | Int      |                                                    |
+| profileId    | Int      | FK → Profile                                       |
+| name         | String   | e.g. "TypeScript"                                  |
+| category     | String   | e.g. "language", "framework", "tool"               |
+| level        | String   | Optional: `beginner` / `intermediate` / `advanced` / `expert` |
+| years        | Int      | Optional — years of experience with this skill     |
+| evidenceRefs | String[] | IDs of experiences/projects as proof (JSON col)    |
 
-### Achievement
+### Certification
 
-| Field       | Type     | Notes        |
-| ----------- | -------- | ------------ |
-| id          | Int      |              |
-| profileId   | Int      | FK → Profile |
-| title       | String   |              |
-| description | String   |              |
-| date        | DateTime | Optional     |
+| Field     | Type     | Notes        |
+| --------- | -------- | ------------ |
+| id        | Int      |              |
+| profileId | Int      | FK → Profile |
+| name      | String   |              |
+| issuer    | String   | Optional     |
+| date      | DateTime | Optional     |
+
+### Language
+
+| Field     | Type   | Notes                                              |
+| --------- | ------ | -------------------------------------------------- |
+| id        | Int    |                                                    |
+| profileId | Int    | FK → Profile                                       |
+| name      | String | e.g. "French"                                      |
+| level     | String | `native` / `professional` / `intermediate` / `basic` |
 
 ### Project
 
@@ -110,36 +124,123 @@ Single master record representing the user's complete professional identity.
 | phone        | String | Optional                   |
 | relationship | String | e.g. "Former Manager"      |
 
+### JobOfferRaw
+
+Raw data captured by the browser extension before AI normalization.
+
+| Field            | Type     | Notes                                  |
+| ---------------- | -------- | -------------------------------------- |
+| id               | Int      |                                        |
+| source           | String   | e.g. "linkedin"                        |
+| sourceUrl        | String   | Original job post URL                  |
+| capturedAt       | DateTime | When the extension scraped it          |
+| htmlSnapshotRef  | String   | Optional — ref to stored HTML snapshot |
+| rawText          | String   | Full text extracted from the page      |
+| rawFields        | Json     | `{title, company, location, employment_type, ...}` |
+
 ### JobPost
 
-Saved LinkedIn job posts the user wants to tailor their resume for.
+Normalized job post created from raw data. Used by the AI agents.
 
-| Field           | Type     | Notes                                  |
-| --------------- | -------- | -------------------------------------- |
-| id              | Int      |                                        |
-| profileId       | Int      | FK → Profile                           |
-| title           | String   | Job title                              |
-| company         | String   |                                        |
-| description     | String   | Full job description text              |
-| url             | String   | LinkedIn post URL                      |
-| salary          | String   | Optional, as posted                    |
-| location        | String   |                                        |
-| contractType    | String   | full-time / part-time / contract / internship |
-| experienceLevel | String   | entry / mid / senior / lead / executive |
-| postedDate      | DateTime | Optional                               |
+| Field                | Type     | Notes                                  |
+| -------------------- | -------- | -------------------------------------- |
+| id                   | Int      |                                        |
+| jobOfferRawId        | Int      | FK → JobOfferRaw                       |
+| profileId            | Int      | FK → Profile                           |
+| title                | String   | Job title                              |
+| company              | String   |                                        |
+| description          | String   | Full job description text              |
+| url                  | String   | LinkedIn post URL                      |
+| salary               | String   | Optional, as posted                    |
+| location             | String   |                                        |
+| remoteMode           | String   | `onsite` / `hybrid` / `remote`         |
+| employmentType       | String   | `full_time` / `part_time` / `contract` / `internship` |
+| seniority            | String   | `entry` / `mid` / `senior` / `lead` / `executive` |
+| jobSummary           | String   | Short normalized summary               |
+| responsibilities     | String[] | Key responsibilities (JSON col)        |
+| requirementsMustHave | String[] | Hard requirements (JSON col)           |
+| requirementsNiceToHave | String[] | Nice-to-have requirements (JSON col) |
+| keywords             | String[] | Extracted keywords (JSON col)          |
+| tools                | String[] | Tools mentioned (JSON col)             |
+| languages            | String[] | Language requirements (JSON col)       |
+| yearsExperienceMin   | Int      | Optional                               |
+| postedDate           | DateTime | Optional                               |
 
-### TailoredResume
+### TailoredResume (GeneratedCV)
 
-Generated output from the AI tailoring process.
+Structured, job-targeted CV generated by the Candidate Agent.
 
-| Field     | Type     | Notes                       |
-| --------- | -------- | --------------------------- |
-| id        | Int      |                             |
-| profileId | Int      | FK → Profile                |
-| jobPostId | Int      | FK → JobPost                |
-| content   | String   | The tailored resume content |
-| format    | String   | "markdown" or "json"        |
-| provider  | String   | Which AI generated it       |
+| Field                  | Type     | Notes                                              |
+| ---------------------- | -------- | -------------------------------------------------- |
+| id                     | Int      |                                                    |
+| profileId              | Int      | FK → Profile                                       |
+| jobPostId              | Int      | FK → JobPost                                       |
+| provider               | String   | Which AI generated it                              |
+| version                | Int      | Iteration count                                    |
+| language               | String   | CV language (e.g. "fr", "en")                      |
+| title                  | String   | e.g. "CV ciblé - Senior Product Designer"          |
+| header                 | Json     | `{fullName, headline, contact, links}`             |
+| summary                | String   | Tailored professional summary                      |
+| skillsHighlighted      | String[] | Selected skills for this job (JSON col)            |
+| experiencesSelected    | Json     | `[{experienceId, rewrittenBullets[]}]`             |
+| educationSelected      | Json     | Selected education entries                         |
+| certificationsSelected | Json     | Selected certifications                            |
+| keywordsCovered        | String[] | Job keywords addressed (JSON col)                  |
+| omittedItems           | String[] | Items deliberately excluded (JSON col)             |
+| generationNotes        | String[] | Agent reasoning notes (JSON col)                   |
+
+### ATSReview
+
+Output from the ATS Agent — keyword and format compliance check.
+
+| Field             | Type     | Notes                                      |
+| ----------------- | -------- | ------------------------------------------ |
+| id                | Int      |                                            |
+| cvId              | Int      | FK → TailoredResume                        |
+| jobPostId         | Int      | FK → JobPost                               |
+| score             | Int      | 0–100                                      |
+| passed            | Boolean  |                                            |
+| hardFiltersStatus | Json     | `[{filter, status, evidence}]`             |
+| matchedKeywords   | String[] | Keywords found in CV (JSON col)            |
+| missingKeywords   | String[] | Keywords absent from CV (JSON col)         |
+| formatFlags       | String[] | Formatting issues (JSON col)               |
+| recommendations   | String[] | Suggested improvements (JSON col)          |
+
+### RecruiterReview
+
+Output from the Recruiter Agent — human-readability and credibility check.
+
+| Field            | Type     | Notes                              |
+| ---------------- | -------- | ---------------------------------- |
+| id               | Int      |                                    |
+| cvId             | Int      | FK → TailoredResume                |
+| jobPostId        | Int      | FK → JobPost                       |
+| score            | Int      | Overall 0–100                      |
+| passed           | Boolean  |                                    |
+| readabilityScore | Int      | 0–100                              |
+| credibilityScore | Int      | 0–100                              |
+| coherenceScore   | Int      | 0–100                              |
+| evidenceScore    | Int      | 0–100                              |
+| strengths        | String[] | What works well (JSON col)         |
+| concerns         | String[] | Issues found (JSON col)            |
+| recommendations  | String[] | Suggested improvements (JSON col)  |
+
+### ReviewAgreement
+
+Final decision object from the orchestrator.
+
+| Field              | Type     | Notes                                                |
+| ------------------ | -------- | ---------------------------------------------------- |
+| id                 | Int      |                                                      |
+| jobPostId          | Int      | FK → JobPost                                         |
+| cvId               | Int      | FK → TailoredResume                                  |
+| cvGenerationOk     | Boolean  |                                                      |
+| atsOk              | Boolean  |                                                      |
+| recruiterOk        | Boolean  |                                                      |
+| reviewAgreementOk  | Boolean  |                                                      |
+| finalStatus        | String   | `FINAL_APPROVED` / `REJECTED` / `NEEDS_REVISION`    |
+| rejectionReasons   | String[] | Why it was rejected (JSON col)                       |
+| iterationCount     | Int      |                                                      |
 
 ---
 
@@ -166,26 +267,42 @@ Each sub-resource follows the same CRUD pattern:
 | PUT    | `/api/profile/{resource}/:id`    | Update one           |
 | DELETE | `/api/profile/{resource}/:id`    | Delete one           |
 
-Where `{resource}` is one of: `experiences`, `educations`, `skills`, `achievements`, `projects`, `references`.
+Where `{resource}` is one of: `experiences`, `educations`, `skills`, `certifications`, `languages`, `projects`, `references`.
 
-### Job Posts
+### Job Posts — Raw
 
-| Method | Route             | Description            |
-| ------ | ----------------- | ---------------------- |
-| GET    | `/api/jobs`       | List saved job posts   |
-| POST   | `/api/jobs`       | Save a new job post    |
-| GET    | `/api/jobs/:id`   | Get a job post         |
-| PUT    | `/api/jobs/:id`   | Update a job post      |
-| DELETE | `/api/jobs/:id`   | Delete a job post      |
+| Method | Route               | Description                                              |
+| ------ | ------------------- | -------------------------------------------------------- |
+| POST   | `/api/jobs/raw`     | Extension posts raw scraped data; auto-normalizes into a JobPost |
+| GET    | `/api/jobs/raw`     | List raw captures                                        |
+| GET    | `/api/jobs/raw/:id` | Get one raw capture                                      |
+
+### Job Posts — Normalized
+
+| Method | Route             | Description                  |
+| ------ | ----------------- | ---------------------------- |
+| GET    | `/api/jobs`       | List normalized job posts    |
+| GET    | `/api/jobs/:id`   | Get a normalized job post    |
+| PUT    | `/api/jobs/:id`   | Update a job post            |
+| DELETE | `/api/jobs/:id`   | Delete a job post            |
 
 ### Tailoring
 
-| Method | Route                      | Description                        |
-| ------ | -------------------------- | ---------------------------------- |
-| POST   | `/api/tailor`              | Generate a tailored resume         |
-| GET    | `/api/tailored-resumes`    | List all tailored resumes          |
-| GET    | `/api/tailored-resumes/:id`| Get a specific tailored resume     |
-| DELETE | `/api/tailored-resumes/:id`| Delete a tailored resume           |
+| Method | Route                                        | Description                        |
+| ------ | -------------------------------------------- | ---------------------------------- |
+| POST   | `/api/tailor`                                | Generate a tailored resume (kicks off the full agent pipeline) |
+| GET    | `/api/tailored-resumes`                      | List all tailored resumes          |
+| GET    | `/api/tailored-resumes/:id`                  | Get a specific tailored resume     |
+| DELETE | `/api/tailored-resumes/:id`                  | Delete a tailored resume           |
+
+### Reviews
+
+| Method | Route                                        | Description                        |
+| ------ | -------------------------------------------- | ---------------------------------- |
+| GET    | `/api/tailored-resumes/:id/ats-review`       | Get ATS review for a CV            |
+| GET    | `/api/tailored-resumes/:id/recruiter-review`  | Get recruiter review for a CV      |
+| GET    | `/api/tailored-resumes/:id/agreement`         | Get review agreement for a CV      |
+| GET    | `/api/jobs/:id/result`                        | Get AddonResult (aggregated response for the extension) |
 
 **POST `/api/tailor` request body:**
 
@@ -193,11 +310,11 @@ Where `{resource}` is one of: `experiences`, `educations`, `skills`, `achievemen
 {
   "jobPostId": 1,
   "provider": "claude",
-  "format": "markdown"
+  "language": "fr"
 }
 ```
 
-The endpoint fetches the full profile + job post, sends them to the selected AI provider, and stores the result as a TailoredResume.
+The endpoint fetches the full profile + job post, runs the multi-agent pipeline (Candidate Agent → ATS Agent → Recruiter Agent → Orchestrator), and stores the GeneratedCV, ATSReview, RecruiterReview, and ReviewAgreement.
 
 ---
 
@@ -217,7 +334,7 @@ Fastify has built-in request validation via JSON Schema. Each route defines a sc
 | ------------ | --------------------------------------------------------------------- |
 | Required fields | Reject missing required fields (e.g. Profile `name`, `email`)     |
 | Types        | Strings are strings, numbers are numbers, dates are ISO-8601 strings  |
-| Enums        | `contractType`, `experienceLevel`, `proficiency`, `format`, `provider` must be one of the allowed values |
+| Enums        | `employmentType`, `seniority`, `remoteMode`, `level`, `provider`, `finalStatus` must be one of the allowed values |
 | String limits | Reasonable max lengths (e.g. `name` ≤ 200, `description` ≤ 10000)   |
 | ID params    | Route `:id` params must be positive integers                          |
 
@@ -271,14 +388,15 @@ src/
   server.ts              — Fastify app setup, plugin registration
   routes/
     profile.ts           — Profile + sub-resource CRUD
-    jobs.ts              — Job post CRUD
-    tailor.ts            — Tailoring endpoints
+    jobs.ts              — Job post + raw capture endpoints
+    tailor.ts            — Tailoring + review endpoints
   services/
     ai/
       index.ts           — Provider interface + factory
       claude.ts          — Claude implementation
       openai.ts          — OpenAI implementation
-    tailor.ts            — Orchestrates profile fetch + AI call + save
+    tailor.ts            — Orchestrates the multi-agent pipeline
+    normalize.ts         — Normalizes raw job data into JobPost
 prisma/
   schema.prisma          — All data models
   seed.ts                — Demo profile data
@@ -332,11 +450,12 @@ npm run dev                  # Start Fastify on :3000
 ## Seed Data
 
 The seed script creates a single demo profile with:
-- Basic info (name, contact, links)
-- 2-3 work experiences with highlights
+- Basic info (name, headline, contact, links, target roles, constraints)
+- 2-3 work experiences with achievements (text, metric, proof level) and skills used
 - 1-2 education entries
-- 8-10 skills across categories
-- 2-3 achievements
+- 8-10 skills across categories with years and evidence refs
+- 1-2 certifications
+- 2-3 languages with proficiency levels
 - 2-3 portfolio projects
 - 1-2 references
 
