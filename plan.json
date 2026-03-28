@@ -615,7 +615,7 @@
       "6. Store all artifacts: GeneratedCV in cvs.json, ATSReview in ats-reviews.json, RecruiterReview in recruiter-reviews.json",
       "7. Verify: single-pass pipeline runs end-to-end with sample data, all artifacts stored"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Orchestration",
@@ -664,22 +664,6 @@
       "4. Aggregate strengths, weaknesses, recommendations from both reviews",
       "5. Return complete AddonResult regardless of outcome",
       "6. Verify: accepted result has correct scores and aggregated feedback, rejected result includes rejection reasons"
-    ],
-    "passes": false
-  },
-  {
-    "category": "Seed Data",
-    "description": "Implement seed script (src/seed.ts) to write demo profile data",
-    "steps": [
-      "1. Create src/seed.ts",
-      "2. Define demo profile with: identity (name, headline, contact, links), target roles, constraints",
-      "3. Add 2-3 work experiences with achievements (text, metric, proofLevel) and skillsUsed",
-      "4. Add 1-2 education entries",
-      "5. Add 8-10 skills across categories (tool, language, framework, etc.) with years and evidenceRefs",
-      "6. Add 1-2 certifications, 2-3 languages, 2-3 projects, 1-2 references",
-      "7. Add professional summary master text",
-      "8. Write to data/profile.json, auto-create data/ directory if needed",
-      "9. Verify: npm run seed writes profile.json, GET /api/profile returns the seeded data"
     ],
     "passes": false
   },

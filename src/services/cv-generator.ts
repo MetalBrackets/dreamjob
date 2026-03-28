@@ -12,6 +12,9 @@ import {
   RECRUITER_REVIEWS_PATH,
   REVIEW_AGREEMENTS_PATH,
 } from "./paths.js";
+import { generateTargetedCV } from "./ai/candidate-agent.js";
+import { reviewCVAsATS } from "./ai/ats-agent.js";
+import { reviewCVAsRecruiter } from "./ai/recruiter-agent.js";
 
 export interface OrchestratorResult {
   cv: GeneratedCV;
@@ -25,87 +28,53 @@ export async function orchestrate(
   jobPost: JobPost,
   language: string
 ): Promise<OrchestratorResult> {
-  const cvId = `cv_${randomUUID().slice(0, 8)}`;
-  const identity = profile.data.identity;
-
-  const cv: GeneratedCV = {
-    id: cvId,
-    profileId: profile.id,
-    jobPostId: jobPost.id,
-    version: 1,
+  // Step 1: Call Candidate Agent to generate initial CV
+  const cv = await generateTargetedCV(profile, jobPost, {
     language,
-    title: `${identity.name} - ${jobPost.title}`,
-    header: {
-      fullName: identity.name,
-      headline: identity.headline,
-      contact: {
-        email: identity.email,
-        phone: identity.phone,
-        location: identity.location,
-      },
-      links: identity.links,
-    },
-    summary: profile.data.professionalSummaryMaster || "",
-    skillsHighlighted: profile.data.skills.map((s) => s.name),
-    experiencesSelected: profile.data.experiences.map((exp) => ({
-      experienceId: exp.experienceId,
-      rewrittenBullets: exp.achievements.map((a) => a.text),
-    })),
-    educationSelected: profile.data.education.map(
-      (e) => `${e.degree} in ${e.field} - ${e.school}`
-    ),
-    certificationsSelected: (profile.data.certifications || []).map((c) => c.name),
-    keywordsCovered: jobPost.keywords || [],
-    omittedItems: [],
-    generationNotes: [
-      "Scaffold generation — AI agents not yet connected",
-    ],
-  };
+    truthfulnessMode: "strict",
+  });
 
-  const atsReview: ATSReview = {
-    id: `ats_${randomUUID().slice(0, 8)}`,
-    cvId,
-    jobPostId: jobPost.id,
-    score: 0,
-    passed: false,
-    hardFiltersStatus: [],
-    matchedKeywords: [],
-    missingKeywords: [],
-    formatFlags: [],
-    recommendations: [
-      "AI ATS agent not yet connected — placeholder review",
-    ],
-  };
+  // Step 2: Call ATS Agent to review the generated CV
+  const atsReview = await reviewCVAsATS(jobPost, cv);
 
-  const recruiterReview: RecruiterReview = {
-    id: `rec_${randomUUID().slice(0, 8)}`,
-    cvId,
-    jobPostId: jobPost.id,
-    score: 0,
-    passed: false,
-    readabilityScore: 0,
-    credibilityScore: 0,
-    coherenceScore: 0,
-    evidenceScore: 0,
-    strengths: [],
-    concerns: [],
-    recommendations: [
-      "AI Recruiter agent not yet connected — placeholder review",
-    ],
-  };
+  // Step 3: Call Recruiter Agent to review the generated CV
+  const recruiterReview = await reviewCVAsRecruiter(jobPost, cv);
+
+  // Build ReviewAgreement
+  const cvGenerationOk = true;
+  const atsOk = atsReview.passed;
+  const recruiterOk = recruiterReview.passed;
+  const reviewAgreementOk = cvGenerationOk && atsOk && recruiterOk;
+
+  const rejectionReasons: string[] = [];
+  if (!atsOk) {
+    rejectionReasons.push(
+      `ATS review failed (score: ${atsReview.score}). ${atsReview.recommendations.join("; ")}`
+    );
+  }
+  if (!recruiterOk) {
+    rejectionReasons.push(
+      `Recruiter review failed (score: ${recruiterReview.score}). ${recruiterReview.recommendations.join("; ")}`
+    );
+  }
+
+  let finalStatus: "FINAL_APPROVED" | "REJECTED" | "NEEDS_REVISION";
+  if (reviewAgreementOk) {
+    finalStatus = "FINAL_APPROVED";
+  } else {
+    finalStatus = "NEEDS_REVISION";
+  }
 
   const reviewAgreement: ReviewAgreement = {
     id: `ra_${randomUUID().slice(0, 8)}`,
     jobPostId: jobPost.id,
-    cvId,
-    cvGenerationOk: true,
-    atsOk: atsReview.passed,
-    recruiterOk: recruiterReview.passed,
-    reviewAgreementOk: false,
-    finalStatus: "NEEDS_REVISION",
-    rejectionReasons: [
-      "AI agents not yet connected — scaffold only",
-    ],
+    cvId: cv.id,
+    cvGenerationOk,
+    atsOk,
+    recruiterOk,
+    reviewAgreementOk,
+    finalStatus,
+    rejectionReasons,
     iterationCount: 1,
   };
 
