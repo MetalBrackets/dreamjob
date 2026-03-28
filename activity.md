@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **GET /api/resume/extraction Endpoint**: Added GET /api/resume/extraction to src/routes/resume.ts. Reads data/extraction.json via store service, returns 200 with the full ExtractionResult document (extracted data, confidence map, review status), or 404 if no extraction exists. Verified: returns 404 with `{"error":"No extraction exists"}` when no extraction.json exists, returns 200 with correct ExtractionResult after upload+extraction, tsc --noEmit passes.
+
+### 2026-03-28
 - **GET /api/resume/status Endpoint**: Added GET /api/resume/status to src/routes/resume.ts. Reads data/resume-upload.json via store service, returns 200 with the full ResumeUpload document (id, originalFilename, storagePath, uploadedAt, status, and error if any), or 404 if no resume has been uploaded. Verified: returns 404 with `{"error":"No resume has been uploaded"}` when no resume-upload.json exists, returns 200 with correct document after upload, shows error field when extraction failed, tsc --noEmit passes.
 
 ### 2026-03-28

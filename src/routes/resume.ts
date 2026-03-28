@@ -2,12 +2,21 @@ import type { FastifyInstance } from "fastify";
 import { join } from "node:path";
 import { writeFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import { UPLOADS_DIR, RESUME_UPLOAD_PATH } from "../services/paths.js";
+import { UPLOADS_DIR, RESUME_UPLOAD_PATH, EXTRACTION_PATH } from "../services/paths.js";
 import { readJSON, writeJSON } from "../services/store.js";
 import type { ResumeUpload } from "../schemas/resume-upload.js";
+import type { ExtractionResult } from "../schemas/extraction-result.js";
 import { runExtractionPipeline } from "../services/extraction-pipeline.js";
 
 export async function resumeRoutes(app: FastifyInstance) {
+  app.get("/api/resume/extraction", async (_request, reply) => {
+    const extraction = await readJSON<ExtractionResult>(EXTRACTION_PATH);
+    if (!extraction) {
+      return reply.code(404).send({ error: "No extraction exists" });
+    }
+    return reply.code(200).send(extraction);
+  });
+
   app.get("/api/resume/status", async (_request, reply) => {
     const resumeUpload = await readJSON<ResumeUpload>(RESUME_UPLOAD_PATH);
     if (!resumeUpload) {

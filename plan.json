@@ -292,7 +292,7 @@
       "3. Return 404 if no extraction exists",
       "4. Verify: returns extraction data after successful upload+extraction"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Resume Upload & Extraction Routes",
