@@ -559,7 +559,7 @@
       "3. self_check.warnings: array of warning strings for any claims not backed by profile evidence",
       "4. Verify: self-check flags when CV contains claims not in the master profile"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "AI Layer - Candidate Agent",

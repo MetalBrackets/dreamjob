@@ -28,6 +28,10 @@ interface CandidateAgentOutput {
     matchedRequirements: Array<{ requirement: string; evidenceRef: string }>;
     uncoveredRequirements: string[];
   };
+  selfCheck: {
+    unsupportedClaimsFound: boolean;
+    warnings: string[];
+  };
 }
 
 const SYSTEM_PROMPT = `You are a professional CV writer agent. Given a candidate's master profile and a target job posting, generate a tailored CV that maximizes the candidate's chances.
@@ -64,8 +68,20 @@ Return a JSON object with these exact keys:
       { "requirement": string — a must-have or nice-to-have requirement from the job post, "evidenceRef": string — reference to the profile item that covers it (e.g. "exp_01: Led migration to AWS", "skill: Kubernetes", "cert: AWS Solutions Architect") }
     ],
     "uncoveredRequirements": string[] — job requirements (must-have or nice-to-have) that are NOT addressed by any profile evidence
+  },
+  "selfCheck": {
+    "unsupportedClaimsFound": boolean — true if ANY claim in the generated CV (summary, bullets, skills) is not directly backed by evidence in the master profile,
+    "warnings": string[] — list of specific warnings for each unsupported or stretched claim found (e.g. "Summary claims 'led a team of 50' but profile only mentions 'managed a team'", "Skill 'Rust' listed but not present in profile skills or experience"). Empty array if no issues found.
   }
 }
+
+## SELF-CHECK RULES
+- After generating the CV, perform a thorough self-check by comparing every claim in the generated output against the master profile.
+- Flag ANY skill listed in skillsHighlighted that does not appear in the profile's skills, experience skillsUsed, or certifications.
+- Flag ANY metric or number in rewrittenBullets that is not present in the original achievement text.
+- Flag ANY claim in the summary that cannot be traced back to a specific profile item.
+- If truthfulness mode is "strict", even minor rephrasing that could imply more than what the profile states should be flagged.
+- Set unsupportedClaimsFound to true if there are ANY warnings, false otherwise.
 
 ## GUIDELINES
 - Write in the specified language.
@@ -154,6 +170,10 @@ Generate the tailored CV now.`;
     coverageMap: output.coverageMap ?? {
       matchedRequirements: [],
       uncoveredRequirements: [],
+    },
+    selfCheck: output.selfCheck ?? {
+      unsupportedClaimsFound: false,
+      warnings: [],
     },
   };
 

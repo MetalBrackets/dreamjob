@@ -42,6 +42,14 @@ export const CoverageMapSchema = Type.Object({
 });
 export type CoverageMap = Static<typeof CoverageMapSchema>;
 
+// --- Self-check sub-schema ---
+
+export const SelfCheckSchema = Type.Object({
+  unsupportedClaimsFound: Type.Boolean(),
+  warnings: Type.Array(Type.String()),
+});
+export type SelfCheck = Static<typeof SelfCheckSchema>;
+
 // --- Full GeneratedCV schema ---
 
 export const GeneratedCVSchema = Type.Object({
@@ -61,5 +69,6 @@ export const GeneratedCVSchema = Type.Object({
   omittedItems: Type.Array(Type.String()),
   generationNotes: Type.Array(Type.String()),
   coverageMap: Type.Optional(CoverageMapSchema),
+  selfCheck: Type.Optional(SelfCheckSchema),
 });
 export type GeneratedCV = Static<typeof GeneratedCVSchema>;

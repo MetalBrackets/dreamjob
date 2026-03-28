@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Self-Check in generateTargetedCV (src/services/ai/candidate-agent.ts, src/schemas/generated-cv.ts)**: Added SelfCheck TypeBox schema (unsupportedClaimsFound boolean, warnings string array) and optional selfCheck field to GeneratedCVSchema. Extended CandidateAgentOutput interface with selfCheck object. Updated system prompt with selfCheck output format and detailed self-check rules: flag skills not in profile, metrics not in original achievements, summary claims without profile evidence, and minor rephrasing in strict truthfulness mode. Updated CV construction to include selfCheck with fallback to {unsupportedClaimsFound: false, warnings: []}. Verified: tsc --noEmit passes, server starts correctly.
+
+### 2026-03-28
 - **Coverage Map in generateTargetedCV (src/services/ai/candidate-agent.ts, src/schemas/generated-cv.ts)**: Extended GeneratedCV schema with optional coverageMap field containing matchedRequirements (array of {requirement, evidenceRef} linking job requirements to specific profile items) and uncoveredRequirements (array of requirement strings not addressed by the profile). Added MatchedRequirement, CoverageMap TypeBox schemas and types. Updated candidate agent system prompt to require coverage_map output mapping every must-have and nice-to-have requirement to either matched evidence or uncovered list. Updated CandidateAgentOutput interface and CV construction to include coverageMap with fallback to empty arrays. Verified: tsc --noEmit passes, server starts correctly.
 
 ### 2026-03-28
