@@ -68,7 +68,7 @@
       "6. Auto-create data/ and data/uploads/ directories if they don't exist on first write",
       "7. Verify: unit test or manual test that read/write round-trips data correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Storage Layer",
