@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **ReviewAgreement TypeBox Schema**: Created src/schemas/review-agreement.ts defining FinalStatusSchema (union enum: FINAL_APPROVED/REJECTED/NEEDS_REVISION) and ReviewAgreementSchema with id, jobPostId, cvId, cvGenerationOk, atsOk, recruiterOk, reviewAgreementOk booleans, finalStatus, rejectionReasons array, and iterationCount integer. Exported static TypeScript types FinalStatus and ReviewAgreement. Verified: tsc --noEmit passes, schema validates valid data (true), missing fields (false), invalid finalStatus (false), REJECTED with reasons (true), and NEEDS_REVISION (true).
+
+### 2026-03-28
 - **RecruiterReview TypeBox Schema**: Created src/schemas/recruiter-review.ts defining RecruiterReviewSchema with id, cvId, jobPostId, score (0-100), passed boolean, sub-scores (readabilityScore, credibilityScore, coherenceScore, evidenceScore — all 0-100), and arrays for strengths, concerns, recommendations. Exported static TypeScript type RecruiterReview. Verified: tsc --noEmit passes, schema validates valid data (true), missing fields (false), out-of-range score (false), and out-of-range sub-score (false).
 
 ### 2026-03-28

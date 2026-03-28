@@ -213,7 +213,7 @@
       "3. Add rejectionReasons array, iterationCount integer",
       "4. Export static TypeScript type"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Profile Routes",
