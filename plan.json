@@ -482,7 +482,7 @@
       "2. Implement GET /api/cvs/:id: find by id, return 200 or 404",
       "3. Verify: list returns generated CVs, get by id returns correct one"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "CV Generation Routes",

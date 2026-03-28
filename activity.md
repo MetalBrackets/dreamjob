@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **GET /api/cvs and GET /api/cvs/:id Endpoints**: Added two GET endpoints to src/routes/cvs.ts for generated CVs. GET /api/cvs reads data/cvs.json via readCollection and returns the full array. GET /api/cvs/:id finds a specific generated CV by id in the collection, returns 200 with the item or 404 with `{"error":"CV not found"}` if not found. Verified: GET /api/cvs returns populated array with existing CVs, GET /api/cvs/:id returns correct entry with 200, GET /api/cvs/nonexistent returns 404, tsc --noEmit passes.
+
+### 2026-03-28
 - **POST /api/cvs/generate Endpoint**: Created src/routes/cvs.ts as a Fastify plugin implementing POST /api/cvs/generate. Accepts JSON body with jobPostId and language (required). Loads Profile from data/profile.json and finds JobPost by id in data/jobs.json. Returns 400 if required fields missing, 404 if profile or job post not found. Calls cv-generator orchestrator service (src/services/cv-generator.ts) which generates scaffold GeneratedCV, ATSReview, RecruiterReview, and ReviewAgreement artifacts and stores them in data/cvs.json, data/ats-reviews.json, data/recruiter-reviews.json, and data/review-agreements.json respectively. Returns 200 with all four artifacts. Registered route in src/server.ts. Verified: missing fields returns 400, missing profile returns 404, missing job returns 404, valid request returns 200 with correct CV/review structure, all artifacts persisted to JSON files, tsc --noEmit passes.
 
 ### 2026-03-28
