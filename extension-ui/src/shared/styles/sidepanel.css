@@ -86,6 +86,145 @@
   padding: 1.25rem;
 }
 
+.hero-head,
+.section-header,
+.item-card-head,
+.document-card,
+.list-editor-head,
+.inline-input-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hero-meta,
+.field,
+.stack-sm,
+.stack-md,
+.one-col {
+  display: grid;
+}
+
+.hero-meta {
+  min-width: 150px;
+  justify-items: end;
+  text-align: right;
+}
+
+.progress-track {
+  height: 10px;
+  margin-top: 1rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(13, 107, 136, 0.1);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #0d6b88, #f57f17);
+}
+
+.section-header {
+  margin-bottom: 1rem;
+}
+
+.section-header h2,
+.item-card h3 {
+  margin: 0;
+}
+
+.section-header p,
+.item-card-head p,
+.document-card p,
+.muted-text {
+  color: #5d6e80;
+}
+
+.field {
+  gap: 0.45rem;
+}
+
+.field span,
+.list-editor-head strong {
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.one-col {
+  gap: 1rem;
+}
+
+.stack-sm {
+  gap: 0.75rem;
+}
+
+.stack-md {
+  gap: 1rem;
+}
+
+.item-card {
+  padding: 1rem;
+  border: 1px solid rgba(19, 34, 56, 0.08);
+  border-radius: 20px;
+  background: rgba(248, 252, 255, 0.75);
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  color: #5d6e80;
+  background: rgba(19, 34, 56, 0.06);
+}
+
+.inline-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.inline-input-row {
+  align-items: center;
+}
+
+.upload-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-button input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.document-card {
+  align-items: center;
+  padding: 0.95rem 1rem;
+  border: 1px dashed rgba(19, 34, 56, 0.16);
+  border-radius: 18px;
+}
+
+.checkbox-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 52px;
+  padding-top: 1.75rem;
+}
+
+.checkbox-field input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
 .table-head,
 .table-row {
   display: grid;
@@ -117,4 +256,31 @@
 
 .table-row span {
   font-size: 0.9rem;
+}
+
+@media (max-width: 920px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .app-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid rgba(19, 34, 56, 0.08);
+  }
+
+  .nav-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-head,
+  .section-header,
+  .item-card-head,
+  .document-card {
+    flex-direction: column;
+  }
+
+  .hero-meta {
+    justify-items: start;
+    text-align: left;
+  }
 }

@@ -24,6 +24,21 @@ button {
   font: inherit;
 }
 
+input,
+textarea {
+  width: 100%;
+  border: 1px solid rgba(19, 34, 56, 0.14);
+  border-radius: 16px;
+  padding: 0.8rem 0.9rem;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.9);
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
 h1,
 h2,
 p {
