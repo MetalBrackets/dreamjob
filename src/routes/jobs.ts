@@ -1,7 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import type { JobOfferRaw } from "../schemas/job-offer-raw.js";
+import type { JobPost } from "../schemas/job-post.js";
 import { readCollection, writeCollection } from "../services/store.js";
-import { JOBS_RAW_PATH } from "../services/paths.js";
+import { JOBS_RAW_PATH, JOBS_PATH } from "../services/paths.js";
 import { normalizeJobOffer } from "../services/normalize.js";
 
 export async function jobsRoutes(app: FastifyInstance) {
@@ -44,6 +45,21 @@ export async function jobsRoutes(app: FastifyInstance) {
       raw: rawEntry,
       normalized: normalizedJob,
     });
+  });
+
+  app.get("/api/jobs", async (_request, reply) => {
+    const collection = await readCollection<JobPost>(JOBS_PATH);
+    return reply.send(collection);
+  });
+
+  app.get("/api/jobs/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const collection = await readCollection<JobPost>(JOBS_PATH);
+    const item = collection.find((entry) => entry.id === id);
+    if (!item) {
+      return reply.code(404).send({ error: "Job post not found" });
+    }
+    return reply.send(item);
   });
 
   app.get("/api/jobs/raw", async (_request, reply) => {

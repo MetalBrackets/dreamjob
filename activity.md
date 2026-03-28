@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **GET /api/jobs and GET /api/jobs/:id Endpoints**: Added two GET endpoints to src/routes/jobs.ts for normalized job posts. GET /api/jobs reads data/jobs.json via readCollection and returns the full array. GET /api/jobs/:id finds a specific normalized job post by id in the collection, returns 200 with the item or 404 with `{"error":"Job post not found"}` if not found. Verified: GET /api/jobs returns populated array with existing normalized jobs, GET /api/jobs/job_01 returns correct entry with 200, GET /api/jobs/job_99 returns 404, tsc --noEmit passes.
+
+### 2026-03-28
 - **GET /api/jobs/raw and GET /api/jobs/raw/:id Endpoints**: Added two GET endpoints to src/routes/jobs.ts. GET /api/jobs/raw reads data/jobs-raw.json via readCollection and returns the full array. GET /api/jobs/raw/:id finds a specific raw job offer by id in the collection, returns 200 with the item or 404 with `{"error":"Raw job offer not found"}` if not found. Verified: GET /api/jobs/raw returns empty array when no data, returns populated array after POST, GET /api/jobs/raw/raw_01 returns correct entry, GET /api/jobs/raw/raw_99 returns 404, tsc --noEmit passes.
 
 ### 2026-03-28

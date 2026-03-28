@@ -421,7 +421,7 @@
       "2. Implement GET /api/jobs/:id: find by id, return 200 or 404",
       "3. Verify: list returns normalized jobs, get by id returns correct one"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Job Posts - Normalized Routes",
