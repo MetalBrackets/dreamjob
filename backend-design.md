@@ -10,7 +10,6 @@
 | ORM | Prisma |
 | Auth | Better-Auth (open source, MIT) -- handles email/password, OAuth, sessions, email verification, password reset. Manages its own `user`, `session`, and `account` tables. |
 | Validation | Zod |
-| PDF Export | Puppeteer (server-side rendering for consistent output) |
 | Job Parsing | LLM-assisted extraction (Claude API) |
 | Resume Tailoring | LLM-assisted rewriting (Claude API) |
 
@@ -355,7 +354,6 @@ Which experiences and bullets are included in this version.
 │   ├── GET    /:id
 │   ├── PUT    /:id                 # manually adjust selections
 │   ├── DELETE /:id
-│   └── GET    /:id/export           # export as PDF/DOCX
 │
 └── /match
     └── POST   /analyze             # compare profile against a job post, return match score + gaps
