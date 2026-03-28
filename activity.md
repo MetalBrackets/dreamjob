@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Revision Support in generateTargetedCV (src/services/ai/candidate-agent.ts)**: Added optional revisionContext parameter (RevisionContext interface with optional previousAtsReview and previousRecruiterReview fields) to generateTargetedCV. When revision context is provided, constructs a detailed REVISION CONTEXT section in the user prompt containing previous ATS review feedback (score, hard filter statuses, missing keywords, format flags, recommendations) and/or previous recruiter review feedback (score, sub-scores, concerns, recommendations). Instructs the agent to address each recommendation and concern, incorporate missing keywords where truthfully possible, and fix format flags. Imported ATSReview and RecruiterReview types. Verified: tsc --noEmit passes.
+
+### 2026-03-28
 - **Self-Check in generateTargetedCV (src/services/ai/candidate-agent.ts, src/schemas/generated-cv.ts)**: Added SelfCheck TypeBox schema (unsupportedClaimsFound boolean, warnings string array) and optional selfCheck field to GeneratedCVSchema. Extended CandidateAgentOutput interface with selfCheck object. Updated system prompt with selfCheck output format and detailed self-check rules: flag skills not in profile, metrics not in original achievements, summary claims without profile evidence, and minor rephrasing in strict truthfulness mode. Updated CV construction to include selfCheck with fallback to {unsupportedClaimsFound: false, warnings: []}. Verified: tsc --noEmit passes, server starts correctly.
 
 ### 2026-03-28

@@ -3,12 +3,19 @@ import { chatCompletionJSON } from "./openai.js";
 import type { Profile } from "../../schemas/profile.js";
 import type { JobPost } from "../../schemas/job-post.js";
 import type { GeneratedCV } from "../../schemas/generated-cv.js";
+import type { ATSReview } from "../../schemas/ats-review.js";
+import type { RecruiterReview } from "../../schemas/recruiter-review.js";
 
 export interface GenerationRules {
   language: string;
   maxPages?: number;
   tone?: string;
   truthfulnessMode?: "strict" | "flexible";
+}
+
+export interface RevisionContext {
+  previousAtsReview?: ATSReview;
+  previousRecruiterReview?: RecruiterReview;
 }
 
 interface CandidateAgentOutput {
@@ -96,8 +103,49 @@ export async function generateTargetedCV(
   profile: Profile,
   jobPost: JobPost,
   rules: GenerationRules,
+  revisionContext?: RevisionContext,
 ): Promise<GeneratedCV> {
   const { language, maxPages, tone, truthfulnessMode } = rules;
+
+  let revisionSection = "";
+  if (revisionContext) {
+    const parts: string[] = [];
+
+    if (revisionContext.previousAtsReview) {
+      const ats = revisionContext.previousAtsReview;
+      parts.push(`### Previous ATS Review (Score: ${ats.score}/100, Passed: ${ats.passed})
+Hard Filters:
+${ats.hardFiltersStatus.map((h) => `- ${h.filter}: ${h.status} — ${h.evidence}`).join("\n")}
+
+Missing Keywords: ${ats.missingKeywords.join(", ") || "none"}
+Format Flags: ${ats.formatFlags.join(", ") || "none"}
+Recommendations:
+${ats.recommendations.map((r) => `- ${r}`).join("\n")}`);
+    }
+
+    if (revisionContext.previousRecruiterReview) {
+      const rec = revisionContext.previousRecruiterReview;
+      parts.push(`### Previous Recruiter Review (Score: ${rec.score}/100, Passed: ${rec.passed})
+Sub-scores: Readability ${rec.readabilityScore}, Credibility ${rec.credibilityScore}, Coherence ${rec.coherenceScore}, Evidence ${rec.evidenceScore}
+
+Concerns:
+${rec.concerns.map((c) => `- ${c}`).join("\n")}
+
+Recommendations:
+${rec.recommendations.map((r) => `- ${r}`).join("\n")}`);
+    }
+
+    if (parts.length > 0) {
+      revisionSection = `
+
+## REVISION CONTEXT
+This is a revision attempt. The previous CV was reviewed and did NOT pass. You MUST address the specific feedback below. Focus on fixing the blocking issues while maintaining truthfulness.
+
+${parts.join("\n\n")}
+
+**IMPORTANT**: Address each recommendation and concern listed above. Incorporate missing keywords where truthfully possible. Fix any format flags. Do NOT ignore this feedback.`;
+    }
+  }
 
   const userPrompt = `## CANDIDATE MASTER PROFILE
 ${JSON.stringify(profile.data, null, 2)}
@@ -130,6 +178,7 @@ ${jobPost.yearsExperienceMin ? `Minimum Years Experience: ${jobPost.yearsExperie
 - Max pages: ${maxPages ?? "no limit"}
 - Tone: ${tone ?? "professional"}
 - Truthfulness mode: ${truthfulnessMode ?? "strict"} (strict = never stretch the truth, flexible = allow minor rephrasing for impact)
+${revisionSection}
 
 Generate the tailored CV now.`;
 

@@ -570,7 +570,7 @@
       "3. Ensure revised CV addresses specific blocking issues and missing keywords from prior reviews",
       "4. Verify: passing a failing ATS review as context produces a revised CV that addresses the feedback"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "AI Layer - ATS Agent",
