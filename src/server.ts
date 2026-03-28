@@ -13,7 +13,19 @@ const PORT = Number(process.env.PORT) || 3000;
 const app = Fastify({ logger: true });
 
 await app.register(cors, {
-  origin: "http://localhost:5173",
+  origin: (origin, cb) => {
+    if (
+      !origin ||
+      origin === "http://localhost:5173" ||
+      origin.startsWith("chrome-extension://")
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 });
 
 await app.register(multipart, {

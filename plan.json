@@ -751,7 +751,7 @@
       "4. Verify allowed headers: Content-Type, Authorization",
       "5. Verify: extension can make API calls to backend without CORS errors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Integration",
