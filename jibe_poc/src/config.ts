@@ -9,6 +9,7 @@ export const config = {
   port: Number.parseInt(process.env.PORT ?? "3000", 10),
   openAiApiKey: process.env.OPENAI_API_KEY ?? "",
   dataPath: process.cwd() + "/data/candidates.json",
+  generatedResultPath: process.cwd() + "/generate_by_ai.json",
   models: {
     candidate: {
       model: process.env.OPENAI_MODEL_CANDIDATE ?? "gpt-5.4",

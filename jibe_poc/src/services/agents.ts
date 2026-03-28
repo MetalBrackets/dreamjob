@@ -20,7 +20,7 @@ export class AgentsService {
   async runCandidateAgent(
     input: CandidateAgentInput
   ): Promise<CandidateAgentOutput> {
-    return this.openAiJsonService.generateJson<CandidateAgentOutput>({
+    const result = await this.openAiJsonService.generateJson<CandidateAgentOutput>({
       model: config.models.candidate.model,
       reasoningEffort: config.models.candidate.reasoningEffort,
       instructions: `
@@ -29,6 +29,9 @@ Construis un CV cible uniquement a partir du profil candidat fourni.
 N'invente jamais d'experiences, de competences, de metriques, de diplomes ou de certifications.
 Le contenu doit etre concis, credible et directement pertinent pour l'offre.
 Tous les champs textuels generes doivent etre rediges en francais.
+Le resume doit faire 2 a 3 phrases maximum.
+Les listes "omitted_items" et "generation_notes" doivent contenir 3 elements maximum.
+Chaque experience de "experiences_selected" doit contenir 3 bullets maximum, courtes et percutantes.
 Conserve les cles JSON exactement telles que definies ci-dessous.
 Renseigne le champ "language" avec la valeur "fr".
 La sortie doit respecter exactement ce format JSON :
@@ -66,10 +69,27 @@ La sortie doit respecter exactement ce format JSON :
 }`.trim(),
       input
     });
+
+    return {
+      ...result,
+      generated_cv: {
+        ...result.generated_cv,
+        experiences_selected: result.generated_cv.experiences_selected.map((experience) => ({
+          ...experience,
+          rewritten_bullets: limitItems(experience.rewritten_bullets, 3)
+        })),
+        omitted_items: limitItems(result.generated_cv.omitted_items, 3),
+        generation_notes: limitItems(result.generated_cv.generation_notes, 3)
+      },
+      self_check: {
+        ...result.self_check,
+        warnings: limitItems(result.self_check.warnings, 3)
+      }
+    };
   }
 
   async runAtsAgent(input: AtsAgentInput): Promise<AtsAgentOutput> {
-    return this.openAiJsonService.generateJson<AtsAgentOutput>({
+    const result = await this.openAiJsonService.generateJson<AtsAgentOutput>({
       model: config.models.ats.model,
       reasoningEffort: config.models.ats.reasoningEffort,
       instructions: `
@@ -78,6 +98,8 @@ Analyse le CV genere par rapport a l'offre normalisee.
 Concentre-toi sur la couverture des mots-cles, les filtres bloquants et la structure.
 Tous les champs textuels generes doivent etre rediges en francais.
 Si certains mots-cles de l'offre sont en anglais, tu peux les conserver tels quels dans les listes de mots-cles.
+Les listes "format_flags", "recommendations" et "blocking_issues" doivent contenir 3 phrases maximum.
+Les phrases doivent etre courtes, concretes et sans repetition.
 Conserve les cles JSON exactement telles que definies ci-dessous.
 La sortie doit respecter exactement ce format JSON :
 {
@@ -100,18 +122,33 @@ La sortie doit respecter exactement ce format JSON :
 }`.trim(),
       input
     });
+
+    return {
+      ...result,
+      ats_review: {
+        ...result.ats_review,
+        format_flags: limitItems(result.ats_review.format_flags, 3),
+        recommendations: limitItems(result.ats_review.recommendations, 3)
+      },
+      decision: {
+        ...result.decision,
+        blocking_issues: limitItems(result.decision.blocking_issues, 3)
+      }
+    };
   }
 
   async runRecruiterAgent(
     input: RecruiterAgentInput
   ): Promise<RecruiterAgentOutput> {
-    return this.openAiJsonService.generateJson<RecruiterAgentOutput>({
+    const result = await this.openAiJsonService.generateJson<RecruiterAgentOutput>({
       model: config.models.recruiter.model,
       reasoningEffort: config.models.recruiter.reasoningEffort,
       instructions: `
 Tu es l'agent d'evaluation Recruteur.
 Analyse le CV genere selon sa lisibilite, sa credibilite, sa coherence et le niveau de preuve.
 Tous les champs textuels generes doivent etre rediges en francais.
+Les listes "strengths", "concerns", "recommendations" et "blocking_issues" doivent contenir 3 phrases maximum.
+Chaque phrase doit etre synthetique, concrete et actionnable.
 Conserve les cles JSON exactement telles que definies ci-dessous.
 La sortie doit respecter exactement ce format JSON :
 {
@@ -136,6 +173,20 @@ La sortie doit respecter exactement ce format JSON :
 }`.trim(),
       input
     });
+
+    return {
+      ...result,
+      recruiter_review: {
+        ...result.recruiter_review,
+        strengths: limitItems(result.recruiter_review.strengths, 3),
+        concerns: limitItems(result.recruiter_review.concerns, 3),
+        recommendations: limitItems(result.recruiter_review.recommendations, 3)
+      },
+      decision: {
+        ...result.decision,
+        blocking_issues: limitItems(result.decision.blocking_issues, 3)
+      }
+    };
   }
 
   buildAddonResult(
@@ -145,22 +196,31 @@ La sortie doit respecter exactement ce format JSON :
     recruiterReview: RecruiterReview,
     accepted: boolean
   ): AddonResult {
-    const strengths = uniqueStrings([
+    const strengths = limitItems(
+      uniqueStrings([
       atsReview.matched_keywords.length > 0
         ? `Bonne couverture des mots-cles : ${atsReview.matched_keywords
             .slice(0, 5)
             .join(", ")}`
         : "",
       ...recruiterReview.strengths
-    ]);
-    const weaknesses = uniqueStrings([
+      ]),
+      3
+    );
+    const weaknesses = limitItems(
+      uniqueStrings([
       ...atsReview.missing_keywords.map((keyword) => `Mot-cle manquant : ${keyword}`),
       ...recruiterReview.concerns
-    ]);
-    const recommendations = uniqueStrings([
+      ]),
+      3
+    );
+    const recommendations = limitItems(
+      uniqueStrings([
       ...atsReview.recommendations,
       ...recruiterReview.recommendations
-    ]);
+      ]),
+      3
+    );
 
     return {
       job_id: jobOffer.job_id,
@@ -181,4 +241,8 @@ La sortie doit respecter exactement ce format JSON :
 
 function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.filter((value) => value.trim().length > 0))];
+}
+
+function limitItems(values: string[], maxItems: number): string[] {
+  return uniqueStrings(values).slice(0, maxItems);
 }

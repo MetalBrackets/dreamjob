@@ -89,7 +89,7 @@ curl -X POST http://localhost:3000/api/workflows/run \
     "jobOfferRaw": {
       "source": "linkedin",
       "source_url": "https://linkedin.com/jobs/view/456",
-      "raw_text": "Product Designer senior. Entreprise : NovaTech. Paris. Hybride. Recherche 5 ans d experience minimum, maitrise de Figma, design systems, collaboration avec les equipes produit et engineering, animation d ateliers, bonne communication avec les parties prenantes. Un profil ayant deja travaille sur un produit SaaS B2B est un plus.",
+      "raw_text": "Product Designer senior. Entreprise : NovaTech. Paris. Hybride. Recherche 5 ans d'experience minimum, maitrise de Figma, design systems, collaboration avec les equipes produit et engineering, animation d'ateliers, bonne communication avec les parties prenantes. Un profil ayant deja travaille sur un produit SaaS B2B est un plus.",
       "raw_fields": {
         "title": "Product Designer senior",
         "company": "NovaTech",
@@ -146,6 +146,7 @@ Output :
 - toujours un objet `AddonResult`
 - `status` vaut `accepted` ou `rejected`
 - le backend retourne aussi le score, les points forts, les points faibles et les recommandations
+- un resultat complet formate est aussi ecrit automatiquement dans `generate_by_ai.json` a la racine de `jibe_poc` lors d'un appel a `POST /api/workflows/run` ou `POST /api/addon/run`
 
 ## Scripts npm
 
@@ -165,3 +166,24 @@ Output :
 
 - Le stockage candidat est volontairement simple pour le POC : JSON local.
 - Le dossier `dist/` contient la version compilee apres `npm run build`.
+
+## Input de test pour s'amuser
+
+```
+curl -X POST http://localhost:3000/api/workflows/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jobOfferRaw": {
+      "source": "linkedin",
+      "source_url": "https://linkedin.com/jobs/view/103",
+      "raw_text": "Detective prive. Entreprise : Aegis Investigation. Paris. Temps plein. Recherche un detective prive rigoureux et discret pour conduire des enquetes civiles et commerciales. Missions : collecte dinformations, filatures, recherches documentaires, redaction de rapports detailles, verification de fraude et collaboration avec les clients dans le respect du cadre legal. Une excellente capacite dobservation, une grande autonomie et une bonne maitrise des outils numeriques sont indispensables. Une experience en securite, investigation ou renseignement est appreciee.",
+      "raw_fields": {
+        "title": "Detective prive",
+        "company": "Aegis Investigation",
+        "location": "Paris",
+        "employment_type": "Temps plein"
+      }
+    },
+    "candidateId": "cand_001"
+  }'
+```
