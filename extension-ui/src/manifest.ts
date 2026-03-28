@@ -12,7 +12,7 @@ const manifest = {
     type: 'module',
   },
   permissions: ['activeTab', 'scripting', 'sidePanel', 'storage', 'tabs'],
-  host_permissions: ['https://www.linkedin.com/*'],
+  host_permissions: ['https://www.linkedin.com/*', 'http://localhost:3000/*'],
   side_panel: {
     default_path: 'sidepanel.html',
   },

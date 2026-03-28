@@ -84,9 +84,49 @@ export async function jobsRoutes(app: FastifyInstance) {
     });
   });
 
+  app.get("/api/jobs/current", async (_request, reply) => {
+    const rawJobs = await readCollection<JobOfferRaw>(JOBS_RAW_PATH);
+    if (rawJobs.length === 0) {
+      return reply.code(404).send({ error: "No captured jobs" });
+    }
+
+    const latest = rawJobs.reduce((a, b) =>
+      new Date(a.capturedAt) > new Date(b.capturedAt) ? a : b
+    );
+
+    const expectedFields = ["title", "company", "location", "employment_type", "salary", "description", "requirements", "posted_date"] as const;
+    const missingFields = expectedFields.filter(
+      (f) => !latest.rawFields[f]
+    );
+
+    return reply.send({
+      source: latest.source,
+      source_url: latest.sourceUrl,
+      captured_at: latest.capturedAt,
+      html_snapshot_ref: latest.htmlSnapshotRef,
+      raw_text: latest.rawText,
+      raw_fields: latest.rawFields,
+      missing_fields: missingFields,
+    });
+  });
+
   app.get("/api/jobs", async (_request, reply) => {
-    const collection = await readCollection<JobPost>(JOBS_PATH);
-    return reply.send(collection);
+    const jobs = await readCollection<JobPost>(JOBS_PATH);
+    const rawJobs = await readCollection<JobOfferRaw>(JOBS_RAW_PATH);
+    const rawById = new Map(rawJobs.map((r) => [r.id, r]));
+
+    const applications = jobs.map((job) => {
+      const raw = rawById.get(job.jobOfferRawId);
+      return {
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        status: "saved" as const,
+        appliedAt: raw?.capturedAt ?? new Date().toISOString(),
+      };
+    });
+
+    return reply.send(applications);
   });
 
   app.get("/api/jobs/:id", {
