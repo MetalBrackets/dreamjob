@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **GET /api/jobs/raw and GET /api/jobs/raw/:id Endpoints**: Added two GET endpoints to src/routes/jobs.ts. GET /api/jobs/raw reads data/jobs-raw.json via readCollection and returns the full array. GET /api/jobs/raw/:id finds a specific raw job offer by id in the collection, returns 200 with the item or 404 with `{"error":"Raw job offer not found"}` if not found. Verified: GET /api/jobs/raw returns empty array when no data, returns populated array after POST, GET /api/jobs/raw/raw_01 returns correct entry, GET /api/jobs/raw/raw_99 returns 404, tsc --noEmit passes.
+
+### 2026-03-28
 - **POST /api/jobs/raw Endpoint**: Created src/routes/jobs.ts as a Fastify plugin implementing POST /api/jobs/raw. Accepts JSON body with source, sourceUrl, rawText (required), and optional rawFields/htmlSnapshotRef. Assigns auto-generated sequential IDs (raw_01, raw_02...), sets capturedAt to current ISO-8601 timestamp, appends to data/jobs-raw.json collection. Auto-triggers normalization via new src/services/normalize.ts which maps raw fields to a JobPost (job_01, job_02...) and appends to data/jobs.json. Returns 201 with both the created JobOfferRaw and normalized JobPost. Returns 400 if required fields are missing. Registered route in src/server.ts. Verified: valid POST returns 201 with correct raw and normalized entries, sequential IDs increment correctly, missing fields return 400, tsc --noEmit passes.
 
 ### 2026-03-28

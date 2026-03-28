@@ -411,7 +411,7 @@
       "3. Define :id param schema (non-empty string)",
       "4. Verify: list returns all raw captures, get by id returns correct one"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Job Posts - Normalized Routes",
