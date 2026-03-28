@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Resume Route Validation Schemas (src/routes/resume.ts)**: Added Fastify request validation schemas to resume routes. Created a TypeBox ReviewBodySchema for PUT /api/resume/extraction/review with section (enum of all valid section names: identity, targetRoles, professionalSummaryMaster, constraints, experiences, education, skills, certifications, languages, projects, references), itemId (optional, minLength 1), and reviewed (boolean, required). Fastify's built-in Ajv schema validation now enforces these constraints, returning 400 Bad Request with descriptive error messages. The PUT route handler no longer needs manual type-checking of section/reviewed since Fastify validates before the handler runs. POST /api/resume/upload already validates multipart format, PDF mimetype, and 10MB file size limit manually (correct for multipart routes). Verified: missing section returns 400, invalid section returns 400, missing reviewed returns 400, valid request returns 200, non-PDF upload returns 400, non-multipart returns 400, tsc --noEmit passes, server starts on port 3000.
+
+### 2026-03-28
 - **Profile Route Validation Schema (src/schemas/profile.ts)**: Added request validation constraints to the PUT /api/profile route's body schema via the IdentitySchema in profile.ts. Added minLength: 1 and maxLength: 200 to identity.name (required, non-empty), maxLength: 300 to identity.headline, minLength: 1 and maxLength: 200 to identity.email (required, non-empty), maxLength: 50 to identity.phone, and maxLength: 200 to identity.location. Fastify's built-in Ajv schema validation now enforces these constraints, returning 400 Bad Request with descriptive error messages for invalid PUT /api/profile requests. Verified: empty name returns 400, name exceeding 200 chars returns 400, missing required fields returns 400, valid request returns 200, tsc --noEmit passes, server starts on port 3000.
 
 ### 2026-03-28

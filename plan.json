@@ -695,7 +695,7 @@
       "2. Add body schema to PUT /api/resume/extraction/review (section required, itemId optional, reviewed required)",
       "3. Verify: invalid resume requests return 400 with descriptive errors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Validation",

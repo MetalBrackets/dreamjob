@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { Type, type Static } from "@sinclair/typebox";
 import { join } from "node:path";
 import { writeFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -9,6 +10,18 @@ import type { ExtractionResult } from "../schemas/extraction-result.js";
 import type { Profile } from "../schemas/profile.js";
 import { runExtractionPipeline } from "../services/extraction-pipeline.js";
 import { computeCompleteness } from "../services/completeness.js";
+
+const allSections = [
+  "identity", "targetRoles", "professionalSummaryMaster", "constraints",
+  "experiences", "education", "skills", "certifications", "languages", "projects", "references",
+] as const;
+
+const ReviewBodySchema = Type.Object({
+  section: Type.Union(allSections.map((s) => Type.Literal(s))),
+  itemId: Type.Optional(Type.String({ minLength: 1 })),
+  reviewed: Type.Boolean(),
+});
+type ReviewBody = Static<typeof ReviewBodySchema>;
 
 export async function resumeRoutes(app: FastifyInstance) {
   app.get("/api/resume/completeness", async (_request, reply) => {
@@ -63,25 +76,20 @@ export async function resumeRoutes(app: FastifyInstance) {
     return reply.code(200).send(profile);
   });
 
-  app.put("/api/resume/extraction/review", async (request, reply) => {
+  app.put<{ Body: ReviewBody }>("/api/resume/extraction/review", {
+    schema: {
+      body: ReviewBodySchema,
+    },
+  }, async (request, reply) => {
     const extraction = await readJSON<ExtractionResult>(EXTRACTION_PATH);
     if (!extraction) {
       return reply.code(404).send({ error: "No extraction exists" });
     }
 
-    const body = request.body as { section?: string; itemId?: string; reviewed?: boolean };
-    const { section, itemId, reviewed } = body;
-
-    if (!section || typeof reviewed !== "boolean") {
-      return reply.code(400).send({ error: "section (string) and reviewed (boolean) are required" });
-    }
+    const { section, itemId, reviewed } = request.body;
 
     const scalarSections = ["identity", "targetRoles", "professionalSummaryMaster", "constraints"];
     const arraySections = ["experiences", "education", "skills", "certifications", "languages", "projects", "references"];
-
-    if (!scalarSections.includes(section) && !arraySections.includes(section)) {
-      return reply.code(400).send({ error: `Unknown section: ${section}` });
-    }
 
     if (!extraction.reviewStatus) {
       extraction.reviewStatus = {};
