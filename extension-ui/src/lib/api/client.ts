@@ -1,6 +1,6 @@
 import { appConfig } from '../config'
-import { mockApplications, mockCapturedJob, mockInterviewPrep, mockProfile } from '../../shared/mock-data'
-import type { ApplicationItem, CapturedJobOffer, InterviewPrepPack, MasterProfile } from '../../shared/types'
+import { mockApplications, mockCapturedJob, mockInterviewPrep, mockResumeMaster } from '../../shared/mock-data'
+import type { ApplicationItem, CapturedJobOffer, InterviewPrepPack, ResumeMaster } from '../../shared/types'
 
 const getJson = async <T>(path: string): Promise<T> => {
   const response = await fetch(`${appConfig.apiBaseUrl}${path}`, {
@@ -15,9 +15,9 @@ const getJson = async <T>(path: string): Promise<T> => {
 }
 
 export const apiClient = {
-  async getProfile(): Promise<MasterProfile> {
-    if (appConfig.useMockData) return mockProfile
-    return getJson<MasterProfile>('/profile')
+  async getResumeMaster(): Promise<ResumeMaster> {
+    if (appConfig.useMockData) return mockResumeMaster
+    return getJson<ResumeMaster>('/profile')
   },
 
   async getCapturedJob(): Promise<CapturedJobOffer> {

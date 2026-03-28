@@ -2,20 +2,120 @@ import type {
   ApplicationItem,
   CapturedJobOffer,
   InterviewPrepPack,
-  MasterProfile,
+  ResumeMaster,
 } from './types'
 
-export const mockProfile: MasterProfile = {
+export const mockResumeMaster: ResumeMaster = {
   fullName: 'Camille Martin',
-  headline: 'Frontend Engineer focused on product UX and extension tooling',
-  summary:
-    'Product-minded frontend engineer with experience shipping internal platforms, browser-based workflows, and high-velocity prototypes.',
+  title: 'Product-focused frontend engineer',
   location: 'Nantes, France',
-  topSkills: ['React', 'TypeScript', 'Browser Extensions', 'Design Systems', 'Product Thinking'],
-  coreWins: [
-    'Built workflow tools used daily by recruiting and sales teams.',
-    'Cut application review time by turning manual flows into guided interfaces.',
-    'Delivered polished demos under hackathon constraints.',
+  summary:
+    'Product-minded builder with experience designing user-facing tools, structuring messy information, and shipping fast under delivery constraints.',
+  profiles: [
+    { id: 'profile-1', label: 'Email', value: 'camille.martin@example.com' },
+    { id: 'profile-2', label: 'Phone', value: '+33 6 12 34 56 78' },
+    { id: 'profile-3', label: 'LinkedIn', value: 'https://www.linkedin.com/in/camillemartin' },
+  ],
+  experience: [
+    {
+      id: 'exp-1',
+      role: 'Frontend Engineer',
+      company: 'Shift Labs',
+      location: 'Nantes, France',
+      startDate: '2023-02',
+      endDate: '',
+      current: true,
+      description: 'Built internal tools and prototypes for recruiting and operations teams.',
+      highlights: [
+        'Created browser-based workflows that reduced repetitive manual work.',
+        'Worked with design and product stakeholders to deliver trust-focused interfaces.',
+      ],
+    },
+  ],
+  education: [
+    {
+      id: 'edu-1',
+      institution: 'Université de Nantes',
+      degree: 'Master',
+      fieldOfStudy: 'Human-Computer Interaction',
+      startDate: '2019-09',
+      endDate: '2021-06',
+      description: 'Focused on interface design, usability testing, and digital product methods.',
+    },
+  ],
+  projects: [
+    {
+      id: 'proj-1',
+      name: 'DreamJob prototype',
+      role: 'Frontend lead',
+      startDate: '2026-03',
+      endDate: '',
+      current: true,
+      description: 'Hackathon prototype for building a source-of-truth resume and job application workflow.',
+      highlights: ['Structured the sidepanel UX and reusable section system.'],
+      link: '',
+    },
+  ],
+  skills: [
+    { id: 'skill-1', name: 'React', level: 'Advanced', details: 'Production UI and state management' },
+    { id: 'skill-2', name: 'TypeScript', level: 'Advanced', details: 'Typed frontend architecture' },
+    { id: 'skill-3', name: 'UX design', level: 'Strong', details: 'Flows, wireframes, and product thinking' },
+  ],
+  languages: [
+    { id: 'lang-1', name: 'French', proficiency: 'Native', certification: '' },
+    { id: 'lang-2', name: 'English', proficiency: 'Professional working proficiency', certification: 'TOEIC 930' },
+  ],
+  interests: ['Digital products', 'Career tools', 'Accessibility', 'Visual storytelling'],
+  awards: [
+    {
+      id: 'award-1',
+      title: 'Hackathon finalist',
+      issuer: 'Nantes Product Sprint',
+      date: '2025-11',
+      description: 'Recognized for a workflow automation concept.',
+    },
+  ],
+  certifications: [
+    {
+      id: 'cert-1',
+      name: 'Google UX Design Certificate',
+      issuer: 'Google',
+      date: '2022-05',
+      expiresAt: '',
+      credentialId: '',
+    },
+  ],
+  publications: [
+    {
+      id: 'pub-1',
+      title: 'Designing Trust In AI-assisted Workflows',
+      publisher: 'Local Product Meetup',
+      date: '2024-10',
+      link: '',
+      description: 'Short talk and written summary on trustworthy product patterns.',
+    },
+  ],
+  volunteering: [
+    {
+      id: 'vol-1',
+      organization: 'Code Club Nantes',
+      role: 'Mentor',
+      startDate: '2022-09',
+      endDate: '',
+      current: true,
+      description: 'Mentored students on web basics and project presentation.',
+    },
+  ],
+  references: [
+    {
+      id: 'ref-1',
+      name: 'Elise Bernard',
+      relationship: 'Former manager',
+      company: 'Shift Labs',
+      email: 'elise.bernard@example.com',
+      phone: '',
+      notes: 'Can speak about product delivery and collaboration.',
+    },
   ],
 }
 

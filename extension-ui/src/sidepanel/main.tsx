@@ -1,12 +1,49 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { HashRouter, NavLink, Route, Routes } from 'react-router-dom'
-import { Briefcase, FileText, LayoutDashboard, Sparkles } from 'lucide-react'
+import {
+  Briefcase,
+  FileText,
+  LayoutDashboard,
+  Plus,
+  Sparkles,
+  Trash2,
+  Upload,
+} from 'lucide-react'
 import { apiClient } from '../lib/api/client'
 import { chromeStorage } from '../lib/chrome/storage'
+import { I18nProvider, useI18n } from '../i18n/I18nProvider'
 import '../shared/styles/global.css'
 import '../shared/styles/sidepanel.css'
-import type { ApplicationItem } from '../shared/types'
+import type {
+  ApplicationItem,
+  ResumeAwardItem,
+  ResumeCertificationItem,
+  ResumeEducationItem,
+  ResumeExperienceItem,
+  ResumeLanguageItem,
+  ResumeMaster,
+  ResumeProfileLink,
+  ResumeProjectItem,
+  ResumePublicationItem,
+  ResumeReferenceItem,
+  ResumeSkillItem,
+  ResumeSourceDocument,
+  ResumeVolunteeringItem,
+} from '../shared/types'
+
+type ResumeCollectionKey =
+  | 'profiles'
+  | 'experience'
+  | 'education'
+  | 'projects'
+  | 'skills'
+  | 'languages'
+  | 'awards'
+  | 'certifications'
+  | 'publications'
+  | 'volunteering'
+  | 'references'
 
 function useAsyncValue<T>(loader: () => Promise<T>) {
   const [data, setData] = React.useState<T | null>(null)
@@ -34,36 +71,84 @@ function useAsyncValue<T>(loader: () => Promise<T>) {
   return data
 }
 
+function createId(prefix: string) {
+  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function formatFileSize(size: number) {
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function getResumeCompletion(resumeMaster: ResumeMaster) {
+  const checks = [
+    resumeMaster.fullName.trim().length > 0,
+    resumeMaster.summary.trim().length > 0,
+    resumeMaster.profiles.some((item) => item.value.trim().length > 0),
+    resumeMaster.experience.length > 0,
+    resumeMaster.education.length > 0,
+    resumeMaster.skills.length > 0,
+    resumeMaster.languages.length > 0,
+    Boolean(resumeMaster.sourceDocument),
+  ]
+
+  const completed = checks.filter(Boolean).length
+  return Math.round((completed / checks.length) * 100)
+}
+
 function Shell({ children }: { children: React.ReactNode }) {
+  const { locale, setLocale, t } = useI18n()
+
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
         <div>
           <div className="brand-mark">DJ</div>
           <div className="brand-copy">
-            <strong>DreamJob</strong>
-            <span>Hackathon demo UI</span>
+            <strong>{t.shell.appName}</strong>
+            <span>{t.shell.appTagline}</span>
           </div>
         </div>
 
         <nav className="nav-list">
           <NavLink to="/" end className="nav-link">
             <FileText size={16} />
-            Master Resume
+            {t.nav.masterResume}
           </NavLink>
           <NavLink to="/offer" className="nav-link">
             <Briefcase size={16} />
-            Selected Offer
+            {t.nav.selectedOffer}
           </NavLink>
           <NavLink to="/dashboard" className="nav-link">
             <LayoutDashboard size={16} />
-            Dashboard
+            {t.nav.dashboard}
           </NavLink>
           <NavLink to="/interview" className="nav-link">
             <Sparkles size={16} />
-            Interview Prep
+            {t.nav.interviewPrep}
           </NavLink>
         </nav>
+
+        <div className="locale-switcher">
+          <span>{t.common.localeLabel}</span>
+          <div className="locale-actions">
+            <button
+              type="button"
+              className={`locale-button${locale === 'fr' ? ' active' : ''}`}
+              onClick={() => setLocale('fr')}
+            >
+              {t.common.french}
+            </button>
+            <button
+              type="button"
+              className={`locale-button${locale === 'en' ? ' active' : ''}`}
+              onClick={() => setLocale('en')}
+            >
+              {t.common.english}
+            </button>
+          </div>
+        </div>
       </aside>
 
       <main className="app-main">{children}</main>
@@ -71,74 +156,1465 @@ function Shell({ children }: { children: React.ReactNode }) {
   )
 }
 
-function MasterResumePage() {
-  const profile = useAsyncValue(() => apiClient.getProfile())
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  type?: string
+}) {
+  return (
+    <label className="field">
+      <span>{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+      />
+    </label>
+  )
+}
 
-  if (!profile) return <div className="panel">Loading profile...</div>
+function TextAreaField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 4,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  rows?: number
+}) {
+  return (
+    <label className="field">
+      <span>{label}</span>
+      <textarea
+        rows={rows}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+      />
+    </label>
+  )
+}
+
+function SectionHeader({
+  title,
+  description,
+  action,
+}: {
+  title: string
+  description: string
+  action?: React.ReactNode
+}) {
+  return (
+    <div className="section-header">
+      <div>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      {action}
+    </div>
+  )
+}
+
+function ItemCard({
+  title,
+  subtitle,
+  removeLabel,
+  onRemove,
+  children,
+}: {
+  title: string
+  subtitle?: string
+  removeLabel: string
+  onRemove: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <article className="item-card">
+      <div className="item-card-head">
+        <div>
+          <h3>{title}</h3>
+          {subtitle ? <p>{subtitle}</p> : null}
+        </div>
+        <button type="button" className="icon-button" onClick={onRemove} aria-label={`${removeLabel} ${title}`}>
+          <Trash2 size={16} />
+        </button>
+      </div>
+      {children}
+    </article>
+  )
+}
+
+function ListEditor({
+  label,
+  items,
+  onChange,
+  addLabel,
+  placeholder,
+  emptyLabel,
+  removeLabel,
+}: {
+  label: string
+  items: string[]
+  onChange: (items: string[]) => void
+  addLabel: string
+  placeholder: string
+  emptyLabel: string
+  removeLabel: string
+}) {
+  const updateItem = (index: number, value: string) => {
+    onChange(items.map((item, itemIndex) => (itemIndex === index ? value : item)))
+  }
+
+  const removeItem = (index: number) => {
+    onChange(items.filter((_, itemIndex) => itemIndex !== index))
+  }
+
+  return (
+    <div className="list-editor">
+      <div className="list-editor-head">
+        <strong>{label}</strong>
+        <button type="button" className="secondary-button inline-button" onClick={() => onChange([...items, ''])}>
+          <Plus size={14} />
+          {addLabel}
+        </button>
+      </div>
+
+      <div className="stack-sm">
+        {items.length === 0 ? <p className="muted-text">{emptyLabel}</p> : null}
+        {items.map((item, index) => (
+          <div key={`${label}-${index}`} className="inline-input-row">
+            <input
+              value={item}
+              onChange={(event) => updateItem(index, event.target.value)}
+              placeholder={placeholder}
+            />
+            <button type="button" className="icon-button" onClick={() => removeItem(index)} aria-label={`${removeLabel} ${label}`}>
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MasterResumePage() {
+  const { t } = useI18n()
+  const [resumeMaster, setResumeMaster] = React.useState<ResumeMaster | null>(null)
+  const [saveState, setSaveState] = React.useState<'idle' | 'saving' | 'saved'>('idle')
+
+  React.useEffect(() => {
+    chromeStorage.getResumeMaster().then(setResumeMaster)
+  }, [])
+
+  React.useEffect(() => {
+    if (!resumeMaster) return
+
+    setSaveState('saving')
+    const timeoutId = window.setTimeout(() => {
+      chromeStorage.saveResumeMaster(resumeMaster).then(() => {
+        setSaveState('saved')
+      })
+    }, 300)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [resumeMaster])
+
+  const updateResumeMaster = <K extends keyof ResumeMaster>(key: K, value: ResumeMaster[K]) => {
+    setResumeMaster((current) => (current ? { ...current, [key]: value } : current))
+  }
+
+  const updateCollectionItem = <T extends { id: string }>(
+    key: ResumeCollectionKey,
+    id: string,
+    updater: (item: T) => T,
+  ) => {
+    setResumeMaster((current) => {
+      if (!current) return current
+
+      const collection = current[key] as unknown as T[]
+      return {
+        ...current,
+        [key]: collection.map((item) => (item.id === id ? updater(item) : item)),
+      }
+    })
+  }
+
+  const addCollectionItem = <T extends { id: string }>(key: ResumeCollectionKey, item: T) => {
+    setResumeMaster((current) => {
+      if (!current) return current
+
+      const collection = current[key] as unknown as T[]
+      return {
+        ...current,
+        [key]: [...collection, item],
+      }
+    })
+  }
+
+  const removeCollectionItem = (key: ResumeCollectionKey, id: string) => {
+    setResumeMaster((current) => {
+      if (!current) return current
+
+      const collection = current[key] as { id: string }[]
+      return {
+        ...current,
+        [key]: collection.filter((item) => item.id !== id),
+      }
+    })
+  }
+
+  const handleSourceDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const sourceDocument: ResumeSourceDocument = {
+        id: createId('file'),
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+        dataUrl: typeof reader.result === 'string' ? reader.result : '',
+      }
+
+      updateResumeMaster('sourceDocument', sourceDocument)
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
+  }
+
+  if (!resumeMaster) return <div className="panel">{t.resumeMaster.loading}</div>
+
+  const completion = getResumeCompletion(resumeMaster)
+  const r = t.resumeMaster
 
   return (
     <div className="page-stack">
       <section className="hero-card">
-        <span className="eyebrow">Master profile</span>
-        <h1>{profile.fullName}</h1>
-        <p>{profile.headline}</p>
+        <div className="hero-head">
+          <div>
+            <span className="eyebrow">{r.eyebrow}</span>
+            <h1>{resumeMaster.fullName || r.untitledProfile}</h1>
+            <p>{resumeMaster.title || r.heroFallback}</p>
+          </div>
+          <div className="hero-meta">
+            <strong>{`${completion}% ${r.completionSuffix}`}</strong>
+            <span>{saveState === 'saving' ? r.saving : r.saved}</span>
+          </div>
+        </div>
+        <div className="progress-track">
+          <div className="progress-fill" style={{ width: `${completion}%` }} />
+        </div>
       </section>
 
       <section className="panel">
-        <h2>Summary</h2>
-        <p>{profile.summary}</p>
+        <SectionHeader
+          title={r.sourceFile.title}
+          description={r.sourceFile.description}
+          action={
+            <label className="secondary-button inline-button upload-button">
+              <Upload size={14} />
+              {r.sourceFile.upload}
+              <input type="file" onChange={handleSourceDocumentUpload} />
+            </label>
+          }
+        />
+
+        {resumeMaster.sourceDocument ? (
+          <div className="document-card">
+            <div>
+              <strong>{resumeMaster.sourceDocument.name}</strong>
+              <p>{`${resumeMaster.sourceDocument.type} • ${formatFileSize(resumeMaster.sourceDocument.size)}`}</p>
+            </div>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => updateResumeMaster('sourceDocument', undefined)}
+              aria-label={r.sourceFile.remove}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ) : (
+          <p className="muted-text">{r.sourceFile.empty}</p>
+        )}
+      </section>
+
+      <section className="panel">
+        <SectionHeader title={r.summary.title} description={r.summary.description} />
+        <div className="grid two-col">
+          <Field
+            label={r.summary.fullName}
+            value={resumeMaster.fullName}
+            onChange={(value) => updateResumeMaster('fullName', value)}
+            placeholder={r.summary.fullNamePlaceholder}
+          />
+          <Field
+            label={r.summary.profileTitle}
+            value={resumeMaster.title}
+            onChange={(value) => updateResumeMaster('title', value)}
+            placeholder={r.summary.profileTitlePlaceholder}
+          />
+        </div>
+        <div className="grid one-col">
+          <Field
+            label={r.summary.location}
+            value={resumeMaster.location}
+            onChange={(value) => updateResumeMaster('location', value)}
+            placeholder={r.summary.locationPlaceholder}
+          />
+          <TextAreaField
+            label={r.summary.professionalSummary}
+            value={resumeMaster.summary}
+            onChange={(value) => updateResumeMaster('summary', value)}
+            placeholder={r.summary.professionalSummaryPlaceholder}
+            rows={5}
+          />
+        </div>
+      </section>
+
+      <section className="panel">
+        <SectionHeader
+          title={r.profiles.title}
+          description={r.profiles.description}
+          action={
+            <button
+              type="button"
+              className="secondary-button inline-button"
+              onClick={() =>
+                addCollectionItem<ResumeProfileLink>('profiles', {
+                  id: createId('profile'),
+                  label: '',
+                  value: '',
+                })
+              }
+            >
+              <Plus size={14} />
+              {r.profiles.add}
+            </button>
+          }
+        />
+        <div className="stack-md">
+          {resumeMaster.profiles.map((profile) => (
+            <ItemCard
+              key={profile.id}
+              title={profile.label || r.profiles.newItem}
+              subtitle={profile.value || r.profiles.itemSubtitle}
+              removeLabel={r.remove}
+              onRemove={() => removeCollectionItem('profiles', profile.id)}
+            >
+              <div className="grid two-col">
+                <Field
+                  label={r.profiles.label}
+                  value={profile.label}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeProfileLink>('profiles', profile.id, (item) => ({
+                      ...item,
+                      label: value,
+                    }))
+                  }
+                  placeholder={r.profiles.labelPlaceholder}
+                />
+                <Field
+                  label={r.profiles.value}
+                  value={profile.value}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeProfileLink>('profiles', profile.id, (item) => ({
+                      ...item,
+                      value,
+                    }))
+                  }
+                  placeholder={r.profiles.valuePlaceholder}
+                />
+              </div>
+            </ItemCard>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <SectionHeader
+          title={r.experience.title}
+          description={r.experience.description}
+          action={
+            <button
+              type="button"
+              className="secondary-button inline-button"
+              onClick={() =>
+                addCollectionItem<ResumeExperienceItem>('experience', {
+                  id: createId('experience'),
+                  role: '',
+                  company: '',
+                  location: '',
+                  startDate: '',
+                  endDate: '',
+                  current: false,
+                  description: '',
+                  highlights: [],
+                })
+              }
+            >
+              <Plus size={14} />
+              {r.experience.add}
+            </button>
+          }
+        />
+        <div className="stack-md">
+          {resumeMaster.experience.map((experience) => (
+            <ItemCard
+              key={experience.id}
+              title={experience.role || r.experience.newItem}
+              subtitle={experience.company || r.experience.itemSubtitle}
+              removeLabel={r.remove}
+              onRemove={() => removeCollectionItem('experience', experience.id)}
+            >
+              <div className="grid two-col">
+                <Field
+                  label={r.experience.role}
+                  value={experience.role}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
+                      ...item,
+                      role: value,
+                    }))
+                  }
+                  placeholder={r.experience.rolePlaceholder}
+                />
+                <Field
+                  label={r.experience.company}
+                  value={experience.company}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
+                      ...item,
+                      company: value,
+                    }))
+                  }
+                  placeholder={r.experience.companyPlaceholder}
+                />
+                <Field
+                  label={r.experience.location}
+                  value={experience.location}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
+                      ...item,
+                      location: value,
+                    }))
+                  }
+                  placeholder={r.experience.locationPlaceholder}
+                />
+                <label className="checkbox-field">
+                  <input
+                    type="checkbox"
+                    checked={experience.current}
+                    onChange={(event) =>
+                      updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
+                        ...item,
+                        current: event.target.checked,
+                        endDate: event.target.checked ? '' : item.endDate,
+                      }))
+                    }
+                  />
+                  <span>{r.experience.current}</span>
+                </label>
+                <Field
+                  label={r.experience.startDate}
+                  type="month"
+                  value={experience.startDate}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
+                      ...item,
+                      startDate: value,
+                    }))
+                  }
+                />
+                <Field
+                  label={r.experience.endDate}
+                  type="month"
+                  value={experience.endDate}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
+                      ...item,
+                      endDate: value,
+                    }))
+                  }
+                />
+              </div>
+              <TextAreaField
+                label={r.experience.descriptionLabel}
+                value={experience.description}
+                onChange={(value) =>
+                  updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
+                    ...item,
+                    description: value,
+                  }))
+                }
+                placeholder={r.experience.descriptionPlaceholder}
+              />
+              <ListEditor
+                label={r.experience.highlights}
+                items={experience.highlights}
+                onChange={(items) =>
+                  updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
+                    ...item,
+                    highlights: items,
+                  }))
+                }
+                addLabel={r.experience.addHighlight}
+                placeholder={r.experience.highlightPlaceholder}
+                emptyLabel={r.noItems}
+                removeLabel={r.remove}
+              />
+            </ItemCard>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <SectionHeader
+          title={r.education.title}
+          description={r.education.description}
+          action={
+            <button
+              type="button"
+              className="secondary-button inline-button"
+              onClick={() =>
+                addCollectionItem<ResumeEducationItem>('education', {
+                  id: createId('education'),
+                  institution: '',
+                  degree: '',
+                  fieldOfStudy: '',
+                  startDate: '',
+                  endDate: '',
+                  description: '',
+                })
+              }
+            >
+              <Plus size={14} />
+              {r.education.add}
+            </button>
+          }
+        />
+        <div className="stack-md">
+          {resumeMaster.education.map((education) => (
+            <ItemCard
+              key={education.id}
+              title={education.institution || r.education.newItem}
+              subtitle={education.degree || r.education.itemSubtitle}
+              removeLabel={r.remove}
+              onRemove={() => removeCollectionItem('education', education.id)}
+            >
+              <div className="grid two-col">
+                <Field
+                  label={r.education.institution}
+                  value={education.institution}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
+                      ...item,
+                      institution: value,
+                    }))
+                  }
+                  placeholder={r.education.institutionPlaceholder}
+                />
+                <Field
+                  label={r.education.degree}
+                  value={education.degree}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
+                      ...item,
+                      degree: value,
+                    }))
+                  }
+                  placeholder={r.education.degreePlaceholder}
+                />
+                <Field
+                  label={r.education.fieldOfStudy}
+                  value={education.fieldOfStudy}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
+                      ...item,
+                      fieldOfStudy: value,
+                    }))
+                  }
+                  placeholder={r.education.fieldOfStudyPlaceholder}
+                />
+                <Field
+                  label={r.education.startDate}
+                  type="month"
+                  value={education.startDate}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
+                      ...item,
+                      startDate: value,
+                    }))
+                  }
+                />
+                <Field
+                  label={r.education.endDate}
+                  type="month"
+                  value={education.endDate}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
+                      ...item,
+                      endDate: value,
+                    }))
+                  }
+                />
+              </div>
+              <TextAreaField
+                label={r.education.descriptionLabel}
+                value={education.description}
+                onChange={(value) =>
+                  updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
+                    ...item,
+                    description: value,
+                  }))
+                }
+                placeholder={r.education.descriptionPlaceholder}
+              />
+            </ItemCard>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <SectionHeader
+          title={r.projects.title}
+          description={r.projects.description}
+          action={
+            <button
+              type="button"
+              className="secondary-button inline-button"
+              onClick={() =>
+                addCollectionItem<ResumeProjectItem>('projects', {
+                  id: createId('project'),
+                  name: '',
+                  role: '',
+                  startDate: '',
+                  endDate: '',
+                  current: false,
+                  description: '',
+                  highlights: [],
+                  link: '',
+                })
+              }
+            >
+              <Plus size={14} />
+              {r.projects.add}
+            </button>
+          }
+        />
+        <div className="stack-md">
+          {resumeMaster.projects.map((project) => (
+            <ItemCard
+              key={project.id}
+              title={project.name || r.projects.newItem}
+              subtitle={project.role || r.projects.itemSubtitle}
+              removeLabel={r.remove}
+              onRemove={() => removeCollectionItem('projects', project.id)}
+            >
+              <div className="grid two-col">
+                <Field
+                  label={r.projects.name}
+                  value={project.name}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
+                      ...item,
+                      name: value,
+                    }))
+                  }
+                  placeholder={r.projects.namePlaceholder}
+                />
+                <Field
+                  label={r.projects.role}
+                  value={project.role}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
+                      ...item,
+                      role: value,
+                    }))
+                  }
+                  placeholder={r.projects.rolePlaceholder}
+                />
+                <Field
+                  label={r.projects.startDate}
+                  type="month"
+                  value={project.startDate}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
+                      ...item,
+                      startDate: value,
+                    }))
+                  }
+                />
+                <Field
+                  label={r.projects.endDate}
+                  type="month"
+                  value={project.endDate}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
+                      ...item,
+                      endDate: value,
+                    }))
+                  }
+                />
+                <Field
+                  label={r.projects.link}
+                  value={project.link}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
+                      ...item,
+                      link: value,
+                    }))
+                  }
+                  placeholder={r.projects.linkPlaceholder}
+                />
+                <label className="checkbox-field">
+                  <input
+                    type="checkbox"
+                    checked={project.current}
+                    onChange={(event) =>
+                      updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
+                        ...item,
+                        current: event.target.checked,
+                        endDate: event.target.checked ? '' : item.endDate,
+                      }))
+                    }
+                  />
+                  <span>{r.projects.current}</span>
+                </label>
+              </div>
+              <TextAreaField
+                label={r.projects.descriptionLabel}
+                value={project.description}
+                onChange={(value) =>
+                  updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
+                    ...item,
+                    description: value,
+                  }))
+                }
+                placeholder={r.projects.descriptionPlaceholder}
+              />
+              <ListEditor
+                label={r.projects.highlights}
+                items={project.highlights}
+                onChange={(items) =>
+                  updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
+                    ...item,
+                    highlights: items,
+                  }))
+                }
+                addLabel={r.projects.addHighlight}
+                placeholder={r.projects.highlightPlaceholder}
+                emptyLabel={r.noItems}
+                removeLabel={r.remove}
+              />
+            </ItemCard>
+          ))}
+        </div>
       </section>
 
       <section className="grid two-col">
         <article className="panel">
-          <h2>Top skills</h2>
-          <div className="tag-list">
-            {profile.topSkills.map((skill) => (
-              <span key={skill} className="tag">
-                {skill}
-              </span>
+          <SectionHeader
+            title={r.skills.title}
+            description={r.skills.description}
+            action={
+              <button
+                type="button"
+                className="secondary-button inline-button"
+                onClick={() =>
+                  addCollectionItem<ResumeSkillItem>('skills', {
+                    id: createId('skill'),
+                    name: '',
+                    level: '',
+                    details: '',
+                  })
+                }
+              >
+                <Plus size={14} />
+                {r.skills.add}
+              </button>
+            }
+          />
+          <div className="stack-md">
+            {resumeMaster.skills.map((skill) => (
+              <ItemCard
+                key={skill.id}
+                title={skill.name || r.skills.newItem}
+                subtitle={skill.level || r.skills.itemSubtitle}
+                removeLabel={r.remove}
+                onRemove={() => removeCollectionItem('skills', skill.id)}
+              >
+                <div className="grid one-col">
+                  <Field
+                    label={r.skills.name}
+                    value={skill.name}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeSkillItem>('skills', skill.id, (item) => ({
+                        ...item,
+                        name: value,
+                      }))
+                    }
+                    placeholder={r.skills.namePlaceholder}
+                  />
+                  <Field
+                    label={r.skills.level}
+                    value={skill.level}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeSkillItem>('skills', skill.id, (item) => ({
+                        ...item,
+                        level: value,
+                      }))
+                    }
+                    placeholder={r.skills.levelPlaceholder}
+                  />
+                  <TextAreaField
+                    label={r.skills.details}
+                    value={skill.details}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeSkillItem>('skills', skill.id, (item) => ({
+                        ...item,
+                        details: value,
+                      }))
+                    }
+                    placeholder={r.skills.detailsPlaceholder}
+                    rows={3}
+                  />
+                </div>
+              </ItemCard>
             ))}
           </div>
         </article>
 
         <article className="panel">
-          <h2>Core wins</h2>
-          <ul className="simple-list">
-            {profile.coreWins.map((win) => (
-              <li key={win}>{win}</li>
+          <SectionHeader
+            title={r.languages.title}
+            description={r.languages.description}
+            action={
+              <button
+                type="button"
+                className="secondary-button inline-button"
+                onClick={() =>
+                  addCollectionItem<ResumeLanguageItem>('languages', {
+                    id: createId('language'),
+                    name: '',
+                    proficiency: '',
+                    certification: '',
+                  })
+                }
+              >
+                <Plus size={14} />
+                {r.languages.add}
+              </button>
+            }
+          />
+          <div className="stack-md">
+            {resumeMaster.languages.map((language) => (
+              <ItemCard
+                key={language.id}
+                title={language.name || r.languages.newItem}
+                subtitle={language.proficiency || r.languages.itemSubtitle}
+                removeLabel={r.remove}
+                onRemove={() => removeCollectionItem('languages', language.id)}
+              >
+                <div className="grid one-col">
+                  <Field
+                    label={r.languages.name}
+                    value={language.name}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeLanguageItem>('languages', language.id, (item) => ({
+                        ...item,
+                        name: value,
+                      }))
+                    }
+                    placeholder={r.languages.namePlaceholder}
+                  />
+                  <Field
+                    label={r.languages.proficiency}
+                    value={language.proficiency}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeLanguageItem>('languages', language.id, (item) => ({
+                        ...item,
+                        proficiency: value,
+                      }))
+                    }
+                    placeholder={r.languages.proficiencyPlaceholder}
+                  />
+                  <Field
+                    label={r.languages.certification}
+                    value={language.certification}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeLanguageItem>('languages', language.id, (item) => ({
+                        ...item,
+                        certification: value,
+                      }))
+                    }
+                    placeholder={r.languages.certificationPlaceholder}
+                  />
+                </div>
+              </ItemCard>
             ))}
-          </ul>
+          </div>
         </article>
+      </section>
+
+      <section className="panel">
+        <SectionHeader title={r.interests.title} description={r.interests.description} />
+        <ListEditor
+          label={r.interests.title}
+          items={resumeMaster.interests}
+          onChange={(items) => updateResumeMaster('interests', items)}
+          addLabel={r.interests.add}
+          placeholder={r.interests.placeholder}
+          emptyLabel={r.noItems}
+          removeLabel={r.remove}
+        />
+      </section>
+
+      <section className="grid two-col">
+        <article className="panel">
+          <SectionHeader
+            title={r.awards.title}
+            description={r.awards.description}
+            action={
+              <button
+                type="button"
+                className="secondary-button inline-button"
+                onClick={() =>
+                  addCollectionItem<ResumeAwardItem>('awards', {
+                    id: createId('award'),
+                    title: '',
+                    issuer: '',
+                    date: '',
+                    description: '',
+                  })
+                }
+              >
+                <Plus size={14} />
+                {r.awards.add}
+              </button>
+            }
+          />
+          <div className="stack-md">
+            {resumeMaster.awards.map((award) => (
+              <ItemCard
+                key={award.id}
+                title={award.title || r.awards.newItem}
+                subtitle={award.issuer || r.awards.itemSubtitle}
+                removeLabel={r.remove}
+                onRemove={() => removeCollectionItem('awards', award.id)}
+              >
+                <div className="grid one-col">
+                  <Field
+                    label={r.awards.titleLabel}
+                    value={award.title}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeAwardItem>('awards', award.id, (item) => ({
+                        ...item,
+                        title: value,
+                      }))
+                    }
+                    placeholder={r.awards.titlePlaceholder}
+                  />
+                  <Field
+                    label={r.awards.issuer}
+                    value={award.issuer}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeAwardItem>('awards', award.id, (item) => ({
+                        ...item,
+                        issuer: value,
+                      }))
+                    }
+                    placeholder={r.awards.issuerPlaceholder}
+                  />
+                  <Field
+                    label={r.awards.date}
+                    type="month"
+                    value={award.date}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeAwardItem>('awards', award.id, (item) => ({
+                        ...item,
+                        date: value,
+                      }))
+                    }
+                  />
+                  <TextAreaField
+                    label={r.awards.descriptionLabel}
+                    value={award.description}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeAwardItem>('awards', award.id, (item) => ({
+                        ...item,
+                        description: value,
+                      }))
+                    }
+                    placeholder={r.awards.descriptionPlaceholder}
+                    rows={3}
+                  />
+                </div>
+              </ItemCard>
+            ))}
+          </div>
+        </article>
+
+        <article className="panel">
+          <SectionHeader
+            title={r.certifications.title}
+            description={r.certifications.description}
+            action={
+              <button
+                type="button"
+                className="secondary-button inline-button"
+                onClick={() =>
+                  addCollectionItem<ResumeCertificationItem>('certifications', {
+                    id: createId('certification'),
+                    name: '',
+                    issuer: '',
+                    date: '',
+                    expiresAt: '',
+                    credentialId: '',
+                  })
+                }
+              >
+                <Plus size={14} />
+                {r.certifications.add}
+              </button>
+            }
+          />
+          <div className="stack-md">
+            {resumeMaster.certifications.map((certification) => (
+              <ItemCard
+                key={certification.id}
+                title={certification.name || r.certifications.newItem}
+                subtitle={certification.issuer || r.certifications.itemSubtitle}
+                removeLabel={r.remove}
+                onRemove={() => removeCollectionItem('certifications', certification.id)}
+              >
+                <div className="grid one-col">
+                  <Field
+                    label={r.certifications.name}
+                    value={certification.name}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeCertificationItem>('certifications', certification.id, (item) => ({
+                        ...item,
+                        name: value,
+                      }))
+                    }
+                    placeholder={r.certifications.namePlaceholder}
+                  />
+                  <Field
+                    label={r.certifications.issuer}
+                    value={certification.issuer}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeCertificationItem>('certifications', certification.id, (item) => ({
+                        ...item,
+                        issuer: value,
+                      }))
+                    }
+                    placeholder={r.certifications.issuerPlaceholder}
+                  />
+                  <Field
+                    label={r.certifications.issuedOn}
+                    type="month"
+                    value={certification.date}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeCertificationItem>('certifications', certification.id, (item) => ({
+                        ...item,
+                        date: value,
+                      }))
+                    }
+                  />
+                  <Field
+                    label={r.certifications.expiresOn}
+                    type="month"
+                    value={certification.expiresAt}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeCertificationItem>('certifications', certification.id, (item) => ({
+                        ...item,
+                        expiresAt: value,
+                      }))
+                    }
+                  />
+                  <Field
+                    label={r.certifications.credentialId}
+                    value={certification.credentialId}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeCertificationItem>('certifications', certification.id, (item) => ({
+                        ...item,
+                        credentialId: value,
+                      }))
+                    }
+                    placeholder={r.certifications.credentialIdPlaceholder}
+                  />
+                </div>
+              </ItemCard>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="grid two-col">
+        <article className="panel">
+          <SectionHeader
+            title={r.publications.title}
+            description={r.publications.description}
+            action={
+              <button
+                type="button"
+                className="secondary-button inline-button"
+                onClick={() =>
+                  addCollectionItem<ResumePublicationItem>('publications', {
+                    id: createId('publication'),
+                    title: '',
+                    publisher: '',
+                    date: '',
+                    link: '',
+                    description: '',
+                  })
+                }
+              >
+                <Plus size={14} />
+                {r.publications.add}
+              </button>
+            }
+          />
+          <div className="stack-md">
+            {resumeMaster.publications.map((publication) => (
+              <ItemCard
+                key={publication.id}
+                title={publication.title || r.publications.newItem}
+                subtitle={publication.publisher || r.publications.itemSubtitle}
+                removeLabel={r.remove}
+                onRemove={() => removeCollectionItem('publications', publication.id)}
+              >
+                <div className="grid one-col">
+                  <Field
+                    label={r.publications.titleLabel}
+                    value={publication.title}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumePublicationItem>('publications', publication.id, (item) => ({
+                        ...item,
+                        title: value,
+                      }))
+                    }
+                    placeholder={r.publications.titlePlaceholder}
+                  />
+                  <Field
+                    label={r.publications.publisher}
+                    value={publication.publisher}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumePublicationItem>('publications', publication.id, (item) => ({
+                        ...item,
+                        publisher: value,
+                      }))
+                    }
+                    placeholder={r.publications.publisherPlaceholder}
+                  />
+                  <Field
+                    label={r.publications.date}
+                    type="month"
+                    value={publication.date}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumePublicationItem>('publications', publication.id, (item) => ({
+                        ...item,
+                        date: value,
+                      }))
+                    }
+                  />
+                  <Field
+                    label={r.publications.link}
+                    value={publication.link}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumePublicationItem>('publications', publication.id, (item) => ({
+                        ...item,
+                        link: value,
+                      }))
+                    }
+                    placeholder={r.publications.linkPlaceholder}
+                  />
+                  <TextAreaField
+                    label={r.publications.descriptionLabel}
+                    value={publication.description}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumePublicationItem>('publications', publication.id, (item) => ({
+                        ...item,
+                        description: value,
+                      }))
+                    }
+                    placeholder={r.publications.descriptionPlaceholder}
+                    rows={3}
+                  />
+                </div>
+              </ItemCard>
+            ))}
+          </div>
+        </article>
+
+        <article className="panel">
+          <SectionHeader
+            title={r.volunteering.title}
+            description={r.volunteering.description}
+            action={
+              <button
+                type="button"
+                className="secondary-button inline-button"
+                onClick={() =>
+                  addCollectionItem<ResumeVolunteeringItem>('volunteering', {
+                    id: createId('volunteering'),
+                    organization: '',
+                    role: '',
+                    startDate: '',
+                    endDate: '',
+                    current: false,
+                    description: '',
+                  })
+                }
+              >
+                <Plus size={14} />
+                {r.volunteering.add}
+              </button>
+            }
+          />
+          <div className="stack-md">
+            {resumeMaster.volunteering.map((volunteering) => (
+              <ItemCard
+                key={volunteering.id}
+                title={volunteering.organization || r.volunteering.newItem}
+                subtitle={volunteering.role || r.volunteering.itemSubtitle}
+                removeLabel={r.remove}
+                onRemove={() => removeCollectionItem('volunteering', volunteering.id)}
+              >
+                <div className="grid one-col">
+                  <Field
+                    label={r.volunteering.organization}
+                    value={volunteering.organization}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
+                        ...item,
+                        organization: value,
+                      }))
+                    }
+                    placeholder={r.volunteering.organizationPlaceholder}
+                  />
+                  <Field
+                    label={r.volunteering.role}
+                    value={volunteering.role}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
+                        ...item,
+                        role: value,
+                      }))
+                    }
+                    placeholder={r.volunteering.rolePlaceholder}
+                  />
+                  <Field
+                    label={r.volunteering.startDate}
+                    type="month"
+                    value={volunteering.startDate}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
+                        ...item,
+                        startDate: value,
+                      }))
+                    }
+                  />
+                  <Field
+                    label={r.volunteering.endDate}
+                    type="month"
+                    value={volunteering.endDate}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
+                        ...item,
+                        endDate: value,
+                      }))
+                    }
+                  />
+                  <label className="checkbox-field">
+                    <input
+                      type="checkbox"
+                      checked={volunteering.current}
+                      onChange={(event) =>
+                        updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
+                          ...item,
+                          current: event.target.checked,
+                          endDate: event.target.checked ? '' : item.endDate,
+                        }))
+                      }
+                    />
+                    <span>{r.volunteering.current}</span>
+                  </label>
+                  <TextAreaField
+                    label={r.volunteering.descriptionLabel}
+                    value={volunteering.description}
+                    onChange={(value) =>
+                      updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
+                        ...item,
+                        description: value,
+                      }))
+                    }
+                    placeholder={r.volunteering.descriptionPlaceholder}
+                    rows={3}
+                  />
+                </div>
+              </ItemCard>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="panel">
+        <SectionHeader
+          title={r.references.title}
+          description={r.references.description}
+          action={
+            <button
+              type="button"
+              className="secondary-button inline-button"
+              onClick={() =>
+                addCollectionItem<ResumeReferenceItem>('references', {
+                  id: createId('reference'),
+                  name: '',
+                  relationship: '',
+                  company: '',
+                  email: '',
+                  phone: '',
+                  notes: '',
+                })
+              }
+            >
+              <Plus size={14} />
+              {r.references.add}
+            </button>
+          }
+        />
+        <div className="stack-md">
+          {resumeMaster.references.map((reference) => (
+            <ItemCard
+              key={reference.id}
+              title={reference.name || r.references.newItem}
+              subtitle={reference.relationship || r.references.itemSubtitle}
+              removeLabel={r.remove}
+              onRemove={() => removeCollectionItem('references', reference.id)}
+            >
+              <div className="grid two-col">
+                <Field
+                  label={r.references.name}
+                  value={reference.name}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
+                      ...item,
+                      name: value,
+                    }))
+                  }
+                  placeholder={r.references.namePlaceholder}
+                />
+                <Field
+                  label={r.references.relationship}
+                  value={reference.relationship}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
+                      ...item,
+                      relationship: value,
+                    }))
+                  }
+                  placeholder={r.references.relationshipPlaceholder}
+                />
+                <Field
+                  label={r.references.company}
+                  value={reference.company}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
+                      ...item,
+                      company: value,
+                    }))
+                  }
+                  placeholder={r.references.companyPlaceholder}
+                />
+                <Field
+                  label={r.references.email}
+                  value={reference.email}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
+                      ...item,
+                      email: value,
+                    }))
+                  }
+                  placeholder={r.references.emailPlaceholder}
+                />
+                <Field
+                  label={r.references.phone}
+                  value={reference.phone}
+                  onChange={(value) =>
+                    updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
+                      ...item,
+                      phone: value,
+                    }))
+                  }
+                  placeholder={r.references.phonePlaceholder}
+                />
+              </div>
+              <TextAreaField
+                label={r.references.notes}
+                value={reference.notes}
+                onChange={(value) =>
+                  updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
+                    ...item,
+                    notes: value,
+                  }))
+                }
+                placeholder={r.references.notesPlaceholder}
+                rows={3}
+              />
+            </ItemCard>
+          ))}
+        </div>
       </section>
     </div>
   )
 }
 
 function SelectedOfferPage() {
+  const { t } = useI18n()
   const offer = useAsyncValue(() => chromeStorage.getCapturedJob())
 
-  if (!offer) return <div className="panel">Loading job offer...</div>
+  if (!offer) return <div className="panel">{t.common.loadingJob}</div>
 
   return (
     <div className="page-stack">
       <section className="hero-card compact">
-        <span className="eyebrow">Captured LinkedIn offer</span>
+        <span className="eyebrow">{t.selectedOffer.eyebrow}</span>
         <h1>{offer.title}</h1>
         <p>{`${offer.company} | ${offer.location}`}</p>
       </section>
 
       <section className="grid two-col">
         <article className="panel">
-          <h2>Job description</h2>
+          <h2>{t.selectedOffer.descriptionTitle}</h2>
           <p>{offer.description}</p>
         </article>
 
         <article className="panel">
-          <h2>Generation actions</h2>
+          <h2>{t.selectedOffer.actionsTitle}</h2>
           <div className="action-stack">
-            <button className="primary-button">Generate tailored resume</button>
-            <button className="secondary-button">Generate cover letter</button>
-            <button className="secondary-button">Save to dashboard</button>
+            <button className="primary-button">{t.selectedOffer.generateResume}</button>
+            <button className="secondary-button">{t.selectedOffer.generateCoverLetter}</button>
+            <button className="secondary-button">{t.selectedOffer.saveDashboard}</button>
           </div>
         </article>
       </section>
@@ -147,24 +1623,25 @@ function SelectedOfferPage() {
 }
 
 function DashboardPage() {
+  const { t } = useI18n()
   const applications = useAsyncValue(() => apiClient.getApplications())
 
-  if (!applications) return <div className="panel">Loading applications...</div>
+  if (!applications) return <div className="panel">{t.common.loadingApplications}</div>
 
   return (
     <div className="page-stack">
       <section className="hero-card compact">
-        <span className="eyebrow">Application tracker</span>
-        <h1>{applications.length} active records</h1>
-        <p>Follow-up dates and interview milestones stay visible in one place.</p>
+        <span className="eyebrow">{t.dashboard.eyebrow}</span>
+        <h1>{`${applications.length} ${t.dashboard.heroSuffix}`}</h1>
+        <p>{t.dashboard.heroText}</p>
       </section>
 
       <section className="panel">
         <div className="table-head">
-          <span>Role</span>
-          <span>Status</span>
-          <span>Follow up</span>
-          <span>Score</span>
+          <span>{t.dashboard.role}</span>
+          <span>{t.dashboard.status}</span>
+          <span>{t.dashboard.followUp}</span>
+          <span>{t.dashboard.score}</span>
         </div>
         <div className="table-body">
           {applications.map((application: ApplicationItem) => (
@@ -185,24 +1662,25 @@ function DashboardPage() {
 }
 
 function InterviewPrepPage() {
+  const { t } = useI18n()
   const prep = useAsyncValue(() => apiClient.getInterviewPrep())
 
-  if (!prep) return <div className="panel">Loading interview prep...</div>
+  if (!prep) return <div className="panel">{t.common.loadingInterviewPrep}</div>
 
   return (
     <div className="page-stack">
       <section className="hero-card compact">
-        <span className="eyebrow">Interview prep</span>
-        <h1>Structured preparation pack</h1>
-        <p>Company context, likely questions, story prompts, and follow-up draft.</p>
+        <span className="eyebrow">{t.interviewPrep.eyebrow}</span>
+        <h1>{t.interviewPrep.title}</h1>
+        <p>{t.interviewPrep.intro}</p>
       </section>
 
       <section className="grid two-col">
         <article className="panel">
-          <h2>Company snapshot</h2>
+          <h2>{t.interviewPrep.snapshotTitle}</h2>
           <p>{prep.companySnapshot}</p>
 
-          <h2>Likely questions</h2>
+          <h2>{t.interviewPrep.questionsTitle}</h2>
           <ul className="simple-list">
             {prep.likelyQuestions.map((question) => (
               <li key={question}>{question}</li>
@@ -211,14 +1689,14 @@ function InterviewPrepPage() {
         </article>
 
         <article className="panel">
-          <h2>Stories to prepare</h2>
+          <h2>{t.interviewPrep.storiesTitle}</h2>
           <ul className="simple-list">
             {prep.storiesToPrepare.map((story) => (
               <li key={story}>{story}</li>
             ))}
           </ul>
 
-          <h2>Follow-up draft</h2>
+          <h2>{t.interviewPrep.followUpDraftTitle}</h2>
           <p>{prep.followUpDraft}</p>
         </article>
       </section>
@@ -228,16 +1706,18 @@ function InterviewPrepPage() {
 
 function App() {
   return (
-    <HashRouter>
-      <Shell>
-        <Routes>
-          <Route path="/" element={<MasterResumePage />} />
-          <Route path="/offer" element={<SelectedOfferPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/interview" element={<InterviewPrepPage />} />
-        </Routes>
-      </Shell>
-    </HashRouter>
+    <I18nProvider>
+      <HashRouter>
+        <Shell>
+          <Routes>
+            <Route path="/" element={<MasterResumePage />} />
+            <Route path="/offer" element={<SelectedOfferPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/interview" element={<InterviewPrepPage />} />
+          </Routes>
+        </Shell>
+      </HashRouter>
+    </I18nProvider>
   )
 }
 
