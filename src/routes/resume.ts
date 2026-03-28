@@ -1,7 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { join } from "node:path";
 import { writeFile, mkdir } from "node:fs/promises";
-import { UPLOADS_DIR } from "../services/paths.js";
+import { randomUUID } from "node:crypto";
+import { UPLOADS_DIR, RESUME_UPLOAD_PATH } from "../services/paths.js";
+import { writeJSON } from "../services/store.js";
+import type { ResumeUpload } from "../schemas/resume-upload.js";
 
 export async function resumeRoutes(app: FastifyInstance) {
   app.post("/api/resume/upload", async (request, reply) => {
@@ -28,10 +31,16 @@ export async function resumeRoutes(app: FastifyInstance) {
     const savePath = join(UPLOADS_DIR, "resume.pdf");
     await writeFile(savePath, buffer);
 
-    return reply.code(200).send({
-      message: "Resume uploaded successfully",
+    const resumeUpload: ResumeUpload = {
+      id: randomUUID(),
       originalFilename: data.filename,
       storagePath: savePath,
-    });
+      uploadedAt: new Date().toISOString(),
+      status: "uploaded",
+    };
+
+    await writeJSON<ResumeUpload>(RESUME_UPLOAD_PATH, resumeUpload);
+
+    return reply.code(200).send(resumeUpload);
   });
 }

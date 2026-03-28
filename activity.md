@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **ResumeUpload Document Management**: Updated src/routes/resume.ts to create/update a ResumeUpload document in data/resume-upload.json after each file upload. Generates a UUID id, records originalFilename, storagePath, uploadedAt (ISO-8601), and sets status to 'uploaded'. The response now returns the full ResumeUpload document instead of a plain message. Re-uploads overwrite the previous document. Verified: upload creates resume-upload.json with correct fields and status 'uploaded', re-upload overwrites with new id and filename, tsc --noEmit passes.
+
+### 2026-03-28
 - **POST /api/resume/upload Endpoint**: Created src/routes/resume.ts as a Fastify plugin implementing POST /api/resume/upload. Accepts multipart/form-data with a single file field, validates that the file is PDF (mimetype check) and under 10MB, saves to data/uploads/resume.pdf (overwriting if exists). Registered route in src/server.ts. Verified: non-multipart request returns 400 with descriptive error, non-PDF file returns 400, valid PDF upload returns 200 with originalFilename and storagePath, file is persisted to data/uploads/.
 
 ### 2026-03-28

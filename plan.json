@@ -259,7 +259,7 @@
       "2. Set id, originalFilename, storagePath, uploadedAt fields",
       "3. Verify: after upload, resume-upload.json contains correct document with status 'uploaded'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Resume Upload & Extraction Routes",
