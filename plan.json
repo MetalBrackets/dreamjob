@@ -601,7 +601,7 @@
       "8. Thresholds: 0-49 low credibility, 50-74 credible but weak, 75-100 pass",
       "9. Verify: review a sample CV, confirm sub-scores and feedback are meaningful"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Orchestration",
