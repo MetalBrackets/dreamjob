@@ -34,7 +34,6 @@ Le système doit rester très simple pour une demo.
 - Historique complet de versions du CV
 - UI avancée
 - Connexion temps réel à plusieurs job boards
-- Génération de lettre de motivation
 
 ## 3. Vue d'ensemble de l'architecture
 
@@ -65,6 +64,25 @@ Le système doit rester très simple pour une demo.
 6. `Agent Recruteur`
    - Évalue la crédibilité humaine du CV
    - Vérifie lisibilité, cohérence et preuves d'expérience
+
+### Flux global
+
+Le flux global du POC est le suivant :
+
+1. l'addon lit une offre LinkedIn et envoie les données brutes ;
+2. le backend normalise l'offre en `JobOfferNormalized` ;
+3. l'orchestrateur charge la `CandidateMasterProfile` ;
+4. l'agent `Candidat` génère un `GeneratedCV` ciblé ;
+5. les agents `ATS` et `Recruteur` évaluent le CV en parallèle ;
+6. l'orchestrateur consolide les retours et relance une révision si nécessaire ;
+7. le système décide `FINAL_APPROVED` ou `REJECTED_FOR_REVIEW` ;
+8. le backend retourne un `AddonResult` standardisé à l'addon.
+
+Résumé en une ligne :
+
+```text
+Addon LinkedIn -> Normalisation offre -> Chargement master DB -> Génération CV -> Review ATS + Recruteur -> Décision finale -> Retour résultat addon
+```
 
 ## 4. Hypothèse MCP
 
