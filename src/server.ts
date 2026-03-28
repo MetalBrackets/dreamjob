@@ -5,6 +5,7 @@ import { ensureDataDirs } from "./ensure-dirs.js";
 import { profileRoutes } from "./routes/profile.js";
 import { resumeRoutes } from "./routes/resume.js";
 import { jobsRoutes } from "./routes/jobs.js";
+import { cvsRoutes } from "./routes/cvs.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -23,6 +24,7 @@ await ensureDataDirs();
 await app.register(profileRoutes);
 await app.register(resumeRoutes);
 await app.register(jobsRoutes);
+await app.register(cvsRoutes);
 
 const start = async () => {
   try {

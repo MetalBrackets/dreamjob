@@ -472,7 +472,7 @@
       "7. Return 200 with generated CV and review results",
       "8. Verify: generate a CV for a seeded profile and job, confirm all artifacts stored"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "CV Generation Routes",

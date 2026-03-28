@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **POST /api/cvs/generate Endpoint**: Created src/routes/cvs.ts as a Fastify plugin implementing POST /api/cvs/generate. Accepts JSON body with jobPostId and language (required). Loads Profile from data/profile.json and finds JobPost by id in data/jobs.json. Returns 400 if required fields missing, 404 if profile or job post not found. Calls cv-generator orchestrator service (src/services/cv-generator.ts) which generates scaffold GeneratedCV, ATSReview, RecruiterReview, and ReviewAgreement artifacts and stores them in data/cvs.json, data/ats-reviews.json, data/recruiter-reviews.json, and data/review-agreements.json respectively. Returns 200 with all four artifacts. Registered route in src/server.ts. Verified: missing fields returns 400, missing profile returns 404, missing job returns 404, valid request returns 200 with correct CV/review structure, all artifacts persisted to JSON files, tsc --noEmit passes.
+
+### 2026-03-28
 - **Job Normalization Service via OpenAI**: Rewrote src/services/normalize.ts to use OpenAI GPT-4o for intelligent job post normalization. The normalizeJobOffer(raw) function now sends raw text and structured fields to OpenAI with a detailed system prompt to extract all JobPost fields (title, company, description, location, remoteMode, employmentType, seniority, jobSummary, responsibilities, requirementsMustHave, requirementsNiceToHave, keywords, tools, languages, yearsExperienceMin, postedDate). Validates enum values with fallbacks. Falls back to basic field mapping when OPENAI_API_KEY is not set (graceful degradation). Uses lazy OpenAI client initialization matching the pattern in ai/openai.ts. Verified: POST /api/jobs/raw returns 201 with correctly structured normalized job post, fallback works without API key, all fields populated from rawFields, tsc --noEmit passes.
 
 ### 2026-03-28
