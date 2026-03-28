@@ -18,3 +18,20 @@ The extension UI is built around a side panel flow:
 - interview preparation
 
 The current scaffold is mock-first and shaped to connect later to the backend routes defined in `backend-design.md`.
+
+## Protocole installation 
+
+Need :
+- chrome
+- the repo github
+
+go into the folder ```extension-ui```
+Inside the folder you have to make the installations of the dependencies ```npm i```
+Once you have done all the installations build the extension ```npm run build```
+
+Load Chrome
+In Chrome go to ```chrome://extensions```
+active the ```dev-mode``` (en haut à droite)
+Click on ```Load unpack```
+find the correct folder inside ```extension-ui\dists``` Load it.
+once you have it you have to re-load chrome and it should work
