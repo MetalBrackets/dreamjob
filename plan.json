@@ -386,7 +386,7 @@
       "7. Implement canMarkComplete logic: identity reviewed AND all experiences reviewed AND all education reviewed AND all skills reviewed",
       "8. Verify: test with empty profile (0 progress, low strength), test with complete profile (100 progress, high strength)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Job Posts - Raw Routes",
