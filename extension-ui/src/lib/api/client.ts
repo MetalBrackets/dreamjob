@@ -31,7 +31,7 @@ export const apiClient = {
   },
 
   async getInterviewPrep(): Promise<InterviewPrepPack> {
-    if (appConfig.useMockData) return mockInterviewPrep
-    return getJson<InterviewPrepPack>('/interviews/prep')
+    // TODO: replace with real endpoint in next version
+    return mockInterviewPrep
   },
 }
