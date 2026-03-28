@@ -31,3 +31,25 @@ export type TargetRoles = Static<typeof TargetRolesSchema>;
 
 export const ProfessionalSummaryMasterSchema = Type.String();
 export type ProfessionalSummaryMaster = Static<typeof ProfessionalSummaryMasterSchema>;
+
+// --- Experience with achievements and skillsUsed ---
+
+export const AchievementSchema = Type.Object({
+  text: Type.String(),
+  metric: Type.Optional(Type.String()),
+  proofLevel: Type.Optional(Type.String()),
+});
+export type Achievement = Static<typeof AchievementSchema>;
+
+export const ExperienceSchema = Type.Object({
+  experienceId: Type.String(),
+  title: Type.String(),
+  company: Type.String(),
+  location: Type.Optional(Type.String()),
+  startDate: Type.String(),
+  endDate: Type.Optional(Type.String()),
+  description: Type.Optional(Type.String()),
+  achievements: Type.Array(AchievementSchema),
+  skillsUsed: Type.Array(Type.String()),
+});
+export type Experience = Static<typeof ExperienceSchema>;

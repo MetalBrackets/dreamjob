@@ -99,7 +99,7 @@
       "2. Define Experience schema: experienceId, title, company, location, startDate, endDate, description, achievements array, skillsUsed array",
       "3. Verify: schema validates sample experience data"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Type Definitions",

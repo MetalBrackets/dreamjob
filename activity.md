@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Experience TypeBox Schema**: Added Achievement sub-schema (text, metric, proofLevel) and Experience schema (experienceId, title, company, location, startDate, endDate, description, achievements array, skillsUsed array) to src/schemas/profile.ts. Verified: tsc --noEmit passes, schema validates sample data correctly (valid returns true, invalid returns false).
+
+### 2026-03-28
 - **Profile Core Identity TypeBox Schemas**: Created src/schemas/profile.ts defining TypeBox schemas and static TypeScript types for Identity (name, headline, email, phone, location, links with linkedin/portfolio/github), Constraints (preferredCvLanguage, maxCvPages, mustNotClaim), TargetRoles (string array), and ProfessionalSummaryMaster (string). Verified: tsc --noEmit passes, all schemas produce correct JSON Schema output.
 
 ### 2026-03-28
