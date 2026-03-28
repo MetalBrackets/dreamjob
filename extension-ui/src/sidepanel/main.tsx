@@ -17,10 +17,17 @@ import {
 } from '../lib/chrome/capture'
 import { chromeStorage } from '../lib/chrome/storage'
 import { I18nProvider, useI18n } from '../i18n/I18nProvider'
+import {
+  mockAtsReview,
+  mockGeneratedCv,
+  mockRecruiterReview,
+  mockReviewAgreement,
+} from '../shared/mock-data'
 import '../shared/styles/global.css'
 import '../shared/styles/sidepanel.css'
 import type {
   ApplicationItem,
+  AtsReview,
   ResumeAwardItem,
   ResumeCertificationItem,
   ResumeEducationItem,
@@ -35,6 +42,9 @@ import type {
   ResumeSourceDocument,
   ResumeVolunteeringItem,
   CapturedJobOffer,
+  GeneratedCv,
+  RecruiterReview,
+  ReviewAgreement,
 } from '../shared/types'
 
 type ResumeCollectionKey =
@@ -1867,7 +1877,15 @@ function SelectedOfferPage() {
   const { t } = useI18n()
   const [offer, setOffer] = React.useState<CapturedJobOffer | null>(null)
   const [isSaving, setIsSaving] = React.useState(false)
-  const [resumeRequestPreview, setResumeRequestPreview] = React.useState('')
+  const [generationState, setGenerationState] = React.useState<
+    'idle' | 'generating' | 'generated'
+  >('idle')
+  const [atsReview, setAtsReview] = React.useState<AtsReview | null>(null)
+  const [recruiterReview, setRecruiterReview] =
+    React.useState<RecruiterReview | null>(null)
+  const [generatedCv, setGeneratedCv] = React.useState<GeneratedCv | null>(null)
+  const [reviewAgreement, setReviewAgreement] =
+    React.useState<ReviewAgreement | null>(null)
   const [saveState, setSaveState] = React.useState<'idle' | 'saved' | 'error'>(
     'idle',
   )
@@ -1875,6 +1893,7 @@ function SelectedOfferPage() {
     reason: CaptureCurrentJobFailureReason
     details?: string
   } | null>(null)
+  const generationTimeoutRef = React.useRef<number | null>(null)
 
   React.useEffect(() => {
     chromeStorage
@@ -1885,6 +1904,14 @@ function SelectedOfferPage() {
       .catch(() => {
         setOffer(null)
       })
+  }, [])
+
+  React.useEffect(() => {
+    return () => {
+      if (generationTimeoutRef.current) {
+        window.clearTimeout(generationTimeoutRef.current)
+      }
+    }
   }, [])
 
   if (!offer) return <div className="panel">{t.common.loadingJob}</div>
@@ -1931,13 +1958,44 @@ function SelectedOfferPage() {
   }
 
   const handleGenerateResume = () => {
-    const requestPayload = {
-      job_offer: offer,
+    if (generationState === 'generating') return
+
+    setGenerationState('generating')
+    setAtsReview(null)
+    setRecruiterReview(null)
+    setGeneratedCv(null)
+    setReviewAgreement(null)
+
+    if (generationTimeoutRef.current) {
+      window.clearTimeout(generationTimeoutRef.current)
     }
 
-    setResumeRequestPreview(JSON.stringify(requestPayload, null, 2))
+    generationTimeoutRef.current = window.setTimeout(() => {
+      setAtsReview(mockAtsReview)
+      setRecruiterReview(mockRecruiterReview)
+      setGeneratedCv(mockGeneratedCv)
+      setReviewAgreement(mockReviewAgreement)
+      setGenerationState('generated')
+    }, 2000)
   }
 
+  const renderList = (items: string[], emptyLabel?: string) => {
+    if (items.length === 0) {
+      return <p className="muted-text">{emptyLabel ?? t.resumeMaster.noItems}</p>
+    }
+
+    return (
+      <ul className="simple-list">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    )
+  }
+
+  const showGeneratedLayout = generationState !== 'idle'
+  const showDecisionBanner = generationState === 'generated' && Boolean(reviewAgreement)
+  const isApproved = reviewAgreement?.final_status === 'FINAL_APPROVED'
   return (
     <div className="page-stack">
       <section className="hero-card compact">
@@ -1951,42 +2009,293 @@ function SelectedOfferPage() {
         ) : null}
       </section>
 
-      <section className="grid two-col">
-        <article className="panel">
-          <h2>{t.selectedOffer.descriptionTitle}</h2>
-          <p>{offer.raw_text}</p>
-        </article>
+      {!showGeneratedLayout ? (
+        <section className="grid two-col">
+          <article className="panel">
+            <h2>{t.selectedOffer.descriptionTitle}</h2>
+            <p>{offer.raw_text}</p>
+          </article>
 
-        <article className="panel">
-          <h2>{t.selectedOffer.actionsTitle}</h2>
-          <div className="action-stack">
+          <article className="panel">
+            <h2>{t.selectedOffer.actionsTitle}</h2>
+            <div className="action-stack">
+              <button
+                className="secondary-button"
+                onClick={() => void handleStoreCurrentOffer()}
+                disabled={isSaving}
+              >
+                {isSaving ? t.common.loadingJob : t.selectedOffer.storeCurrentOffer}
+              </button>
+              {saveState === 'saved' ? (
+                <p className="panel-note">{t.selectedOffer.storeSuccess}</p>
+              ) : null}
+              {saveState === 'error' ? (
+                <div className="panel-note">
+                  <p>{getCaptureErrorMessage(saveError?.reason ?? 'no-job-found')}</p>
+                  {saveError?.details ? (
+                    <pre className="debug-block">{saveError.details}</pre>
+                  ) : null}
+                </div>
+              ) : null}
+              <button className="primary-button" onClick={handleGenerateResume}>
+                {t.selectedOffer.generateResume}
+              </button>
+              <button className="secondary-button">
+                {t.selectedOffer.generateCoverLetter}
+              </button>
+              <button className="secondary-button">
+                {t.selectedOffer.saveDashboard}
+              </button>
+            </div>
+          </article>
+        </section>
+      ) : null}
+
+      {showDecisionBanner ? (
+        <section
+          className={`result-banner ${isApproved ? 'approved' : 'rejected'}`}
+        >
+          <strong>
+            {isApproved
+              ? t.selectedOffer.approvedBanner
+              : t.selectedOffer.rejectedBanner}
+          </strong>
+        </section>
+      ) : null}
+
+      {showGeneratedLayout ? (
+        <section className="panel tailored-preview-panel">
+            <h2>
+              {generationState === 'generated'
+                ? t.selectedOffer.previewTitle
+                : t.selectedOffer.generatingTitle}
+            </h2>
+            <p className="panel-note">
+              {generationState === 'generated'
+                ? t.selectedOffer.generationDoneBody
+                : t.selectedOffer.generatingBody}
+            </p>
+
+            {generationState === 'generating' ? (
+              <div className="generation-progress-block">
+                <div className="progress-track">
+                  <div className="progress-fill progress-fill-animated" />
+                </div>
+              </div>
+            ) : (
+              <div className="resume-preview-sheet">
+                <header className="resume-preview-header">
+                  <div>
+                    <h3>{generatedCv?.header.full_name}</h3>
+                    <p>{generatedCv?.header.headline}</p>
+                  </div>
+                  <div className="resume-contact-list">
+                    <span>{generatedCv?.header.contact.email}</span>
+                    <span>{generatedCv?.header.contact.phone}</span>
+                    {Object.entries(generatedCv?.header.links ?? {}).map(
+                      ([key, value]) => (
+                        <span key={key}>{value}</span>
+                      ),
+                    )}
+                  </div>
+                </header>
+
+                <div className="resume-preview-section">
+                  <h4>{t.selectedOffer.resumeSummaryTitle}</h4>
+                  <p>{generatedCv?.summary ?? t.selectedOffer.previewPlaceholder}</p>
+                </div>
+
+                <div className="resume-preview-section">
+                  <h4>{t.selectedOffer.resumeSkillsTitle}</h4>
+                  <div className="tag-list">
+                    {generatedCv?.skills_highlighted.map((skill) => (
+                      <span key={skill} className="tag">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="resume-preview-section">
+                  <h4>{t.selectedOffer.resumeExperienceTitle}</h4>
+                  <div className="stack-sm">
+                    {generatedCv?.experiences_selected.map((experience) => (
+                      <div key={experience.experience_id} className="resume-preview-block">
+                        <strong>{experience.experience_id}</strong>
+                        <ul className="simple-list">
+                          {experience.rewritten_bullets.map((bullet) => (
+                            <li key={bullet}>{bullet}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid two-col">
+                  <div className="resume-preview-section">
+                    <h4>{t.selectedOffer.resumeEducationTitle}</h4>
+                    <div className="stack-sm">
+                      {generatedCv?.education_selected.map((education) => (
+                        <div key={`${education.school}-${education.year}`}>
+                          <strong>{education.school}</strong>
+                          <p>{`${education.degree} | ${education.year}`}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="resume-preview-section">
+                    <h4>{t.selectedOffer.resumeKeywordsTitle}</h4>
+                    <div className="tag-list">
+                      {generatedCv?.keywords_covered.map((keyword) => (
+                        <span key={keyword} className="tag">
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid two-col">
+                  <div className="resume-preview-section">
+                    <h4>{t.selectedOffer.resumeNotesTitle}</h4>
+                    {renderList(generatedCv?.generation_notes ?? [])}
+                  </div>
+
+                  <div className="resume-preview-section">
+                    <h4>{t.selectedOffer.resumeOmittedTitle}</h4>
+                    {renderList(generatedCv?.omitted_items ?? [])}
+                  </div>
+                </div>
+              </div>
+            )}
+        </section>
+      ) : null}
+
+      {showGeneratedLayout ? (
+        <section className="grid two-col">
+          <article className="panel review-card">
+            {generationState === 'generating' ? (
+              <>
+                <h2>{t.selectedOffer.generatingTitle}</h2>
+                <p>{t.selectedOffer.generatingBody}</p>
+                <div className="progress-track">
+                  <div className="progress-fill progress-fill-animated" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="review-card-head">
+                  <h2>{t.selectedOffer.atsPanelTitle}</h2>
+                  <span className="status-pill">
+                    {`${t.selectedOffer.scoreLabel}: ${atsReview?.score ?? 0}`}
+                  </span>
+                </div>
+                <p className="panel-note">
+                  {`${t.selectedOffer.passedLabel}: ${
+                    atsReview?.passed ? t.selectedOffer.yes : t.selectedOffer.no
+                  }`}
+                </p>
+                <h3>{t.selectedOffer.hardFiltersTitle}</h3>
+                <div className="stack-sm">
+                  {atsReview?.hard_filters_status.map((item) => (
+                    <div key={item.filter} className="hard-filter-card">
+                      <div className="hard-filter-head">
+                        <strong>{item.filter}</strong>
+                        <span className="tag">{item.status}</span>
+                      </div>
+                      <p>{item.evidence}</p>
+                    </div>
+                  ))}
+                </div>
+                <h3>{t.selectedOffer.matchedKeywordsTitle}</h3>
+                <div className="tag-list">
+                  {atsReview?.matched_keywords.map((keyword) => (
+                    <span key={keyword} className="tag">
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+                <h3>{t.selectedOffer.missingKeywordsTitle}</h3>
+                <div className="tag-list">
+                  {atsReview?.missing_keywords.map((keyword) => (
+                    <span key={keyword} className="tag">
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+                <h3>{t.selectedOffer.formatFlagsTitle}</h3>
+                {renderList(
+                  atsReview?.format_flags ?? [],
+                  t.selectedOffer.noFormatFlags,
+                )}
+                <h3>{t.selectedOffer.recommendationsTitle}</h3>
+                {renderList(atsReview?.recommendations ?? [])}
+              </>
+            )}
+          </article>
+
+          <article className="panel review-card">
+            {generationState === 'generating' ? (
+              <>
+                <h2>{t.selectedOffer.generatingTitle}</h2>
+                <p>{t.selectedOffer.generatingBody}</p>
+                <div className="progress-track">
+                  <div className="progress-fill progress-fill-animated" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="review-card-head">
+                  <h2>{t.selectedOffer.recruiterPanelTitle}</h2>
+                  <span className="status-pill">
+                    {`${t.selectedOffer.scoreLabel}: ${recruiterReview?.score ?? 0}`}
+                  </span>
+                </div>
+                <p className="panel-note">
+                  {`${t.selectedOffer.passedLabel}: ${
+                    recruiterReview?.passed
+                      ? t.selectedOffer.yes
+                      : t.selectedOffer.no
+                  }`}
+                </p>
+                <div className="review-score-grid">
+                  <span>{`${t.selectedOffer.readabilityLabel}: ${recruiterReview?.readability_score ?? 0}`}</span>
+                  <span>{`${t.selectedOffer.credibilityLabel}: ${recruiterReview?.credibility_score ?? 0}`}</span>
+                  <span>{`${t.selectedOffer.coherenceLabel}: ${recruiterReview?.coherence_score ?? 0}`}</span>
+                  <span>{`${t.selectedOffer.evidenceLabel}: ${recruiterReview?.evidence_score ?? 0}`}</span>
+                </div>
+                <h3>{t.selectedOffer.strengthsTitle}</h3>
+                {renderList(recruiterReview?.strengths ?? [])}
+                <h3>{t.selectedOffer.concernsTitle}</h3>
+                {renderList(recruiterReview?.concerns ?? [])}
+                <h3>{t.selectedOffer.recommendationsTitle}</h3>
+                {renderList(recruiterReview?.recommendations ?? [])}
+              </>
+            )}
+          </article>
+        </section>
+      ) : null}
+
+      {showGeneratedLayout ? (
+        <section className="panel">
+          <h2>{t.selectedOffer.compactActionsTitle}</h2>
+          <div className="action-bar">
             <button
               className="secondary-button"
               onClick={() => void handleStoreCurrentOffer()}
               disabled={isSaving}
             >
-              {isSaving
-                ? t.common.loadingJob
-                : t.selectedOffer.storeCurrentOffer}
+              {isSaving ? t.common.loadingJob : t.selectedOffer.storeCurrentOffer}
             </button>
-            {saveState === 'saved' ? (
-              <p className="panel-note">{t.selectedOffer.storeSuccess}</p>
-            ) : null}
-            {saveState === 'error' ? (
-              <div className="panel-note">
-                <p>{getCaptureErrorMessage(saveError?.reason ?? 'no-job-found')}</p>
-                {saveError?.details ? <pre className="debug-block">{saveError.details}</pre> : null}
-              </div>
-            ) : null}
-            <button className="primary-button" onClick={handleGenerateResume}>
+            <button
+              className="primary-button"
+              onClick={handleGenerateResume}
+              disabled={generationState === 'generating'}
+            >
               {t.selectedOffer.generateResume}
             </button>
-            {resumeRequestPreview ? (
-              <div className="panel-note">
-                <p>{t.selectedOffer.generateResumePreview}</p>
-                <pre className="debug-block">{resumeRequestPreview}</pre>
-              </div>
-            ) : null}
             <button className="secondary-button">
               {t.selectedOffer.generateCoverLetter}
             </button>
@@ -1994,8 +2303,19 @@ function SelectedOfferPage() {
               {t.selectedOffer.saveDashboard}
             </button>
           </div>
-        </article>
-      </section>
+          {saveState === 'saved' ? (
+            <p className="panel-note">{t.selectedOffer.storeSuccess}</p>
+          ) : null}
+          {saveState === 'error' ? (
+            <div className="panel-note">
+              <p>{getCaptureErrorMessage(saveError?.reason ?? 'no-job-found')}</p>
+              {saveError?.details ? (
+                <pre className="debug-block">{saveError.details}</pre>
+              ) : null}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   )
 }
