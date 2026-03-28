@@ -13,6 +13,21 @@
   background: rgba(255, 255, 255, 0.52);
 }
 
+.panel-note {
+  font-size: 0.88rem;
+  color: #5d6e80;
+}
+
+.debug-block {
+  overflow-x: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 0.78rem;
+  color: #294155;
+}
+
 .brand-mark {
   display: inline-grid;
   place-items: center;
@@ -211,6 +226,174 @@
   border-radius: 18px;
 }
 
+.tailored-layout {
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  align-items: start;
+}
+
+.result-banner {
+  padding: 1rem 1.2rem;
+  border-radius: 20px;
+  font-weight: 800;
+}
+
+.result-banner.approved {
+  color: #14532d;
+  background: rgba(34, 197, 94, 0.16);
+  border: 1px solid rgba(34, 197, 94, 0.24);
+}
+
+.result-banner.rejected {
+  color: #991b1b;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+.tailored-preview-panel,
+.review-stack,
+.review-card,
+.review-score-grid,
+.action-bar {
+  display: grid;
+  gap: 1rem;
+}
+
+.review-stack {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.review-card {
+  padding: 1.1rem;
+  border: 1px solid rgba(19, 34, 56, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.84);
+  overflow-wrap: anywhere;
+}
+
+.review-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.review-chip-row {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem;
+  border-radius: 16px;
+  background: rgba(13, 107, 136, 0.06);
+  overflow-wrap: anywhere;
+}
+
+.review-score-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.resume-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+  border: 1px dashed rgba(13, 107, 136, 0.2);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 251, 0.92)),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 24px,
+      rgba(19, 34, 56, 0.05) 24px,
+      rgba(19, 34, 56, 0.05) 25px
+    );
+  color: #5d6e80;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.generation-progress-block {
+  display: grid;
+  align-content: center;
+  min-height: 220px;
+}
+
+.resume-preview-sheet,
+.resume-preview-section,
+.resume-contact-list,
+.hard-filter-card {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.resume-preview-sheet {
+  padding: 1.4rem;
+  border: 1px solid rgba(19, 34, 56, 0.08);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 252, 255, 0.96));
+}
+
+.resume-preview-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(19, 34, 56, 0.08);
+}
+
+.resume-preview-header h3,
+.resume-preview-section h4 {
+  margin: 0;
+}
+
+.resume-contact-list {
+  justify-items: end;
+  color: #5d6e80;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.resume-preview-block,
+.hard-filter-card {
+  padding: 0.9rem;
+  border-radius: 18px;
+  background: rgba(13, 107, 136, 0.05);
+}
+
+.hard-filter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.progress-fill-animated {
+  width: 100%;
+  animation: progress-sim 2s ease forwards;
+}
+
+.action-bar {
+  grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
+  align-items: center;
+}
+
+.panel-note {
+  color: #5d6e80;
+}
+
+.debug-block {
+  overflow: auto;
+  border-radius: 16px;
+  padding: 0.9rem;
+  background: rgba(19, 34, 56, 0.06);
+  font-size: 0.84rem;
+}
+
+.simple-list li,
+.tag {
+  overflow-wrap: anywhere;
+}
+
 .checkbox-field {
   display: inline-flex;
   align-items: center;
@@ -258,6 +441,16 @@
   font-size: 0.9rem;
 }
 
+@keyframes progress-sim {
+  from {
+    width: 8%;
+  }
+
+  to {
+    width: 100%;
+  }
+}
+
 @media (max-width: 920px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -280,6 +473,21 @@
   }
 
   .hero-meta {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .tailored-layout,
+  .review-score-grid,
+  .action-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-preview-header {
+    flex-direction: column;
+  }
+
+  .resume-contact-list {
     justify-items: start;
     text-align: left;
   }

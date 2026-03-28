@@ -1,31 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { I18nProvider, useI18n } from '../i18n/I18nProvider'
+import { captureCurrentJob, openSidePanelForCurrentTab } from '../lib/chrome/capture'
 import '../shared/styles/global.css'
 import '../shared/styles/popup.css'
 
-const captureCurrentJob = async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-
-  if (!tab?.id) {
-    return
-  }
-
-  const response = await chrome.tabs.sendMessage(tab.id, {
-    type: 'dreamjob:capture-current-job',
-  })
-
-  if (response?.job) {
-    await chrome.runtime.sendMessage({
-      type: 'dreamjob:cache-captured-job',
-      payload: response.job,
-    })
-  }
-
-  await chrome.runtime.sendMessage({
-    type: 'dreamjob:open-side-panel',
-    tabId: tab.id,
-  })
+const handleCaptureCurrentJob = async () => {
+  await captureCurrentJob()
+  await openSidePanelForCurrentTab()
 }
 
 function PopupCard() {
@@ -53,7 +35,7 @@ function PopupCard() {
         </div>
         <h1>{t.popup.title}</h1>
         <p>{t.popup.description}</p>
-        <button className="primary-button" onClick={() => void captureCurrentJob()}>
+        <button className="primary-button" onClick={() => void handleCaptureCurrentJob()}>
           {t.popup.cta}
         </button>
       </div>

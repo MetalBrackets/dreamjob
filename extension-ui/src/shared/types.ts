@@ -136,13 +136,106 @@ export interface ResumeMaster {
   sourceDocument?: ResumeSourceDocument
 }
 
-export interface CapturedJobOffer {
-  sourceUrl: string
+export interface CapturedJobOfferRawFields {
   title: string
   company: string
   location: string
-  description: string
-  capturedAt: string
+  employment_type: string
+}
+
+export interface CapturedJobOffer {
+  source: 'linkedin'
+  source_url: string
+  captured_at: string
+  html_snapshot_ref?: string
+  raw_text: string
+  raw_fields: CapturedJobOfferRawFields
+  missing_fields?: Array<keyof CapturedJobOfferRawFields>
+}
+
+export interface GeneratedCvExperience {
+  experience_id: string
+  rewritten_bullets: string[]
+}
+
+export interface GeneratedCvEducation {
+  school: string
+  degree: string
+  year: string
+}
+
+export interface GeneratedCvHeader {
+  full_name: string
+  headline: string
+  contact: {
+    email: string
+    phone: string
+  }
+  links: Record<string, string>
+}
+
+export interface GeneratedCv {
+  cv_id: string
+  candidate_id: string
+  job_id: string
+  version: number
+  language: 'fr' | 'en'
+  title: string
+  header: GeneratedCvHeader
+  summary: string
+  skills_highlighted: string[]
+  experiences_selected: GeneratedCvExperience[]
+  education_selected: GeneratedCvEducation[]
+  certifications_selected: string[]
+  keywords_covered: string[]
+  omitted_items: string[]
+  generation_notes: string[]
+}
+
+export interface ReviewAgreement {
+  job_id: string
+  cv_id: string
+  cv_generation_ok: boolean
+  ats_ok: boolean
+  recruiter_ok: boolean
+  review_agreement_ok: boolean
+  final_status: 'FINAL_APPROVED' | 'REJECTED_FOR_REVIEW'
+  rejection_reasons: string[]
+  iteration_count: number
+}
+
+export interface AtsHardFilterStatus {
+  filter: string
+  status: 'pass' | 'fail' | 'partial'
+  evidence: string
+}
+
+export interface AtsReview {
+  review_id: string
+  cv_id: string
+  job_id: string
+  score: number
+  passed: boolean
+  hard_filters_status: AtsHardFilterStatus[]
+  matched_keywords: string[]
+  missing_keywords: string[]
+  format_flags: string[]
+  recommendations: string[]
+}
+
+export interface RecruiterReview {
+  review_id: string
+  cv_id: string
+  job_id: string
+  score: number
+  passed: boolean
+  readability_score: number
+  credibility_score: number
+  coherence_score: number
+  evidence_score: number
+  strengths: string[]
+  concerns: string[]
+  recommendations: string[]
 }
 
 export interface ApplicationItem {
