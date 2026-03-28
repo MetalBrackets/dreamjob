@@ -1,3 +1,5 @@
+curl -X POST http://localhost:3000/api/cvs/generate -H "Content-Type: application/json" -d '{"jobPostId": "job_01", "language": "fr"}'
+
 # dreamjob
 
 LinkedIn-style hackathon prototype for AI-assisted job applications.
