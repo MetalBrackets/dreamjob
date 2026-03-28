@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Fastify Server Entry Point**: Created src/server.ts with Fastify initialization (logger enabled), registered @fastify/cors (origin localhost:5173) and @fastify/multipart (10MB limit), ensureDataDirs on startup, and listen on PORT (default 3000). Verified: server starts, GET / returns 404, tsc --noEmit passes.
+
+### 2026-03-28
 - **Data Directory Structure**: Created data/ and data/uploads/ directories with .gitkeep files. Added data/ to .gitignore (preserving .gitkeep). Created src/ensure-dirs.ts to auto-create directories on first run.
 
 ### 2026-03-28

@@ -42,7 +42,7 @@
       "5. Listen on PORT from env (default 3000)",
       "6. Verify: npm run dev starts server, GET / returns 404 or root response"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Server Setup",
