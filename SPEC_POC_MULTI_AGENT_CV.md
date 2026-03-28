@@ -671,5 +671,3 @@ Pour aller vite sur ce POC :
 3. une sortie JSON + HTML/Markdown du CV ;
 4. des agents implémentés comme 3 services ou 3 prompts séparés ;
 5. une logique de seuil simple et explicable.
-
-Ce découpage permet de valider rapidement la valeur métier avant d'investir dans une architecture plus complexe.
