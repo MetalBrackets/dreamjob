@@ -157,7 +157,7 @@
       "2. Export static TypeScript type",
       "3. Verify: schema validates sample raw job data"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Type Definitions",
