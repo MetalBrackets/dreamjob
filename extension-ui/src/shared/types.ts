@@ -139,9 +139,11 @@ export interface ResumeMaster {
 export interface CapturedJobOffer {
   sourceUrl: string
   title: string
+  pageTitle?: string
   company: string
   location: string
   description: string
+  missingFields?: Array<'title' | 'company' | 'location' | 'description'>
   capturedAt: string
 }
 

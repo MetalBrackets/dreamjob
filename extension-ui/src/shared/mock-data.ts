@@ -122,6 +122,7 @@ export const mockResumeMaster: ResumeMaster = {
 export const mockCapturedJob: CapturedJobOffer = {
   sourceUrl: 'https://www.linkedin.com/jobs/view/123456789',
   title: 'Frontend Developer',
+  pageTitle: 'Frontend Developer at Shift Labs | LinkedIn',
   company: 'Shift Labs',
   location: 'Nantes, France',
   description:

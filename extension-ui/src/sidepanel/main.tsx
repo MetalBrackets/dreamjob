@@ -11,6 +11,10 @@ import {
   Upload,
 } from 'lucide-react'
 import { apiClient } from '../lib/api/client'
+import {
+  captureCurrentJob,
+  type CaptureCurrentJobFailureReason,
+} from '../lib/chrome/capture'
 import { chromeStorage } from '../lib/chrome/storage'
 import { I18nProvider, useI18n } from '../i18n/I18nProvider'
 import '../shared/styles/global.css'
@@ -30,6 +34,7 @@ import type {
   ResumeSkillItem,
   ResumeSourceDocument,
   ResumeVolunteeringItem,
+  CapturedJobOffer,
 } from '../shared/types'
 
 type ResumeCollectionKey =
@@ -248,7 +253,12 @@ function ItemCard({
           <h3>{title}</h3>
           {subtitle ? <p>{subtitle}</p> : null}
         </div>
-        <button type="button" className="icon-button" onClick={onRemove} aria-label={`${removeLabel} ${title}`}>
+        <button
+          type="button"
+          className="icon-button"
+          onClick={onRemove}
+          aria-label={`${removeLabel} ${title}`}
+        >
           <Trash2 size={16} />
         </button>
       </div>
@@ -275,7 +285,9 @@ function ListEditor({
   removeLabel: string
 }) {
   const updateItem = (index: number, value: string) => {
-    onChange(items.map((item, itemIndex) => (itemIndex === index ? value : item)))
+    onChange(
+      items.map((item, itemIndex) => (itemIndex === index ? value : item)),
+    )
   }
 
   const removeItem = (index: number) => {
@@ -286,7 +298,11 @@ function ListEditor({
     <div className="list-editor">
       <div className="list-editor-head">
         <strong>{label}</strong>
-        <button type="button" className="secondary-button inline-button" onClick={() => onChange([...items, ''])}>
+        <button
+          type="button"
+          className="secondary-button inline-button"
+          onClick={() => onChange([...items, ''])}
+        >
           <Plus size={14} />
           {addLabel}
         </button>
@@ -301,7 +317,12 @@ function ListEditor({
               onChange={(event) => updateItem(index, event.target.value)}
               placeholder={placeholder}
             />
-            <button type="button" className="icon-button" onClick={() => removeItem(index)} aria-label={`${removeLabel} ${label}`}>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => removeItem(index)}
+              aria-label={`${removeLabel} ${label}`}
+            >
               <Trash2 size={16} />
             </button>
           </div>
@@ -313,8 +334,12 @@ function ListEditor({
 
 function MasterResumePage() {
   const { t } = useI18n()
-  const [resumeMaster, setResumeMaster] = React.useState<ResumeMaster | null>(null)
-  const [saveState, setSaveState] = React.useState<'idle' | 'saving' | 'saved'>('idle')
+  const [resumeMaster, setResumeMaster] = React.useState<ResumeMaster | null>(
+    null,
+  )
+  const [saveState, setSaveState] = React.useState<'idle' | 'saving' | 'saved'>(
+    'idle',
+  )
 
   React.useEffect(() => {
     chromeStorage.getResumeMaster().then(setResumeMaster)
@@ -335,8 +360,13 @@ function MasterResumePage() {
     }
   }, [resumeMaster])
 
-  const updateResumeMaster = <K extends keyof ResumeMaster>(key: K, value: ResumeMaster[K]) => {
-    setResumeMaster((current) => (current ? { ...current, [key]: value } : current))
+  const updateResumeMaster = <K extends keyof ResumeMaster>(
+    key: K,
+    value: ResumeMaster[K],
+  ) => {
+    setResumeMaster((current) =>
+      current ? { ...current, [key]: value } : current,
+    )
   }
 
   const updateCollectionItem = <T extends { id: string }>(
@@ -350,12 +380,17 @@ function MasterResumePage() {
       const collection = current[key] as unknown as T[]
       return {
         ...current,
-        [key]: collection.map((item) => (item.id === id ? updater(item) : item)),
+        [key]: collection.map((item) =>
+          item.id === id ? updater(item) : item,
+        ),
       }
     })
   }
 
-  const addCollectionItem = <T extends { id: string }>(key: ResumeCollectionKey, item: T) => {
+  const addCollectionItem = <T extends { id: string }>(
+    key: ResumeCollectionKey,
+    item: T,
+  ) => {
     setResumeMaster((current) => {
       if (!current) return current
 
@@ -379,7 +414,9 @@ function MasterResumePage() {
     })
   }
 
-  const handleSourceDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSourceDocumentUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -400,7 +437,8 @@ function MasterResumePage() {
     event.target.value = ''
   }
 
-  if (!resumeMaster) return <div className="panel">{t.resumeMaster.loading}</div>
+  if (!resumeMaster)
+    return <div className="panel">{t.resumeMaster.loading}</div>
 
   const completion = getResumeCompletion(resumeMaster)
   const r = t.resumeMaster
@@ -458,7 +496,10 @@ function MasterResumePage() {
       </section>
 
       <section className="panel">
-        <SectionHeader title={r.summary.title} description={r.summary.description} />
+        <SectionHeader
+          title={r.summary.title}
+          description={r.summary.description}
+        />
         <div className="grid two-col">
           <Field
             label={r.summary.fullName}
@@ -525,10 +566,14 @@ function MasterResumePage() {
                   label={r.profiles.label}
                   value={profile.label}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeProfileLink>('profiles', profile.id, (item) => ({
-                      ...item,
-                      label: value,
-                    }))
+                    updateCollectionItem<ResumeProfileLink>(
+                      'profiles',
+                      profile.id,
+                      (item) => ({
+                        ...item,
+                        label: value,
+                      }),
+                    )
                   }
                   placeholder={r.profiles.labelPlaceholder}
                 />
@@ -536,10 +581,14 @@ function MasterResumePage() {
                   label={r.profiles.value}
                   value={profile.value}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeProfileLink>('profiles', profile.id, (item) => ({
-                      ...item,
-                      value,
-                    }))
+                    updateCollectionItem<ResumeProfileLink>(
+                      'profiles',
+                      profile.id,
+                      (item) => ({
+                        ...item,
+                        value,
+                      }),
+                    )
                   }
                   placeholder={r.profiles.valuePlaceholder}
                 />
@@ -590,10 +639,14 @@ function MasterResumePage() {
                   label={r.experience.role}
                   value={experience.role}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
-                      ...item,
-                      role: value,
-                    }))
+                    updateCollectionItem<ResumeExperienceItem>(
+                      'experience',
+                      experience.id,
+                      (item) => ({
+                        ...item,
+                        role: value,
+                      }),
+                    )
                   }
                   placeholder={r.experience.rolePlaceholder}
                 />
@@ -601,10 +654,14 @@ function MasterResumePage() {
                   label={r.experience.company}
                   value={experience.company}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
-                      ...item,
-                      company: value,
-                    }))
+                    updateCollectionItem<ResumeExperienceItem>(
+                      'experience',
+                      experience.id,
+                      (item) => ({
+                        ...item,
+                        company: value,
+                      }),
+                    )
                   }
                   placeholder={r.experience.companyPlaceholder}
                 />
@@ -612,10 +669,14 @@ function MasterResumePage() {
                   label={r.experience.location}
                   value={experience.location}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
-                      ...item,
-                      location: value,
-                    }))
+                    updateCollectionItem<ResumeExperienceItem>(
+                      'experience',
+                      experience.id,
+                      (item) => ({
+                        ...item,
+                        location: value,
+                      }),
+                    )
                   }
                   placeholder={r.experience.locationPlaceholder}
                 />
@@ -624,11 +685,15 @@ function MasterResumePage() {
                     type="checkbox"
                     checked={experience.current}
                     onChange={(event) =>
-                      updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
-                        ...item,
-                        current: event.target.checked,
-                        endDate: event.target.checked ? '' : item.endDate,
-                      }))
+                      updateCollectionItem<ResumeExperienceItem>(
+                        'experience',
+                        experience.id,
+                        (item) => ({
+                          ...item,
+                          current: event.target.checked,
+                          endDate: event.target.checked ? '' : item.endDate,
+                        }),
+                      )
                     }
                   />
                   <span>{r.experience.current}</span>
@@ -638,10 +703,14 @@ function MasterResumePage() {
                   type="month"
                   value={experience.startDate}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
-                      ...item,
-                      startDate: value,
-                    }))
+                    updateCollectionItem<ResumeExperienceItem>(
+                      'experience',
+                      experience.id,
+                      (item) => ({
+                        ...item,
+                        startDate: value,
+                      }),
+                    )
                   }
                 />
                 <Field
@@ -649,10 +718,14 @@ function MasterResumePage() {
                   type="month"
                   value={experience.endDate}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
-                      ...item,
-                      endDate: value,
-                    }))
+                    updateCollectionItem<ResumeExperienceItem>(
+                      'experience',
+                      experience.id,
+                      (item) => ({
+                        ...item,
+                        endDate: value,
+                      }),
+                    )
                   }
                 />
               </div>
@@ -660,10 +733,14 @@ function MasterResumePage() {
                 label={r.experience.descriptionLabel}
                 value={experience.description}
                 onChange={(value) =>
-                  updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
-                    ...item,
-                    description: value,
-                  }))
+                  updateCollectionItem<ResumeExperienceItem>(
+                    'experience',
+                    experience.id,
+                    (item) => ({
+                      ...item,
+                      description: value,
+                    }),
+                  )
                 }
                 placeholder={r.experience.descriptionPlaceholder}
               />
@@ -671,10 +748,14 @@ function MasterResumePage() {
                 label={r.experience.highlights}
                 items={experience.highlights}
                 onChange={(items) =>
-                  updateCollectionItem<ResumeExperienceItem>('experience', experience.id, (item) => ({
-                    ...item,
-                    highlights: items,
-                  }))
+                  updateCollectionItem<ResumeExperienceItem>(
+                    'experience',
+                    experience.id,
+                    (item) => ({
+                      ...item,
+                      highlights: items,
+                    }),
+                  )
                 }
                 addLabel={r.experience.addHighlight}
                 placeholder={r.experience.highlightPlaceholder}
@@ -725,10 +806,14 @@ function MasterResumePage() {
                   label={r.education.institution}
                   value={education.institution}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
-                      ...item,
-                      institution: value,
-                    }))
+                    updateCollectionItem<ResumeEducationItem>(
+                      'education',
+                      education.id,
+                      (item) => ({
+                        ...item,
+                        institution: value,
+                      }),
+                    )
                   }
                   placeholder={r.education.institutionPlaceholder}
                 />
@@ -736,10 +821,14 @@ function MasterResumePage() {
                   label={r.education.degree}
                   value={education.degree}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
-                      ...item,
-                      degree: value,
-                    }))
+                    updateCollectionItem<ResumeEducationItem>(
+                      'education',
+                      education.id,
+                      (item) => ({
+                        ...item,
+                        degree: value,
+                      }),
+                    )
                   }
                   placeholder={r.education.degreePlaceholder}
                 />
@@ -747,10 +836,14 @@ function MasterResumePage() {
                   label={r.education.fieldOfStudy}
                   value={education.fieldOfStudy}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
-                      ...item,
-                      fieldOfStudy: value,
-                    }))
+                    updateCollectionItem<ResumeEducationItem>(
+                      'education',
+                      education.id,
+                      (item) => ({
+                        ...item,
+                        fieldOfStudy: value,
+                      }),
+                    )
                   }
                   placeholder={r.education.fieldOfStudyPlaceholder}
                 />
@@ -759,10 +852,14 @@ function MasterResumePage() {
                   type="month"
                   value={education.startDate}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
-                      ...item,
-                      startDate: value,
-                    }))
+                    updateCollectionItem<ResumeEducationItem>(
+                      'education',
+                      education.id,
+                      (item) => ({
+                        ...item,
+                        startDate: value,
+                      }),
+                    )
                   }
                 />
                 <Field
@@ -770,10 +867,14 @@ function MasterResumePage() {
                   type="month"
                   value={education.endDate}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
-                      ...item,
-                      endDate: value,
-                    }))
+                    updateCollectionItem<ResumeEducationItem>(
+                      'education',
+                      education.id,
+                      (item) => ({
+                        ...item,
+                        endDate: value,
+                      }),
+                    )
                   }
                 />
               </div>
@@ -781,10 +882,14 @@ function MasterResumePage() {
                 label={r.education.descriptionLabel}
                 value={education.description}
                 onChange={(value) =>
-                  updateCollectionItem<ResumeEducationItem>('education', education.id, (item) => ({
-                    ...item,
-                    description: value,
-                  }))
+                  updateCollectionItem<ResumeEducationItem>(
+                    'education',
+                    education.id,
+                    (item) => ({
+                      ...item,
+                      description: value,
+                    }),
+                  )
                 }
                 placeholder={r.education.descriptionPlaceholder}
               />
@@ -834,10 +939,14 @@ function MasterResumePage() {
                   label={r.projects.name}
                   value={project.name}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
-                      ...item,
-                      name: value,
-                    }))
+                    updateCollectionItem<ResumeProjectItem>(
+                      'projects',
+                      project.id,
+                      (item) => ({
+                        ...item,
+                        name: value,
+                      }),
+                    )
                   }
                   placeholder={r.projects.namePlaceholder}
                 />
@@ -845,10 +954,14 @@ function MasterResumePage() {
                   label={r.projects.role}
                   value={project.role}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
-                      ...item,
-                      role: value,
-                    }))
+                    updateCollectionItem<ResumeProjectItem>(
+                      'projects',
+                      project.id,
+                      (item) => ({
+                        ...item,
+                        role: value,
+                      }),
+                    )
                   }
                   placeholder={r.projects.rolePlaceholder}
                 />
@@ -857,10 +970,14 @@ function MasterResumePage() {
                   type="month"
                   value={project.startDate}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
-                      ...item,
-                      startDate: value,
-                    }))
+                    updateCollectionItem<ResumeProjectItem>(
+                      'projects',
+                      project.id,
+                      (item) => ({
+                        ...item,
+                        startDate: value,
+                      }),
+                    )
                   }
                 />
                 <Field
@@ -868,20 +985,28 @@ function MasterResumePage() {
                   type="month"
                   value={project.endDate}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
-                      ...item,
-                      endDate: value,
-                    }))
+                    updateCollectionItem<ResumeProjectItem>(
+                      'projects',
+                      project.id,
+                      (item) => ({
+                        ...item,
+                        endDate: value,
+                      }),
+                    )
                   }
                 />
                 <Field
                   label={r.projects.link}
                   value={project.link}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
-                      ...item,
-                      link: value,
-                    }))
+                    updateCollectionItem<ResumeProjectItem>(
+                      'projects',
+                      project.id,
+                      (item) => ({
+                        ...item,
+                        link: value,
+                      }),
+                    )
                   }
                   placeholder={r.projects.linkPlaceholder}
                 />
@@ -890,11 +1015,15 @@ function MasterResumePage() {
                     type="checkbox"
                     checked={project.current}
                     onChange={(event) =>
-                      updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
-                        ...item,
-                        current: event.target.checked,
-                        endDate: event.target.checked ? '' : item.endDate,
-                      }))
+                      updateCollectionItem<ResumeProjectItem>(
+                        'projects',
+                        project.id,
+                        (item) => ({
+                          ...item,
+                          current: event.target.checked,
+                          endDate: event.target.checked ? '' : item.endDate,
+                        }),
+                      )
                     }
                   />
                   <span>{r.projects.current}</span>
@@ -904,10 +1033,14 @@ function MasterResumePage() {
                 label={r.projects.descriptionLabel}
                 value={project.description}
                 onChange={(value) =>
-                  updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
-                    ...item,
-                    description: value,
-                  }))
+                  updateCollectionItem<ResumeProjectItem>(
+                    'projects',
+                    project.id,
+                    (item) => ({
+                      ...item,
+                      description: value,
+                    }),
+                  )
                 }
                 placeholder={r.projects.descriptionPlaceholder}
               />
@@ -915,10 +1048,14 @@ function MasterResumePage() {
                 label={r.projects.highlights}
                 items={project.highlights}
                 onChange={(items) =>
-                  updateCollectionItem<ResumeProjectItem>('projects', project.id, (item) => ({
-                    ...item,
-                    highlights: items,
-                  }))
+                  updateCollectionItem<ResumeProjectItem>(
+                    'projects',
+                    project.id,
+                    (item) => ({
+                      ...item,
+                      highlights: items,
+                    }),
+                  )
                 }
                 addLabel={r.projects.addHighlight}
                 placeholder={r.projects.highlightPlaceholder}
@@ -967,10 +1104,14 @@ function MasterResumePage() {
                     label={r.skills.name}
                     value={skill.name}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeSkillItem>('skills', skill.id, (item) => ({
-                        ...item,
-                        name: value,
-                      }))
+                      updateCollectionItem<ResumeSkillItem>(
+                        'skills',
+                        skill.id,
+                        (item) => ({
+                          ...item,
+                          name: value,
+                        }),
+                      )
                     }
                     placeholder={r.skills.namePlaceholder}
                   />
@@ -978,10 +1119,14 @@ function MasterResumePage() {
                     label={r.skills.level}
                     value={skill.level}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeSkillItem>('skills', skill.id, (item) => ({
-                        ...item,
-                        level: value,
-                      }))
+                      updateCollectionItem<ResumeSkillItem>(
+                        'skills',
+                        skill.id,
+                        (item) => ({
+                          ...item,
+                          level: value,
+                        }),
+                      )
                     }
                     placeholder={r.skills.levelPlaceholder}
                   />
@@ -989,10 +1134,14 @@ function MasterResumePage() {
                     label={r.skills.details}
                     value={skill.details}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeSkillItem>('skills', skill.id, (item) => ({
-                        ...item,
-                        details: value,
-                      }))
+                      updateCollectionItem<ResumeSkillItem>(
+                        'skills',
+                        skill.id,
+                        (item) => ({
+                          ...item,
+                          details: value,
+                        }),
+                      )
                     }
                     placeholder={r.skills.detailsPlaceholder}
                     rows={3}
@@ -1039,10 +1188,14 @@ function MasterResumePage() {
                     label={r.languages.name}
                     value={language.name}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeLanguageItem>('languages', language.id, (item) => ({
-                        ...item,
-                        name: value,
-                      }))
+                      updateCollectionItem<ResumeLanguageItem>(
+                        'languages',
+                        language.id,
+                        (item) => ({
+                          ...item,
+                          name: value,
+                        }),
+                      )
                     }
                     placeholder={r.languages.namePlaceholder}
                   />
@@ -1050,10 +1203,14 @@ function MasterResumePage() {
                     label={r.languages.proficiency}
                     value={language.proficiency}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeLanguageItem>('languages', language.id, (item) => ({
-                        ...item,
-                        proficiency: value,
-                      }))
+                      updateCollectionItem<ResumeLanguageItem>(
+                        'languages',
+                        language.id,
+                        (item) => ({
+                          ...item,
+                          proficiency: value,
+                        }),
+                      )
                     }
                     placeholder={r.languages.proficiencyPlaceholder}
                   />
@@ -1061,10 +1218,14 @@ function MasterResumePage() {
                     label={r.languages.certification}
                     value={language.certification}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeLanguageItem>('languages', language.id, (item) => ({
-                        ...item,
-                        certification: value,
-                      }))
+                      updateCollectionItem<ResumeLanguageItem>(
+                        'languages',
+                        language.id,
+                        (item) => ({
+                          ...item,
+                          certification: value,
+                        }),
+                      )
                     }
                     placeholder={r.languages.certificationPlaceholder}
                   />
@@ -1076,7 +1237,10 @@ function MasterResumePage() {
       </section>
 
       <section className="panel">
-        <SectionHeader title={r.interests.title} description={r.interests.description} />
+        <SectionHeader
+          title={r.interests.title}
+          description={r.interests.description}
+        />
         <ListEditor
           label={r.interests.title}
           items={resumeMaster.interests}
@@ -1126,10 +1290,14 @@ function MasterResumePage() {
                     label={r.awards.titleLabel}
                     value={award.title}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeAwardItem>('awards', award.id, (item) => ({
-                        ...item,
-                        title: value,
-                      }))
+                      updateCollectionItem<ResumeAwardItem>(
+                        'awards',
+                        award.id,
+                        (item) => ({
+                          ...item,
+                          title: value,
+                        }),
+                      )
                     }
                     placeholder={r.awards.titlePlaceholder}
                   />
@@ -1137,10 +1305,14 @@ function MasterResumePage() {
                     label={r.awards.issuer}
                     value={award.issuer}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeAwardItem>('awards', award.id, (item) => ({
-                        ...item,
-                        issuer: value,
-                      }))
+                      updateCollectionItem<ResumeAwardItem>(
+                        'awards',
+                        award.id,
+                        (item) => ({
+                          ...item,
+                          issuer: value,
+                        }),
+                      )
                     }
                     placeholder={r.awards.issuerPlaceholder}
                   />
@@ -1149,20 +1321,28 @@ function MasterResumePage() {
                     type="month"
                     value={award.date}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeAwardItem>('awards', award.id, (item) => ({
-                        ...item,
-                        date: value,
-                      }))
+                      updateCollectionItem<ResumeAwardItem>(
+                        'awards',
+                        award.id,
+                        (item) => ({
+                          ...item,
+                          date: value,
+                        }),
+                      )
                     }
                   />
                   <TextAreaField
                     label={r.awards.descriptionLabel}
                     value={award.description}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeAwardItem>('awards', award.id, (item) => ({
-                        ...item,
-                        description: value,
-                      }))
+                      updateCollectionItem<ResumeAwardItem>(
+                        'awards',
+                        award.id,
+                        (item) => ({
+                          ...item,
+                          description: value,
+                        }),
+                      )
                     }
                     placeholder={r.awards.descriptionPlaceholder}
                     rows={3}
@@ -1204,17 +1384,23 @@ function MasterResumePage() {
                 title={certification.name || r.certifications.newItem}
                 subtitle={certification.issuer || r.certifications.itemSubtitle}
                 removeLabel={r.remove}
-                onRemove={() => removeCollectionItem('certifications', certification.id)}
+                onRemove={() =>
+                  removeCollectionItem('certifications', certification.id)
+                }
               >
                 <div className="grid one-col">
                   <Field
                     label={r.certifications.name}
                     value={certification.name}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeCertificationItem>('certifications', certification.id, (item) => ({
-                        ...item,
-                        name: value,
-                      }))
+                      updateCollectionItem<ResumeCertificationItem>(
+                        'certifications',
+                        certification.id,
+                        (item) => ({
+                          ...item,
+                          name: value,
+                        }),
+                      )
                     }
                     placeholder={r.certifications.namePlaceholder}
                   />
@@ -1222,10 +1408,14 @@ function MasterResumePage() {
                     label={r.certifications.issuer}
                     value={certification.issuer}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeCertificationItem>('certifications', certification.id, (item) => ({
-                        ...item,
-                        issuer: value,
-                      }))
+                      updateCollectionItem<ResumeCertificationItem>(
+                        'certifications',
+                        certification.id,
+                        (item) => ({
+                          ...item,
+                          issuer: value,
+                        }),
+                      )
                     }
                     placeholder={r.certifications.issuerPlaceholder}
                   />
@@ -1234,10 +1424,14 @@ function MasterResumePage() {
                     type="month"
                     value={certification.date}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeCertificationItem>('certifications', certification.id, (item) => ({
-                        ...item,
-                        date: value,
-                      }))
+                      updateCollectionItem<ResumeCertificationItem>(
+                        'certifications',
+                        certification.id,
+                        (item) => ({
+                          ...item,
+                          date: value,
+                        }),
+                      )
                     }
                   />
                   <Field
@@ -1245,20 +1439,28 @@ function MasterResumePage() {
                     type="month"
                     value={certification.expiresAt}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeCertificationItem>('certifications', certification.id, (item) => ({
-                        ...item,
-                        expiresAt: value,
-                      }))
+                      updateCollectionItem<ResumeCertificationItem>(
+                        'certifications',
+                        certification.id,
+                        (item) => ({
+                          ...item,
+                          expiresAt: value,
+                        }),
+                      )
                     }
                   />
                   <Field
                     label={r.certifications.credentialId}
                     value={certification.credentialId}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeCertificationItem>('certifications', certification.id, (item) => ({
-                        ...item,
-                        credentialId: value,
-                      }))
+                      updateCollectionItem<ResumeCertificationItem>(
+                        'certifications',
+                        certification.id,
+                        (item) => ({
+                          ...item,
+                          credentialId: value,
+                        }),
+                      )
                     }
                     placeholder={r.certifications.credentialIdPlaceholder}
                   />
@@ -1301,17 +1503,23 @@ function MasterResumePage() {
                 title={publication.title || r.publications.newItem}
                 subtitle={publication.publisher || r.publications.itemSubtitle}
                 removeLabel={r.remove}
-                onRemove={() => removeCollectionItem('publications', publication.id)}
+                onRemove={() =>
+                  removeCollectionItem('publications', publication.id)
+                }
               >
                 <div className="grid one-col">
                   <Field
                     label={r.publications.titleLabel}
                     value={publication.title}
                     onChange={(value) =>
-                      updateCollectionItem<ResumePublicationItem>('publications', publication.id, (item) => ({
-                        ...item,
-                        title: value,
-                      }))
+                      updateCollectionItem<ResumePublicationItem>(
+                        'publications',
+                        publication.id,
+                        (item) => ({
+                          ...item,
+                          title: value,
+                        }),
+                      )
                     }
                     placeholder={r.publications.titlePlaceholder}
                   />
@@ -1319,10 +1527,14 @@ function MasterResumePage() {
                     label={r.publications.publisher}
                     value={publication.publisher}
                     onChange={(value) =>
-                      updateCollectionItem<ResumePublicationItem>('publications', publication.id, (item) => ({
-                        ...item,
-                        publisher: value,
-                      }))
+                      updateCollectionItem<ResumePublicationItem>(
+                        'publications',
+                        publication.id,
+                        (item) => ({
+                          ...item,
+                          publisher: value,
+                        }),
+                      )
                     }
                     placeholder={r.publications.publisherPlaceholder}
                   />
@@ -1331,20 +1543,28 @@ function MasterResumePage() {
                     type="month"
                     value={publication.date}
                     onChange={(value) =>
-                      updateCollectionItem<ResumePublicationItem>('publications', publication.id, (item) => ({
-                        ...item,
-                        date: value,
-                      }))
+                      updateCollectionItem<ResumePublicationItem>(
+                        'publications',
+                        publication.id,
+                        (item) => ({
+                          ...item,
+                          date: value,
+                        }),
+                      )
                     }
                   />
                   <Field
                     label={r.publications.link}
                     value={publication.link}
                     onChange={(value) =>
-                      updateCollectionItem<ResumePublicationItem>('publications', publication.id, (item) => ({
-                        ...item,
-                        link: value,
-                      }))
+                      updateCollectionItem<ResumePublicationItem>(
+                        'publications',
+                        publication.id,
+                        (item) => ({
+                          ...item,
+                          link: value,
+                        }),
+                      )
                     }
                     placeholder={r.publications.linkPlaceholder}
                   />
@@ -1352,10 +1572,14 @@ function MasterResumePage() {
                     label={r.publications.descriptionLabel}
                     value={publication.description}
                     onChange={(value) =>
-                      updateCollectionItem<ResumePublicationItem>('publications', publication.id, (item) => ({
-                        ...item,
-                        description: value,
-                      }))
+                      updateCollectionItem<ResumePublicationItem>(
+                        'publications',
+                        publication.id,
+                        (item) => ({
+                          ...item,
+                          description: value,
+                        }),
+                      )
                     }
                     placeholder={r.publications.descriptionPlaceholder}
                     rows={3}
@@ -1398,17 +1622,23 @@ function MasterResumePage() {
                 title={volunteering.organization || r.volunteering.newItem}
                 subtitle={volunteering.role || r.volunteering.itemSubtitle}
                 removeLabel={r.remove}
-                onRemove={() => removeCollectionItem('volunteering', volunteering.id)}
+                onRemove={() =>
+                  removeCollectionItem('volunteering', volunteering.id)
+                }
               >
                 <div className="grid one-col">
                   <Field
                     label={r.volunteering.organization}
                     value={volunteering.organization}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
-                        ...item,
-                        organization: value,
-                      }))
+                      updateCollectionItem<ResumeVolunteeringItem>(
+                        'volunteering',
+                        volunteering.id,
+                        (item) => ({
+                          ...item,
+                          organization: value,
+                        }),
+                      )
                     }
                     placeholder={r.volunteering.organizationPlaceholder}
                   />
@@ -1416,10 +1646,14 @@ function MasterResumePage() {
                     label={r.volunteering.role}
                     value={volunteering.role}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
-                        ...item,
-                        role: value,
-                      }))
+                      updateCollectionItem<ResumeVolunteeringItem>(
+                        'volunteering',
+                        volunteering.id,
+                        (item) => ({
+                          ...item,
+                          role: value,
+                        }),
+                      )
                     }
                     placeholder={r.volunteering.rolePlaceholder}
                   />
@@ -1428,10 +1662,14 @@ function MasterResumePage() {
                     type="month"
                     value={volunteering.startDate}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
-                        ...item,
-                        startDate: value,
-                      }))
+                      updateCollectionItem<ResumeVolunteeringItem>(
+                        'volunteering',
+                        volunteering.id,
+                        (item) => ({
+                          ...item,
+                          startDate: value,
+                        }),
+                      )
                     }
                   />
                   <Field
@@ -1439,10 +1677,14 @@ function MasterResumePage() {
                     type="month"
                     value={volunteering.endDate}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
-                        ...item,
-                        endDate: value,
-                      }))
+                      updateCollectionItem<ResumeVolunteeringItem>(
+                        'volunteering',
+                        volunteering.id,
+                        (item) => ({
+                          ...item,
+                          endDate: value,
+                        }),
+                      )
                     }
                   />
                   <label className="checkbox-field">
@@ -1450,11 +1692,15 @@ function MasterResumePage() {
                       type="checkbox"
                       checked={volunteering.current}
                       onChange={(event) =>
-                        updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
-                          ...item,
-                          current: event.target.checked,
-                          endDate: event.target.checked ? '' : item.endDate,
-                        }))
+                        updateCollectionItem<ResumeVolunteeringItem>(
+                          'volunteering',
+                          volunteering.id,
+                          (item) => ({
+                            ...item,
+                            current: event.target.checked,
+                            endDate: event.target.checked ? '' : item.endDate,
+                          }),
+                        )
                       }
                     />
                     <span>{r.volunteering.current}</span>
@@ -1463,10 +1709,14 @@ function MasterResumePage() {
                     label={r.volunteering.descriptionLabel}
                     value={volunteering.description}
                     onChange={(value) =>
-                      updateCollectionItem<ResumeVolunteeringItem>('volunteering', volunteering.id, (item) => ({
-                        ...item,
-                        description: value,
-                      }))
+                      updateCollectionItem<ResumeVolunteeringItem>(
+                        'volunteering',
+                        volunteering.id,
+                        (item) => ({
+                          ...item,
+                          description: value,
+                        }),
+                      )
                     }
                     placeholder={r.volunteering.descriptionPlaceholder}
                     rows={3}
@@ -1517,10 +1767,14 @@ function MasterResumePage() {
                   label={r.references.name}
                   value={reference.name}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
-                      ...item,
-                      name: value,
-                    }))
+                    updateCollectionItem<ResumeReferenceItem>(
+                      'references',
+                      reference.id,
+                      (item) => ({
+                        ...item,
+                        name: value,
+                      }),
+                    )
                   }
                   placeholder={r.references.namePlaceholder}
                 />
@@ -1528,10 +1782,14 @@ function MasterResumePage() {
                   label={r.references.relationship}
                   value={reference.relationship}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
-                      ...item,
-                      relationship: value,
-                    }))
+                    updateCollectionItem<ResumeReferenceItem>(
+                      'references',
+                      reference.id,
+                      (item) => ({
+                        ...item,
+                        relationship: value,
+                      }),
+                    )
                   }
                   placeholder={r.references.relationshipPlaceholder}
                 />
@@ -1539,10 +1797,14 @@ function MasterResumePage() {
                   label={r.references.company}
                   value={reference.company}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
-                      ...item,
-                      company: value,
-                    }))
+                    updateCollectionItem<ResumeReferenceItem>(
+                      'references',
+                      reference.id,
+                      (item) => ({
+                        ...item,
+                        company: value,
+                      }),
+                    )
                   }
                   placeholder={r.references.companyPlaceholder}
                 />
@@ -1550,10 +1812,14 @@ function MasterResumePage() {
                   label={r.references.email}
                   value={reference.email}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
-                      ...item,
-                      email: value,
-                    }))
+                    updateCollectionItem<ResumeReferenceItem>(
+                      'references',
+                      reference.id,
+                      (item) => ({
+                        ...item,
+                        email: value,
+                      }),
+                    )
                   }
                   placeholder={r.references.emailPlaceholder}
                 />
@@ -1561,10 +1827,14 @@ function MasterResumePage() {
                   label={r.references.phone}
                   value={reference.phone}
                   onChange={(value) =>
-                    updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
-                      ...item,
-                      phone: value,
-                    }))
+                    updateCollectionItem<ResumeReferenceItem>(
+                      'references',
+                      reference.id,
+                      (item) => ({
+                        ...item,
+                        phone: value,
+                      }),
+                    )
                   }
                   placeholder={r.references.phonePlaceholder}
                 />
@@ -1573,10 +1843,14 @@ function MasterResumePage() {
                 label={r.references.notes}
                 value={reference.notes}
                 onChange={(value) =>
-                  updateCollectionItem<ResumeReferenceItem>('references', reference.id, (item) => ({
-                    ...item,
-                    notes: value,
-                  }))
+                  updateCollectionItem<ResumeReferenceItem>(
+                    'references',
+                    reference.id,
+                    (item) => ({
+                      ...item,
+                      notes: value,
+                    }),
+                  )
                 }
                 placeholder={r.references.notesPlaceholder}
                 rows={3}
@@ -1591,16 +1865,78 @@ function MasterResumePage() {
 
 function SelectedOfferPage() {
   const { t } = useI18n()
-  const offer = useAsyncValue(() => chromeStorage.getCapturedJob())
+  const [offer, setOffer] = React.useState<CapturedJobOffer | null>(null)
+  const [isSaving, setIsSaving] = React.useState(false)
+  const [saveState, setSaveState] = React.useState<'idle' | 'saved' | 'error'>(
+    'idle',
+  )
+  const [saveError, setSaveError] = React.useState<{
+    reason: CaptureCurrentJobFailureReason
+    details?: string
+  } | null>(null)
+
+  React.useEffect(() => {
+    chromeStorage
+      .getCapturedJob()
+      .then((job) => {
+        setOffer(job)
+      })
+      .catch(() => {
+        setOffer(null)
+      })
+  }, [])
 
   if (!offer) return <div className="panel">{t.common.loadingJob}</div>
+
+  const displayTitle = offer.pageTitle || offer.title
+  const missingFieldsText = offer.missingFields?.join(', ')
+  const getCaptureErrorMessage = (reason: CaptureCurrentJobFailureReason) => {
+    switch (reason) {
+      case 'no-active-tab':
+        return t.selectedOffer.storeErrorNoActiveTab
+      case 'message-failed':
+        return t.selectedOffer.storeErrorMessageFailed
+      case 'no-job-found':
+        return t.selectedOffer.storeErrorNoJobFound
+      case 'cache-failed':
+        return t.selectedOffer.storeErrorCacheFailed
+      default:
+        return t.selectedOffer.storeError
+    }
+  }
+
+  const handleStoreCurrentOffer = async () => {
+    setIsSaving(true)
+    setSaveState('idle')
+    setSaveError(null)
+
+    const result = await captureCurrentJob()
+
+    if (result.ok) {
+      setOffer(result.job)
+      setSaveState('saved')
+    } else {
+      setSaveState('error')
+      setSaveError({
+        reason: result.reason,
+        details: result.details,
+      })
+    }
+
+    setIsSaving(false)
+  }
 
   return (
     <div className="page-stack">
       <section className="hero-card compact">
         <span className="eyebrow">{t.selectedOffer.eyebrow}</span>
-        <h1>{offer.title}</h1>
+        <h1>{displayTitle}</h1>
         <p>{`${offer.company} | ${offer.location}`}</p>
+        {missingFieldsText ? (
+          <p className="panel-note">
+            {`${t.selectedOffer.missingFieldsLabel}: ${missingFieldsText}`}
+          </p>
+        ) : null}
       </section>
 
       <section className="grid two-col">
@@ -1612,9 +1948,33 @@ function SelectedOfferPage() {
         <article className="panel">
           <h2>{t.selectedOffer.actionsTitle}</h2>
           <div className="action-stack">
-            <button className="primary-button">{t.selectedOffer.generateResume}</button>
-            <button className="secondary-button">{t.selectedOffer.generateCoverLetter}</button>
-            <button className="secondary-button">{t.selectedOffer.saveDashboard}</button>
+            <button
+              className="secondary-button"
+              onClick={() => void handleStoreCurrentOffer()}
+              disabled={isSaving}
+            >
+              {isSaving
+                ? t.common.loadingJob
+                : t.selectedOffer.storeCurrentOffer}
+            </button>
+            {saveState === 'saved' ? (
+              <p className="panel-note">{t.selectedOffer.storeSuccess}</p>
+            ) : null}
+            {saveState === 'error' ? (
+              <div className="panel-note">
+                <p>{getCaptureErrorMessage(saveError?.reason ?? 'no-job-found')}</p>
+                {saveError?.details ? <pre className="debug-block">{saveError.details}</pre> : null}
+              </div>
+            ) : null}
+            <button className="primary-button">
+              {t.selectedOffer.generateResume}
+            </button>
+            <button className="secondary-button">
+              {t.selectedOffer.generateCoverLetter}
+            </button>
+            <button className="secondary-button">
+              {t.selectedOffer.saveDashboard}
+            </button>
           </div>
         </article>
       </section>
@@ -1626,7 +1986,8 @@ function DashboardPage() {
   const { t } = useI18n()
   const applications = useAsyncValue(() => apiClient.getApplications())
 
-  if (!applications) return <div className="panel">{t.common.loadingApplications}</div>
+  if (!applications)
+    return <div className="panel">{t.common.loadingApplications}</div>
 
   return (
     <div className="page-stack">
