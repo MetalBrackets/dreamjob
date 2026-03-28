@@ -767,6 +767,6 @@
       "8. Retrieve generated CV and reviews via GET endpoints",
       "9. Verify: all data flows through correctly, all JSON files are populated"
     ],
-    "passes": false
+    "passes": true
   }
 ]
