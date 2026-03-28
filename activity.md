@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Decision Evaluation Logic (src/services/cv-generator.ts)**: Extracted decision evaluation into a dedicated `evaluateDecision()` function with typed `DecisionInput` and `DecisionResult` interfaces. The function evaluates three boolean outcomes: cvGenerationOk (CV was produced), atsOk (ATS review passed), recruiterOk (Recruiter review passed). When all three are true, finalStatus is FINAL_APPROVED. When CV generation itself failed, finalStatus is REJECTED. Otherwise (ATS or Recruiter failed but CV exists), finalStatus is NEEDS_REVISION. Rejection reasons are aggregated from each failing component with scores and recommendations. The `orchestrate()` function now delegates to `evaluateDecision()` instead of inline logic. Verified: tsc --noEmit passes, server starts, GET /api/cvs returns 200.
+
+### 2026-03-28
 - **Single-Pass Orchestrator (src/services/cv-generator.ts)**: Verified src/services/cv-generator.ts implements the full single-pass orchestrator pipeline. The orchestrate(profile, jobPost, language) function calls three AI agents sequentially: (1) Candidate Agent via generateTargetedCV to produce initial GeneratedCV, (2) ATS Agent via reviewCVAsATS to score for machine compatibility, (3) Recruiter Agent via reviewCVAsRecruiter to evaluate credibility and readability. After all agents run, builds a ReviewAgreement with cvGenerationOk (always true since CV was produced), atsOk (atsReview.passed), recruiterOk (recruiterReview.passed), and derives finalStatus (FINAL_APPROVED if all pass, NEEDS_REVISION otherwise) with rejectionReasons aggregated from failing reviews. Stores all four artifacts by appending to their respective JSON collections: cvs.json, ats-reviews.json, recruiter-reviews.json, review-agreements.json. Returns OrchestratorResult containing cv, atsReview, recruiterReview, and reviewAgreement. Verified: tsc --noEmit passes, server starts, GET /api/cvs returns 200.
 
 ### 2026-03-28

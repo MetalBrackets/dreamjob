@@ -626,7 +626,7 @@
       "3. Otherwise mark as needing revision or rejection",
       "4. Verify: passing scores produce FINAL_APPROVED, any failure prevents approval"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Orchestration",

@@ -23,6 +23,61 @@ export interface OrchestratorResult {
   reviewAgreement: ReviewAgreement;
 }
 
+export interface DecisionInput {
+  cvProduced: boolean;
+  atsReview: ATSReview;
+  recruiterReview: RecruiterReview;
+}
+
+export interface DecisionResult {
+  cvGenerationOk: boolean;
+  atsOk: boolean;
+  recruiterOk: boolean;
+  reviewAgreementOk: boolean;
+  finalStatus: "FINAL_APPROVED" | "REJECTED" | "NEEDS_REVISION";
+  rejectionReasons: string[];
+}
+
+export function evaluateDecision(input: DecisionInput): DecisionResult {
+  const cvGenerationOk = input.cvProduced;
+  const atsOk = input.atsReview.passed;
+  const recruiterOk = input.recruiterReview.passed;
+  const reviewAgreementOk = cvGenerationOk && atsOk && recruiterOk;
+
+  const rejectionReasons: string[] = [];
+  if (!cvGenerationOk) {
+    rejectionReasons.push("CV generation failed.");
+  }
+  if (!atsOk) {
+    rejectionReasons.push(
+      `ATS review failed (score: ${input.atsReview.score}). ${input.atsReview.recommendations.join("; ")}`
+    );
+  }
+  if (!recruiterOk) {
+    rejectionReasons.push(
+      `Recruiter review failed (score: ${input.recruiterReview.score}). ${input.recruiterReview.recommendations.join("; ")}`
+    );
+  }
+
+  let finalStatus: "FINAL_APPROVED" | "REJECTED" | "NEEDS_REVISION";
+  if (reviewAgreementOk) {
+    finalStatus = "FINAL_APPROVED";
+  } else if (!cvGenerationOk) {
+    finalStatus = "REJECTED";
+  } else {
+    finalStatus = "NEEDS_REVISION";
+  }
+
+  return {
+    cvGenerationOk,
+    atsOk,
+    recruiterOk,
+    reviewAgreementOk,
+    finalStatus,
+    rejectionReasons,
+  };
+}
+
 export async function orchestrate(
   profile: Profile,
   jobPost: JobPost,
@@ -40,41 +95,18 @@ export async function orchestrate(
   // Step 3: Call Recruiter Agent to review the generated CV
   const recruiterReview = await reviewCVAsRecruiter(jobPost, cv);
 
-  // Build ReviewAgreement
-  const cvGenerationOk = true;
-  const atsOk = atsReview.passed;
-  const recruiterOk = recruiterReview.passed;
-  const reviewAgreementOk = cvGenerationOk && atsOk && recruiterOk;
-
-  const rejectionReasons: string[] = [];
-  if (!atsOk) {
-    rejectionReasons.push(
-      `ATS review failed (score: ${atsReview.score}). ${atsReview.recommendations.join("; ")}`
-    );
-  }
-  if (!recruiterOk) {
-    rejectionReasons.push(
-      `Recruiter review failed (score: ${recruiterReview.score}). ${recruiterReview.recommendations.join("; ")}`
-    );
-  }
-
-  let finalStatus: "FINAL_APPROVED" | "REJECTED" | "NEEDS_REVISION";
-  if (reviewAgreementOk) {
-    finalStatus = "FINAL_APPROVED";
-  } else {
-    finalStatus = "NEEDS_REVISION";
-  }
+  // Evaluate decision based on agent results
+  const decision = evaluateDecision({
+    cvProduced: true,
+    atsReview,
+    recruiterReview,
+  });
 
   const reviewAgreement: ReviewAgreement = {
     id: `ra_${randomUUID().slice(0, 8)}`,
     jobPostId: jobPost.id,
     cvId: cv.id,
-    cvGenerationOk,
-    atsOk,
-    recruiterOk,
-    reviewAgreementOk,
-    finalStatus,
-    rejectionReasons,
+    ...decision,
     iterationCount: 1,
   };
 
