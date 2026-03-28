@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Shared Validation Definitions (src/schemas/shared.ts)**: Created src/schemas/shared.ts defining shared enum and constraint definitions for reuse across route validation schemas. Re-exports RemoteModeEnum, EmploymentTypeEnum, SeniorityEnum from job-post.ts and FinalStatusSchema from review-agreement.ts. Defines new LevelEnum (beginner/intermediate/advanced/expert/native) for skill and language level validation. Defines NameString (maxLength 200) and DescriptionString (maxLength 10000) shared constraint types. Defines IdParamsSchema as Type.Object({ id: Type.String({ minLength: 1 }) }) for use as a shared :id param schema across all parameterized routes. Exports static TypeScript types Level and IdParams. Verified: tsc --noEmit passes, server starts on port 3002, GET /api/cvs returns 200.
+
+### 2026-03-28
 - **AddonResult Construction (src/services/cv-generator.ts, src/schemas/addon-result.ts)**: Created AddonResult TypeBox schema (src/schemas/addon-result.ts) with status ('accepted'|'rejected'), overall_score (average of ATS and Recruiter scores), scores object ({ats_score, recruiter_score}), strengths (matched keywords + recruiter strengths), weaknesses (missing keywords + format flags + recruiter concerns), recommendations (aggregated from both ATS and Recruiter), rejection_reasons, cv_id, job_post_id, and iteration_count. Added buildAddonResult() function to cv-generator.ts that maps FINAL_APPROVED→'accepted' and REJECTED→'rejected', computes overall_score as Math.round((atsScore + recruiterScore) / 2), and aggregates feedback from both reviews. Updated OrchestratorResult interface to include addonResult field. The orchestrate() function now returns the addonResult alongside all other artifacts. Verified: tsc --noEmit passes, server starts on port 3000, GET /api/cvs returns 200.
 
 ### 2026-03-28

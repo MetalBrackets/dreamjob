@@ -676,7 +676,7 @@
       "3. Define shared :id param schema (non-empty string) for all parameterized routes",
       "4. Verify: shared schemas export correctly and can be referenced by route files"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Validation",
