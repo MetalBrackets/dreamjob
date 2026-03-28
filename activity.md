@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **ATS Agent - reviewCVAsATS (src/services/ai/ats-agent.ts)**: Created src/services/ai/ats-agent.ts implementing reviewCVAsATS(jobPost, cv, scoringRules?) which uses OpenAI GPT-4o with JSON mode to evaluate a generated CV for ATS/machine compatibility against a target job posting. Accepts optional ATSScoringRules interface (passingScore default 75, weightKeywords 0.5, weightHardFilters 0.3, weightStructure 0.2). Constructs a detailed system prompt enforcing three evaluation criteria: keyword presence (50% weight — exact matches and synonyms against job keywords/tools/languages), hard filter coverage (30% weight — each must-have requirement evaluated as pass/fail/unknown with evidence), and structure/formatting (20% weight — clear titles, consistent dates, quantified achievements, proper sections). Returns ATSReview with score (0-100 clamped), passed boolean (score >= passingScore), hardFiltersStatus array, matchedKeywords, missingKeywords, formatFlags, and recommendations. Score thresholds: 0-49 low, 50-74 partial, 75-100 pass. Verified: tsc --noEmit passes.
+
+### 2026-03-28
 - **Revision Support in generateTargetedCV (src/services/ai/candidate-agent.ts)**: Added optional revisionContext parameter (RevisionContext interface with optional previousAtsReview and previousRecruiterReview fields) to generateTargetedCV. When revision context is provided, constructs a detailed REVISION CONTEXT section in the user prompt containing previous ATS review feedback (score, hard filter statuses, missing keywords, format flags, recommendations) and/or previous recruiter review feedback (score, sub-scores, concerns, recommendations). Instructs the agent to address each recommendation and concern, incorporate missing keywords where truthfully possible, and fix format flags. Imported ATSReview and RecruiterReview types. Verified: tsc --noEmit passes.
 
 ### 2026-03-28
