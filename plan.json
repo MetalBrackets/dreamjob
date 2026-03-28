@@ -639,7 +639,7 @@
       "5. After 2 failures: end with REJECTED_FOR_REVIEW status",
       "6. Verify: simulate a failing ATS score, confirm revision triggers and re-evaluates"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Orchestration",

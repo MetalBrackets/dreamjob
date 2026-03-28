@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Revision Loop in Orchestrator (src/services/cv-generator.ts)**: Added revision loop to `orchestrate()` that retries CV generation with feedback when ATS or Recruiter reviews fail, up to a maximum of 2 revision iterations (3 total attempts). When ATS fails, feeds the ATSReview back as `revisionContext.previousAtsReview`. When Recruiter fails, feeds RecruiterReview back as `revisionContext.previousRecruiterReview`. When both fail, consolidates both reviews into a single revision context. After exhausting max iterations without approval, finalStatus is set to REJECTED. The `iterationCount` in the ReviewAgreement tracks how many attempts were made. Verified: tsc --noEmit passes, server starts, GET /api/cvs returns 200.
+
+### 2026-03-28
 - **Decision Evaluation Logic (src/services/cv-generator.ts)**: Extracted decision evaluation into a dedicated `evaluateDecision()` function with typed `DecisionInput` and `DecisionResult` interfaces. The function evaluates three boolean outcomes: cvGenerationOk (CV was produced), atsOk (ATS review passed), recruiterOk (Recruiter review passed). When all three are true, finalStatus is FINAL_APPROVED. When CV generation itself failed, finalStatus is REJECTED. Otherwise (ATS or Recruiter failed but CV exists), finalStatus is NEEDS_REVISION. Rejection reasons are aggregated from each failing component with scores and recommendations. The `orchestrate()` function now delegates to `evaluateDecision()` instead of inline logic. Verified: tsc --noEmit passes, server starts, GET /api/cvs returns 200.
 
 ### 2026-03-28

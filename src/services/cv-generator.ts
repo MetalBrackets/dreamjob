@@ -78,36 +78,62 @@ export function evaluateDecision(input: DecisionInput): DecisionResult {
   };
 }
 
+const MAX_REVISION_ITERATIONS = 2;
+
 export async function orchestrate(
   profile: Profile,
   jobPost: JobPost,
   language: string
 ): Promise<OrchestratorResult> {
-  // Step 1: Call Candidate Agent to generate initial CV
-  const cv = await generateTargetedCV(profile, jobPost, {
-    language,
-    truthfulnessMode: "strict",
-  });
+  const rules = { language, truthfulnessMode: "strict" as const };
 
-  // Step 2: Call ATS Agent to review the generated CV
-  const atsReview = await reviewCVAsATS(jobPost, cv);
-
-  // Step 3: Call Recruiter Agent to review the generated CV
-  const recruiterReview = await reviewCVAsRecruiter(jobPost, cv);
-
-  // Evaluate decision based on agent results
-  const decision = evaluateDecision({
+  // Initial generation
+  let cv = await generateTargetedCV(profile, jobPost, rules);
+  let atsReview = await reviewCVAsATS(jobPost, cv);
+  let recruiterReview = await reviewCVAsRecruiter(jobPost, cv);
+  let decision = evaluateDecision({
     cvProduced: true,
     atsReview,
     recruiterReview,
   });
+  let iterationCount = 1;
+
+  // Revision loop: retry with feedback when ATS or Recruiter fails
+  while (
+    decision.finalStatus === "NEEDS_REVISION" &&
+    iterationCount < MAX_REVISION_ITERATIONS + 1
+  ) {
+    const revisionContext: import("./ai/candidate-agent.js").RevisionContext = {};
+    if (!decision.atsOk) {
+      revisionContext.previousAtsReview = atsReview;
+    }
+    if (!decision.recruiterOk) {
+      revisionContext.previousRecruiterReview = recruiterReview;
+    }
+
+    cv = await generateTargetedCV(profile, jobPost, rules, revisionContext);
+    atsReview = await reviewCVAsATS(jobPost, cv);
+    recruiterReview = await reviewCVAsRecruiter(jobPost, cv);
+    decision = evaluateDecision({
+      cvProduced: true,
+      atsReview,
+      recruiterReview,
+    });
+    iterationCount++;
+  }
+
+  // After max iterations, if still not approved, mark as REJECTED
+  if (decision.finalStatus === "NEEDS_REVISION") {
+    decision.finalStatus = "REJECTED";
+    decision.reviewAgreementOk = false;
+  }
 
   const reviewAgreement: ReviewAgreement = {
     id: `ra_${randomUUID().slice(0, 8)}`,
     jobPostId: jobPost.id,
     cvId: cv.id,
     ...decision,
-    iterationCount: 1,
+    iterationCount,
   };
 
   // Store all artifacts
