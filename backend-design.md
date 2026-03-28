@@ -206,7 +206,7 @@ Output from the Recruiter Agent — human-readability and credibility check.
 | Field            | Type     | Notes                              |
 | ---------------- | -------- | ---------------------------------- |
 | id               | Int      |                                    |
-| cvId             | Int      | FK → TailoredResume                |
+| cvId             | Int      | FK → GeneratedCV                   |
 | jobPostId        | Int      | FK → JobPost                       |
 | score            | Int      | Overall 0–100                      |
 | passed           | Boolean  |                                    |

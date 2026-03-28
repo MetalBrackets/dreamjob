@@ -206,7 +206,7 @@ Sortie de l'Agent Recruteur — vérification de la lisibilité et de la crédib
 | Champ            | Type     | Notes                              |
 | ---------------- | -------- | ---------------------------------- |
 | id               | Int      |                                    |
-| cvId             | Int      | FK → TailoredResume                |
+| cvId             | Int      | FK → GeneratedCV                   |
 | jobPostId        | Int      | FK → JobPost                       |
 | score            | Int      | Score global 0–100                 |
 | passed           | Boolean  |                                    |
