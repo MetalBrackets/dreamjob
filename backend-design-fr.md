@@ -14,23 +14,23 @@ DreamJob aide les utilisateurs à adapter leur CV aux offres d'emploi LinkedIn. 
 | ---------- | ----------------------- | ------------------------------------------- |
 | Runtime    | Node.js + TypeScript    | Largement connu, excellent outillage        |
 | Framework  | Fastify                 | Rapide, basé sur les plugins, support TS natif |
-| Base de données | SQLite via Prisma  | Zéro configuration — un seul fichier, pas de serveur nécessaire |
+| Stockage    | Fichiers JSON (`fs`) | Zéro configuration — juste des fichiers, pas d'ORM ni de BDD nécessaire |
 | IA         | OpenAI API              | Alimente toutes les opérations des agents IA |
 
 ---
 
 ## Modèles de données
 
-Tous les modèles utilisent des IDs entiers auto-incrémentés et des horodatages `createdAt`/`updatedAt`.
+Tous les modèles utilisent des IDs string auto-générés (ex. `"job_1"`, `"cv_1"`) et des horodatages `createdAt`/`updatedAt` au format ISO-8601. Chaque type de modèle est stocké dans son propre fichier JSON dans le répertoire `data/`.
 
 ### Profile
 
-Document unique représentant l'identité professionnelle complète de l'utilisateur (CandidateMasterProfile). Stocké en une seule ligne avec une colonne JSON unique. Récupéré et mis à jour en bloc via `GET` / `PUT /api/profile`.
+Document unique représentant l'identité professionnelle complète de l'utilisateur (CandidateMasterProfile). Stocké dans `data/profile.json`. Récupéré et mis à jour en bloc via `GET` / `PUT /api/profile`.
 
 | Champ | Type | Notes                                    |
 | ----- | ---- | ---------------------------------------- |
-| id    | Int  | Toujours 1 (utilisateur unique)          |
-| data  | Json | CandidateMasterProfile complet — voir ci-dessous |
+| id    | String | Toujours `"default"` (utilisateur unique)  |
+| data  | Object | CandidateMasterProfile complet — voir ci-dessous |
 
 #### Structure JSON du profil
 
@@ -125,13 +125,13 @@ Données brutes capturées par l'extension navigateur avant la normalisation IA.
 
 | Champ            | Type     | Notes                                      |
 | ---------------- | -------- | ------------------------------------------ |
-| id               | Int      |                                            |
+| id               | String   | ex. `"raw_1"`                              |
 | source           | String   | ex. "linkedin"                             |
 | sourceUrl        | String   | URL originale de l'offre d'emploi          |
 | capturedAt       | DateTime | Date de capture par l'extension            |
 | htmlSnapshotRef  | String   | Optionnel — réf. vers le snapshot HTML stocké |
 | rawText          | String   | Texte complet extrait de la page           |
-| rawFields        | Json     | `{title, company, location, employment_type, ...}` |
+| rawFields        | Object   | `{title, company, location, employment_type, ...}` |
 
 ### JobPost
 
@@ -139,8 +139,8 @@ Offre d'emploi normalisée créée à partir des données brutes. Utilisée par 
 
 | Champ                | Type     | Notes                                      |
 | -------------------- | -------- | ------------------------------------------ |
-| id                   | Int      |                                            |
-| jobOfferRawId        | Int      | FK → JobOfferRaw                           |
+| id                   | String   | ex. `"job_1"`                              |
+| jobOfferRawId        | String   | Réf → id JobOfferRaw                       |
 | title                | String   | Intitulé du poste                          |
 | company              | String   |                                            |
 | description          | String   | Texte complet de la description du poste   |
@@ -151,12 +151,12 @@ Offre d'emploi normalisée créée à partir des données brutes. Utilisée par 
 | employmentType       | String   | `full_time` / `part_time` / `contract` / `internship` |
 | seniority            | String   | `entry` / `mid` / `senior` / `lead` / `executive` |
 | jobSummary           | String   | Résumé normalisé court                     |
-| responsibilities     | String[] | Responsabilités clés (colonne JSON)        |
-| requirementsMustHave | String[] | Exigences obligatoires (colonne JSON)      |
-| requirementsNiceToHave | String[] | Exigences souhaitées (colonne JSON)      |
-| keywords             | String[] | Mots-clés extraits (colonne JSON)          |
-| tools                | String[] | Outils mentionnés (colonne JSON)           |
-| languages            | String[] | Langues requises (colonne JSON)            |
+| responsibilities     | String[] | Responsabilités clés        |
+| requirementsMustHave | String[] | Exigences obligatoires      |
+| requirementsNiceToHave | String[] | Exigences souhaitées      |
+| keywords             | String[] | Mots-clés extraits          |
+| tools                | String[] | Outils mentionnés           |
+| languages            | String[] | Langues requises            |
 | yearsExperienceMin   | Int      | Optionnel                                  |
 | postedDate           | DateTime | Optionnel                                  |
 
@@ -166,21 +166,21 @@ CV structuré et ciblé pour un poste, généré par l'Agent Candidat.
 
 | Champ                  | Type     | Notes                                              |
 | ---------------------- | -------- | -------------------------------------------------- |
-| id                     | Int      |                                                    |
-| profileId              | Int      | FK → Profile                                       |
-| jobPostId              | Int      | FK → JobPost                                       |
+| id                     | String   | ex. `"cv_1"`                                       |
+| profileId              | String   | Réf → id Profile                                   |
+| jobPostId              | String   | Réf → id JobPost                                   |
 | version                | Int      | Compteur d'itérations                              |
 | language               | String   | Langue du CV (ex. "fr", "en")                      |
 | title                  | String   | ex. "CV ciblé - Senior Product Designer"           |
-| header                 | Json     | `{fullName, headline, contact, links}`             |
+| header                 | Object   | `{fullName, headline, contact, links}`             |
 | summary                | String   | Résumé professionnel adapté                        |
-| skillsHighlighted      | String[] | Compétences sélectionnées pour ce poste (colonne JSON) |
-| experiencesSelected    | Json     | `[{experienceId, rewrittenBullets[]}]`             |
-| educationSelected      | Json     | Entrées de formation sélectionnées                 |
-| certificationsSelected | Json     | Certifications sélectionnées                       |
-| keywordsCovered        | String[] | Mots-clés du poste couverts (colonne JSON)         |
-| omittedItems           | String[] | Éléments délibérément exclus (colonne JSON)        |
-| generationNotes        | String[] | Notes de raisonnement de l'agent (colonne JSON)    |
+| skillsHighlighted      | String[] | Compétences sélectionnées pour ce poste |
+| experiencesSelected    | Object[] | `[{experienceId, rewrittenBullets[]}]`             |
+| educationSelected      | Object[] | Entrées de formation sélectionnées                 |
+| certificationsSelected | Object[] | Certifications sélectionnées                       |
+| keywordsCovered        | String[] | Mots-clés du poste couverts         |
+| omittedItems           | String[] | Éléments délibérément exclus        |
+| generationNotes        | String[] | Notes de raisonnement de l'agent    |
 
 ### ATSReview
 
@@ -188,16 +188,16 @@ Sortie de l'Agent ATS — vérification de la conformité des mots-clés et du f
 
 | Champ             | Type     | Notes                                      |
 | ----------------- | -------- | ------------------------------------------ |
-| id                | Int      |                                            |
-| cvId              | Int      | FK → GeneratedCV                           |
-| jobPostId         | Int      | FK → JobPost                               |
+| id                | String   | ex. `"ats_1"`                              |
+| cvId              | String   | Réf → id GeneratedCV                       |
+| jobPostId         | String   | Réf → id JobPost                           |
 | score             | Int      | 0–100                                      |
 | passed            | Boolean  |                                            |
-| hardFiltersStatus | Json     | `[{filter, status, evidence}]`             |
-| matchedKeywords   | String[] | Mots-clés trouvés dans le CV (colonne JSON) |
-| missingKeywords   | String[] | Mots-clés absents du CV (colonne JSON)     |
-| formatFlags       | String[] | Problèmes de mise en forme (colonne JSON)  |
-| recommendations   | String[] | Améliorations suggérées (colonne JSON)     |
+| hardFiltersStatus | Object[] | `[{filter, status, evidence}]`             |
+| matchedKeywords   | String[] | Mots-clés trouvés dans le CV |
+| missingKeywords   | String[] | Mots-clés absents du CV     |
+| formatFlags       | String[] | Problèmes de mise en forme  |
+| recommendations   | String[] | Améliorations suggérées     |
 
 ### RecruiterReview
 
@@ -205,18 +205,18 @@ Sortie de l'Agent Recruteur — vérification de la lisibilité et de la crédib
 
 | Champ            | Type     | Notes                              |
 | ---------------- | -------- | ---------------------------------- |
-| id               | Int      |                                    |
-| cvId             | Int      | FK → GeneratedCV                   |
-| jobPostId        | Int      | FK → JobPost                       |
+| id               | String   | ex. `"rr_1"`                       |
+| cvId             | String   | Réf → id GeneratedCV               |
+| jobPostId        | String   | Réf → id JobPost                   |
 | score            | Int      | Score global 0–100                 |
 | passed           | Boolean  |                                    |
 | readabilityScore | Int      | 0–100                              |
 | credibilityScore | Int      | 0–100                              |
 | coherenceScore   | Int      | 0–100                              |
 | evidenceScore    | Int      | 0–100                              |
-| strengths        | String[] | Points forts (colonne JSON)        |
-| concerns         | String[] | Problèmes identifiés (colonne JSON) |
-| recommendations  | String[] | Améliorations suggérées (colonne JSON) |
+| strengths        | String[] | Points forts        |
+| concerns         | String[] | Problèmes identifiés |
+| recommendations  | String[] | Améliorations suggérées |
 
 ### ReviewAgreement
 
@@ -224,15 +224,15 @@ Objet de décision finale de l'orchestrateur.
 
 | Champ              | Type     | Notes                                                |
 | ------------------ | -------- | ---------------------------------------------------- |
-| id                 | Int      |                                                      |
-| jobPostId          | Int      | FK → JobPost                                         |
-| cvId               | Int      | FK → GeneratedCV                                     |
+| id                 | String   | ex. `"ra_1"`                                         |
+| jobPostId          | String   | Réf → id JobPost                                     |
+| cvId               | String   | Réf → id GeneratedCV                                 |
 | cvGenerationOk     | Boolean  |                                                      |
 | atsOk              | Boolean  |                                                      |
 | recruiterOk        | Boolean  |                                                      |
 | reviewAgreementOk  | Boolean  |                                                      |
 | finalStatus        | String   | `FINAL_APPROVED` / `REJECTED` / `NEEDS_REVISION`    |
-| rejectionReasons   | String[] | Raisons du rejet (colonne JSON)                      |
+| rejectionReasons   | String[] | Raisons du rejet                      |
 | iterationCount     | Int      |                                                      |
 
 ---
@@ -285,7 +285,7 @@ Chemin de base : `/api`
 
 ```json
 {
-  "jobPostId": 1,
+  "jobPostId": "job_1",
   "language": "fr"
 }
 ```
@@ -312,7 +312,7 @@ Fastify intègre nativement la validation des requêtes via JSON Schema. Chaque 
 | Types           | Les strings sont des strings, les nombres sont des nombres, les dates sont des chaînes ISO-8601 |
 | Enums           | `employmentType`, `seniority`, `remoteMode`, `level`, `finalStatus` doivent être parmi les valeurs autorisées |
 | Limites de chaînes | Longueurs maximales raisonnables (ex. `name` ≤ 200, `description` ≤ 10000) |
-| Paramètres ID   | Les paramètres de route `:id` doivent être des entiers positifs        |
+| Paramètres ID   | Les paramètres de route `:id` doivent être des chaînes non vides       |
 
 ### Format des erreurs
 
@@ -353,11 +353,18 @@ src/
   services/
     ai/
       openai.ts          — Appels API OpenAI
+    store.ts             — Couche lecture/écriture sur les fichiers JSON (fs)
     cv-generator.ts      — Orchestre le pipeline multi-agents
     normalize.ts         — Normalise les données brutes en JobPost
-prisma/
-  schema.prisma          — Tous les modèles de données
-  seed.ts                — Données de démo du profil
+  seed.ts                — Écrit les données de démo dans data/profile.json
+data/                    — Créé automatiquement au premier lancement, gitignored
+  profile.json           — Document profil unique
+  jobs-raw.json          — Captures brutes des offres
+  jobs.json              — Offres d'emploi normalisées
+  cvs.json               — CVs générés
+  ats-reviews.json       — Résultats des revues ATS
+  recruiter-reviews.json — Résultats des revues recruteur
+  review-agreements.json — Décisions finales de revue
 .env.example             — Template avec les variables d'env requises
 package.json
 tsconfig.json
@@ -375,7 +382,6 @@ OPENAI_API_KEY=sk-...
 
 # Optionnel
 PORT=3000                   # Port du serveur (par défaut : 3000)
-DATABASE_URL=file:./dev.db  # Chemin SQLite (par défaut : file:./dev.db)
 ```
 
 ### Démarrage rapide
@@ -385,9 +391,8 @@ git clone <repo-url>
 cd dreamjob
 cp .env.example .env       # Ajoutez votre clé API
 npm install
-npx prisma db push          # Créer la base SQLite + les tables
-npx prisma db seed           # Charger les données de démo
-npm run dev                  # Démarrer Fastify sur :3000
+npm run seed                # Charger les données de démo dans data/
+npm run dev                 # Démarrer Fastify sur :3000
 ```
 
 ### Scripts
@@ -397,15 +402,13 @@ npm run dev                  # Démarrer Fastify sur :3000
 | `dev`           | `tsx watch src/server.ts` | Serveur de dev avec rechargement automatique |
 | `build`         | `tsc`                  | Compiler le TypeScript         |
 | `start`         | `node dist/server.js`  | Démarrage en production        |
-| `db:push`       | `prisma db push`       | Synchroniser le schéma avec la BDD |
-| `db:seed`       | `prisma db seed`       | Insérer les données de démo    |
-| `db:studio`     | `prisma studio`        | Navigateur visuel de la BDD    |
+| `seed`          | `tsx src/seed.ts`      | Écrire les données de démo dans data/ |
 
 ---
 
 ## Données de démo
 
-Le script de seed crée une seule ligne Profile avec un document JSON complet contenant :
+Le script de seed écrit un fichier `data/profile.json` contenant :
 - Identité (nom, titre, contact, liens)
 - Rôles cibles et contraintes
 - 2-3 expériences professionnelles avec réalisations (texte, métrique, niveau de preuve) et compétences utilisées

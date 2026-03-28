@@ -14,23 +14,23 @@ DreamJob helps users tailor their resume to LinkedIn job posts. This document de
 | ---------- | ----------------------- | ------------------------------------------- |
 | Runtime    | Node.js + TypeScript    | Widely known, great tooling                 |
 | Framework  | Fastify                 | Fast, plugin-based, first-class TS support  |
-| Database   | SQLite via Prisma       | Zero config — single file, no server needed |
+| Storage    | JSON files (`fs`)       | Zero config — just files, no ORM or DB needed |
 | AI         | OpenAI API              | Powers all AI agent operations               |
 
 ---
 
 ## Data Models
 
-All models use auto-increment integer IDs and `createdAt`/`updatedAt` timestamps.
+All models use auto-generated string IDs (e.g. `"job_1"`, `"cv_1"`) and `createdAt`/`updatedAt` ISO-8601 timestamps. Each model type is stored in its own JSON file inside the `data/` directory.
 
 ### Profile
 
-Single document representing the user's complete professional identity (CandidateMasterProfile). Stored as one row with a single JSON column. Retrieved and updated as a whole via `GET` / `PUT /api/profile`.
+Single document representing the user's complete professional identity (CandidateMasterProfile). Stored as `data/profile.json`. Retrieved and updated as a whole via `GET` / `PUT /api/profile`.
 
-| Field | Type | Notes                                    |
-| ----- | ---- | ---------------------------------------- |
-| id    | Int  | Always 1 (single user)                   |
-| data  | Json | Full CandidateMasterProfile — see below  |
+| Field | Type   | Notes                                    |
+| ----- | ------ | ---------------------------------------- |
+| id    | String | Always `"default"` (single user)         |
+| data  | Object | Full CandidateMasterProfile — see below  |
 
 #### Profile JSON shape
 
@@ -125,13 +125,13 @@ Raw data captured by the browser extension before AI normalization.
 
 | Field            | Type     | Notes                                  |
 | ---------------- | -------- | -------------------------------------- |
-| id               | Int      |                                        |
+| id               | String   | e.g. `"raw_1"`                         |
 | source           | String   | e.g. "linkedin"                        |
 | sourceUrl        | String   | Original job post URL                  |
 | capturedAt       | DateTime | When the extension scraped it          |
 | htmlSnapshotRef  | String   | Optional — ref to stored HTML snapshot |
 | rawText          | String   | Full text extracted from the page      |
-| rawFields        | Json     | `{title, company, location, employment_type, ...}` |
+| rawFields        | Object   | `{title, company, location, employment_type, ...}` |
 
 ### JobPost
 
@@ -139,8 +139,8 @@ Normalized job post created from raw data. Used by the AI agents.
 
 | Field                | Type     | Notes                                  |
 | -------------------- | -------- | -------------------------------------- |
-| id                   | Int      |                                        |
-| jobOfferRawId        | Int      | FK → JobOfferRaw                       |
+| id                   | String   | e.g. `"job_1"`                         |
+| jobOfferRawId        | String   | Ref → JobOfferRaw id                   |
 | title                | String   | Job title                              |
 | company              | String   |                                        |
 | description          | String   | Full job description text              |
@@ -151,12 +151,12 @@ Normalized job post created from raw data. Used by the AI agents.
 | employmentType       | String   | `full_time` / `part_time` / `contract` / `internship` |
 | seniority            | String   | `entry` / `mid` / `senior` / `lead` / `executive` |
 | jobSummary           | String   | Short normalized summary               |
-| responsibilities     | String[] | Key responsibilities (JSON col)        |
-| requirementsMustHave | String[] | Hard requirements (JSON col)           |
-| requirementsNiceToHave | String[] | Nice-to-have requirements (JSON col) |
-| keywords             | String[] | Extracted keywords (JSON col)          |
-| tools                | String[] | Tools mentioned (JSON col)             |
-| languages            | String[] | Language requirements (JSON col)       |
+| responsibilities     | String[] | Key responsibilities        |
+| requirementsMustHave | String[] | Hard requirements           |
+| requirementsNiceToHave | String[] | Nice-to-have requirements |
+| keywords             | String[] | Extracted keywords          |
+| tools                | String[] | Tools mentioned             |
+| languages            | String[] | Language requirements       |
 | yearsExperienceMin   | Int      | Optional                               |
 | postedDate           | DateTime | Optional                               |
 
@@ -166,21 +166,21 @@ Structured, job-targeted CV generated by the Candidate Agent.
 
 | Field                  | Type     | Notes                                              |
 | ---------------------- | -------- | -------------------------------------------------- |
-| id                     | Int      |                                                    |
-| profileId              | Int      | FK → Profile                                       |
-| jobPostId              | Int      | FK → JobPost                                       |
+| id                     | String   | e.g. `"cv_1"`                                      |
+| profileId              | String   | Ref → Profile id                                   |
+| jobPostId              | String   | Ref → JobPost id                                   |
 | version                | Int      | Iteration count                                    |
 | language               | String   | CV language (e.g. "fr", "en")                      |
 | title                  | String   | e.g. "CV ciblé - Senior Product Designer"          |
-| header                 | Json     | `{fullName, headline, contact, links}`             |
+| header                 | Object   | `{fullName, headline, contact, links}`             |
 | summary                | String   | Tailored professional summary                      |
-| skillsHighlighted      | String[] | Selected skills for this job (JSON col)            |
-| experiencesSelected    | Json     | `[{experienceId, rewrittenBullets[]}]`             |
-| educationSelected      | Json     | Selected education entries                         |
-| certificationsSelected | Json     | Selected certifications                            |
-| keywordsCovered        | String[] | Job keywords addressed (JSON col)                  |
-| omittedItems           | String[] | Items deliberately excluded (JSON col)             |
-| generationNotes        | String[] | Agent reasoning notes (JSON col)                   |
+| skillsHighlighted      | String[] | Selected skills for this job            |
+| experiencesSelected    | Object[] | `[{experienceId, rewrittenBullets[]}]`             |
+| educationSelected      | Object[] | Selected education entries                         |
+| certificationsSelected | Object[] | Selected certifications                            |
+| keywordsCovered        | String[] | Job keywords addressed                  |
+| omittedItems           | String[] | Items deliberately excluded             |
+| generationNotes        | String[] | Agent reasoning notes                   |
 
 ### ATSReview
 
@@ -188,16 +188,16 @@ Output from the ATS Agent — keyword and format compliance check.
 
 | Field             | Type     | Notes                                      |
 | ----------------- | -------- | ------------------------------------------ |
-| id                | Int      |                                            |
-| cvId              | Int      | FK → GeneratedCV                        |
-| jobPostId         | Int      | FK → JobPost                               |
+| id                | String   | e.g. `"ats_1"`                             |
+| cvId              | String   | Ref → GeneratedCV id                       |
+| jobPostId         | String   | Ref → JobPost id                           |
 | score             | Int      | 0–100                                      |
 | passed            | Boolean  |                                            |
-| hardFiltersStatus | Json     | `[{filter, status, evidence}]`             |
-| matchedKeywords   | String[] | Keywords found in CV (JSON col)            |
-| missingKeywords   | String[] | Keywords absent from CV (JSON col)         |
-| formatFlags       | String[] | Formatting issues (JSON col)               |
-| recommendations   | String[] | Suggested improvements (JSON col)          |
+| hardFiltersStatus | Object[] | `[{filter, status, evidence}]`             |
+| matchedKeywords   | String[] | Keywords found in CV            |
+| missingKeywords   | String[] | Keywords absent from CV         |
+| formatFlags       | String[] | Formatting issues               |
+| recommendations   | String[] | Suggested improvements          |
 
 ### RecruiterReview
 
@@ -205,18 +205,18 @@ Output from the Recruiter Agent — human-readability and credibility check.
 
 | Field            | Type     | Notes                              |
 | ---------------- | -------- | ---------------------------------- |
-| id               | Int      |                                    |
-| cvId             | Int      | FK → GeneratedCV                   |
-| jobPostId        | Int      | FK → JobPost                       |
+| id               | String   | e.g. `"rr_1"`                      |
+| cvId             | String   | Ref → GeneratedCV id               |
+| jobPostId        | String   | Ref → JobPost id                   |
 | score            | Int      | Overall 0–100                      |
 | passed           | Boolean  |                                    |
 | readabilityScore | Int      | 0–100                              |
 | credibilityScore | Int      | 0–100                              |
 | coherenceScore   | Int      | 0–100                              |
 | evidenceScore    | Int      | 0–100                              |
-| strengths        | String[] | What works well (JSON col)         |
-| concerns         | String[] | Issues found (JSON col)            |
-| recommendations  | String[] | Suggested improvements (JSON col)  |
+| strengths        | String[] | What works well         |
+| concerns         | String[] | Issues found            |
+| recommendations  | String[] | Suggested improvements  |
 
 ### ReviewAgreement
 
@@ -224,15 +224,15 @@ Final decision object from the orchestrator.
 
 | Field              | Type     | Notes                                                |
 | ------------------ | -------- | ---------------------------------------------------- |
-| id                 | Int      |                                                      |
-| jobPostId          | Int      | FK → JobPost                                         |
-| cvId               | Int      | FK → GeneratedCV                                  |
+| id                 | String   | e.g. `"ra_1"`                                        |
+| jobPostId          | String   | Ref → JobPost id                                     |
+| cvId               | String   | Ref → GeneratedCV id                                 |
 | cvGenerationOk     | Boolean  |                                                      |
 | atsOk              | Boolean  |                                                      |
 | recruiterOk        | Boolean  |                                                      |
 | reviewAgreementOk  | Boolean  |                                                      |
 | finalStatus        | String   | `FINAL_APPROVED` / `REJECTED` / `NEEDS_REVISION`    |
-| rejectionReasons   | String[] | Why it was rejected (JSON col)                       |
+| rejectionReasons   | String[] | Why it was rejected                       |
 | iterationCount     | Int      |                                                      |
 
 ---
@@ -285,7 +285,7 @@ Base path: `/api`
 
 ```json
 {
-  "jobPostId": 1,
+  "jobPostId": "job_1",
   "language": "fr"
 }
 ```
@@ -312,7 +312,7 @@ Fastify has built-in request validation via JSON Schema. Each route defines a sc
 | Types        | Strings are strings, numbers are numbers, dates are ISO-8601 strings  |
 | Enums        | `employmentType`, `seniority`, `remoteMode`, `level`, `finalStatus` must be one of the allowed values |
 | String limits | Reasonable max lengths (e.g. `name` ≤ 200, `description` ≤ 10000)   |
-| ID params    | Route `:id` params must be positive integers                          |
+| ID params    | Route `:id` params must be non-empty strings                          |
 
 ### Error format
 
@@ -353,11 +353,18 @@ src/
   services/
     ai/
       openai.ts          — OpenAI API calls
+    store.ts             — Thin read/write layer over JSON files (fs)
     cv-generator.ts      — Orchestrates the multi-agent pipeline
     normalize.ts         — Normalizes raw job data into JobPost
-prisma/
-  schema.prisma          — All data models
-  seed.ts                — Demo profile data
+  seed.ts                — Writes demo profile data to data/profile.json
+data/                    — Auto-created on first run, gitignored
+  profile.json           — Single profile document
+  jobs-raw.json          — Raw job captures
+  jobs.json              — Normalized job posts
+  cvs.json               — Generated CVs
+  ats-reviews.json       — ATS review results
+  recruiter-reviews.json — Recruiter review results
+  review-agreements.json — Final review decisions
 .env.example             — Template with required env vars
 package.json
 tsconfig.json
@@ -375,7 +382,6 @@ OPENAI_API_KEY=sk-...
 
 # Optional
 PORT=3000                   # Server port (default: 3000)
-DATABASE_URL=file:./dev.db  # SQLite path (default: file:./dev.db)
 ```
 
 ### Getting Started
@@ -385,9 +391,8 @@ git clone <repo-url>
 cd dreamjob
 cp .env.example .env       # Add your API key(s)
 npm install
-npx prisma db push          # Create SQLite DB + tables
-npx prisma db seed           # Load demo profile data
-npm run dev                  # Start Fastify on :3000
+npm run seed                # Load demo profile data into data/
+npm run dev                 # Start Fastify on :3000
 ```
 
 ### Scripts
@@ -397,15 +402,13 @@ npm run dev                  # Start Fastify on :3000
 | `dev`           | `tsx watch src/server.ts` | Dev server with hot reload |
 | `build`         | `tsc`                  | Compile TypeScript         |
 | `start`         | `node dist/server.js`  | Production start           |
-| `db:push`       | `prisma db push`       | Sync schema to DB          |
-| `db:seed`       | `prisma db seed`       | Seed demo data             |
-| `db:studio`     | `prisma studio`        | Visual DB browser          |
+| `seed`          | `tsx src/seed.ts`      | Write demo profile to data/|
 
 ---
 
 ## Seed Data
 
-The seed script creates a single Profile row with a full JSON document containing:
+The seed script writes a `data/profile.json` file containing:
 - Identity (name, headline, contact, links)
 - Target roles and constraints
 - 2-3 work experiences with achievements (text, metric, proof level) and skills used
