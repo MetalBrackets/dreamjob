@@ -53,6 +53,52 @@ export async function resumeRoutes(app: FastifyInstance) {
     return reply.code(200).send(profile);
   });
 
+  app.put("/api/resume/extraction/review", async (request, reply) => {
+    const extraction = await readJSON<ExtractionResult>(EXTRACTION_PATH);
+    if (!extraction) {
+      return reply.code(404).send({ error: "No extraction exists" });
+    }
+
+    const body = request.body as { section?: string; itemId?: string; reviewed?: boolean };
+    const { section, itemId, reviewed } = body;
+
+    if (!section || typeof reviewed !== "boolean") {
+      return reply.code(400).send({ error: "section (string) and reviewed (boolean) are required" });
+    }
+
+    const scalarSections = ["identity", "targetRoles", "professionalSummaryMaster", "constraints"];
+    const arraySections = ["experiences", "education", "skills", "certifications", "languages", "projects", "references"];
+
+    if (!scalarSections.includes(section) && !arraySections.includes(section)) {
+      return reply.code(400).send({ error: `Unknown section: ${section}` });
+    }
+
+    if (!extraction.reviewStatus) {
+      extraction.reviewStatus = {};
+    }
+
+    if (scalarSections.includes(section)) {
+      (extraction.reviewStatus as Record<string, unknown>)[section] = reviewed;
+    } else {
+      if (!itemId) {
+        return reply.code(400).send({ error: "itemId is required for array sections" });
+      }
+      const sectionRecord = (extraction.reviewStatus as Record<string, Record<string, boolean> | undefined>)[section];
+      if (sectionRecord && !(itemId in sectionRecord)) {
+        return reply.code(400).send({ error: `Item ${itemId} not found in section ${section}` });
+      }
+      if (!sectionRecord) {
+        (extraction.reviewStatus as Record<string, Record<string, boolean>>)[section] = { [itemId]: reviewed };
+      } else {
+        sectionRecord[itemId] = reviewed;
+      }
+    }
+
+    await writeJSON<ExtractionResult>(EXTRACTION_PATH, extraction);
+
+    return reply.code(200).send(extraction.reviewStatus);
+  });
+
   app.post("/api/resume/upload", async (request, reply) => {
     if (!request.isMultipart()) {
       return reply.code(400).send({ error: "Request must be multipart/form-data" });

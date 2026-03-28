@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **PUT /api/resume/extraction/review Endpoint**: Added PUT /api/resume/extraction/review to src/routes/resume.ts. Accepts JSON body with section (string, required), itemId (string, optional for array sections), and reviewed (boolean, required). Reads data/extraction.json, updates the matching reviewStatus entry — scalar sections (identity, targetRoles, professionalSummaryMaster, constraints) set directly, array sections (experiences, education, skills, certifications, languages, projects, references) require itemId to identify the item. Returns 200 with updated reviewStatus, 404 if no extraction exists, 400 if section/item not found or missing required fields. Verified: returns 404 when no extraction.json, marks identity as reviewed (scalar), marks experience exp_01 as reviewed (array), rejects unknown sections, rejects missing itemId for array sections, persistence confirmed via GET, tsc --noEmit passes.
+
+### 2026-03-28
 - **POST /api/resume/extraction/confirm Endpoint**: Added POST /api/resume/extraction/confirm to src/routes/resume.ts. Reads data/extraction.json, copies ExtractionResult.data into data/profile.json as a new Profile document (with generated id, createdAt, updatedAt). Updates resume-upload.json status to 'confirmed'. Returns 200 with the new Profile, 404 if no extraction exists, 409 if already confirmed. Verified: returns 404 when no extraction.json, returns 200 with correct Profile after confirm, GET /api/profile returns the confirmed data, re-confirm returns 409, resume status shows 'confirmed', tsc --noEmit passes.
 
 ### 2026-03-28
