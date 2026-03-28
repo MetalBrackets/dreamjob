@@ -10,7 +10,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react'
-import { apiClient } from '../lib/api/client'
+import { apiClient, type ResumeUploadResponse } from '../lib/api/client'
 import {
   captureCurrentJob,
   type CaptureCurrentJobFailureReason,
@@ -110,6 +110,86 @@ function getResumeCompletion(resumeMaster: ResumeMaster) {
 
   const completed = checks.filter(Boolean).length
   return Math.round((completed / checks.length) * 100)
+}
+
+function mapExtractionToResumeMaster(
+  data: ResumeUploadResponse['extractedData']['data'],
+): Partial<ResumeMaster> {
+  const profiles: ResumeProfileLink[] = []
+  if (data.identity.links) {
+    const { linkedin, portfolio, github } = data.identity.links
+    if (linkedin) profiles.push({ id: createId('link'), label: 'LinkedIn', value: linkedin })
+    if (portfolio) profiles.push({ id: createId('link'), label: 'Portfolio', value: portfolio })
+    if (github) profiles.push({ id: createId('link'), label: 'GitHub', value: github })
+  }
+
+  return {
+    fullName: data.identity.name,
+    title: data.identity.headline,
+    location: data.identity.location ?? '',
+    summary: data.professionalSummaryMaster ?? '',
+    profiles,
+    experience: data.experiences.map((exp) => ({
+      id: createId('exp'),
+      role: exp.title,
+      company: exp.company,
+      location: exp.location ?? '',
+      startDate: exp.startDate,
+      endDate: exp.endDate ?? '',
+      current: !exp.endDate,
+      description: exp.description ?? '',
+      highlights: exp.achievements.map((a) => a.text),
+    })),
+    education: data.education.map((edu) => ({
+      id: createId('edu'),
+      institution: edu.school,
+      degree: edu.degree,
+      fieldOfStudy: edu.field ?? '',
+      startDate: '',
+      endDate: edu.year ? String(edu.year) : '',
+      description: '',
+    })),
+    skills: data.skills.map((s) => ({
+      id: createId('skill'),
+      name: s.name,
+      level: s.level ?? '',
+      details: s.category ?? '',
+    })),
+    languages: (data.languages ?? []).map((l) => ({
+      id: createId('lang'),
+      name: l.name,
+      proficiency: l.level ?? '',
+      certification: '',
+    })),
+    projects: (data.projects ?? []).map((p) => ({
+      id: createId('proj'),
+      name: p.name,
+      role: '',
+      startDate: '',
+      endDate: '',
+      current: false,
+      description: p.description ?? '',
+      highlights: p.technologies ?? [],
+      link: p.url ?? '',
+    })),
+    certifications: (data.certifications ?? []).map((c) => ({
+      id: createId('cert'),
+      name: c.name,
+      issuer: c.issuer ?? '',
+      date: c.date ?? '',
+      expiresAt: '',
+      credentialId: '',
+    })),
+    references: (data.references ?? []).map((r) => ({
+      id: createId('ref'),
+      name: r.name,
+      relationship: r.relationship ?? '',
+      company: r.company ?? '',
+      email: r.email ?? '',
+      phone: r.phone ?? '',
+      notes: '',
+    })),
+  }
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -350,6 +430,11 @@ function MasterResumePage() {
   const [saveState, setSaveState] = React.useState<'idle' | 'saving' | 'saved'>(
     'idle',
   )
+  const [extractionState, setExtractionState] = React.useState<
+    'idle' | 'extracting' | 'done' | 'error'
+  >('idle')
+  const [extractionError, setExtractionError] = React.useState('')
+  const lastUploadedFileRef = React.useRef<File | null>(null)
 
   React.useEffect(() => {
     chromeStorage.getResumeMaster().then(setResumeMaster)
@@ -424,12 +509,41 @@ function MasterResumePage() {
     })
   }
 
+  const runExtraction = async (file: File) => {
+    setExtractionState('extracting')
+    setExtractionError('')
+    try {
+      const result = await apiClient.uploadResume(file)
+      const mapped = mapExtractionToResumeMaster(result.extractedData.data)
+      setResumeMaster((current) => (current ? { ...current, ...mapped } : current))
+      setExtractionState('done')
+    } catch (err) {
+      setExtractionState('error')
+      setExtractionError(err instanceof Error ? err.message : 'Extraction failed')
+    }
+  }
+
   const handleSourceDocumentUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
+    if (file.type !== 'application/pdf') {
+      setExtractionState('error')
+      setExtractionError('Only PDF files are accepted')
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setExtractionState('error')
+      setExtractionError('File size exceeds 10MB limit')
+      return
+    }
+
+    lastUploadedFileRef.current = file
+
+    // Store locally as DataURL
     const reader = new FileReader()
     reader.onload = () => {
       const sourceDocument: ResumeSourceDocument = {
@@ -445,6 +559,9 @@ function MasterResumePage() {
     }
     reader.readAsDataURL(file)
     event.target.value = ''
+
+    // Send to backend for extraction
+    runExtraction(file)
   }
 
   if (!resumeMaster)
@@ -480,7 +597,7 @@ function MasterResumePage() {
             <label className="secondary-button inline-button upload-button">
               <Upload size={14} />
               {r.sourceFile.upload}
-              <input type="file" onChange={handleSourceDocumentUpload} />
+              <input type="file" accept=".pdf,application/pdf" onChange={handleSourceDocumentUpload} />
             </label>
           }
         />
@@ -502,6 +619,29 @@ function MasterResumePage() {
           </div>
         ) : (
           <p className="muted-text">{r.sourceFile.empty}</p>
+        )}
+
+        {extractionState === 'extracting' && (
+          <p className="muted-text">Extracting resume data…</p>
+        )}
+        {extractionState === 'done' && (
+          <p className="muted-text">Resume data extracted successfully.</p>
+        )}
+        {extractionState === 'error' && (
+          <div className="stack-sm">
+            <p className="muted-text" style={{ color: 'var(--color-danger, #c0392b)' }}>
+              {extractionError}
+            </p>
+            {lastUploadedFileRef.current && (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => runExtraction(lastUploadedFileRef.current!)}
+              >
+                Retry extraction
+              </button>
+            )}
+          </div>
         )}
       </section>
 
