@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **RecruiterReview TypeBox Schema**: Created src/schemas/recruiter-review.ts defining RecruiterReviewSchema with id, cvId, jobPostId, score (0-100), passed boolean, sub-scores (readabilityScore, credibilityScore, coherenceScore, evidenceScore — all 0-100), and arrays for strengths, concerns, recommendations. Exported static TypeScript type RecruiterReview. Verified: tsc --noEmit passes, schema validates valid data (true), missing fields (false), out-of-range score (false), and out-of-range sub-score (false).
+
+### 2026-03-28
 - **ATSReview TypeBox Schema**: Created src/schemas/ats-review.ts defining HardFilterStatusSchema (filter, status enum: pass/fail/unknown, evidence) and full ATSReviewSchema with id, cvId, jobPostId, score (0-100), passed boolean, hardFiltersStatus array, matchedKeywords array, missingKeywords array, formatFlags array, recommendations array. Exported static TypeScript types HardFilterStatus and ATSReview. Verified: tsc --noEmit passes, schema validates valid data (true), missing fields (false), and out-of-range score (false).
 
 ### 2026-03-28
