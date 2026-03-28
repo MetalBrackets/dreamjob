@@ -30,6 +30,16 @@ interface RecruiterAgentOutput {
   recommendations: string[];
 }
 
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof value === "string" && value.trim()) {
+    return [value];
+  }
+  return [];
+}
+
 const SYSTEM_PROMPT = `Tu es l'agent Recruteur.
 Analyse le CV comme un recruteur humain.
 Concentre-toi sur 4 points: lisibilite, credibilite, coherence, preuve.
@@ -37,6 +47,7 @@ Sois direct et tres synthetique.
 strengths, concerns et recommendations: 3 elements max.
 Chaque phrase doit etre courte, concrete et en francais.
 N'ajoute aucune explication hors schema.
+Tous les textes de valeur doivent etre en francais, meme si l'offre est en anglais.
 Retourne uniquement un JSON valide avec exactement les cles demandees.`;
 
 export async function reviewCVAsRecruiter(
@@ -110,8 +121,8 @@ Retourne le JSON maintenant.`;
     credibilityScore,
     coherenceScore,
     evidenceScore,
-    strengths: output.strengths || [],
-    concerns: output.concerns || [],
-    recommendations: output.recommendations || [],
+    strengths: toStringArray(output.strengths),
+    concerns: toStringArray(output.concerns),
+    recommendations: toStringArray(output.recommendations),
   };
 }

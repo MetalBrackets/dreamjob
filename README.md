@@ -207,3 +207,106 @@ Les deux serveurs tournent sur des ports differents et peuvent etre lances en pa
 | `employmentType` | `full_time`, `part_time`, `contract`, `internship` |
 | `seniority` | `entry`, `mid`, `senior`, `lead`, `executive` |
 | `finalStatus` | `FINAL_APPROVED`, `REJECTED`, `NEEDS_REVISION` |
+
+## Usages
+
+
+### When you send the job, the response is the normalized version...
+```sh
+# -> return jobs-raw-response.json
+
+curl -X POST http://localhost:3000/api/jobs/raw \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source": "manual-test",
+    "sourceUrl": "https://example.com/jobs/senior-backend-typescript",
+    "rawText": "Senior Backend Engineer. Company: DreamCorp. Location: Paris hybrid. We are looking for 5+ years of experience in Node.js, TypeScript, REST APIs, PostgreSQL, Docker, AWS, and system design. You will collaborate with product and frontend teams, build scalable backend services, improve API performance, and maintain CI/CD pipelines. Nice to have: Kubernetes, Terraform, mentoring experience, and fintech domain knowledge. English required.",
+    "rawFields": {
+      "title": "Senior Backend Engineer",
+      "company": "DreamCorp",
+      "location": "Paris / Hybrid",
+      "employment_type": "full_time",
+      "description": "Build scalable backend services in Node.js and TypeScript with PostgreSQL, Docker, AWS and CI/CD.",
+      "requirements": "5+ years Node.js/TypeScript, PostgreSQL, Docker, AWS, REST APIs, system design",
+      "posted_date": "2026-03-28"
+    }
+  }' | tee jobs-raw-response.json
+```
+
+
+## 2) Generate CV
+-> return cv + ats + recruiter review
+```sh
+# -> return cv-generate-response.json
+
+curl -X PUT http://localhost:3000/api/profile \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "profile_01",
+    "createdAt": "2026-03-29T10:00:00.000Z",
+    "updatedAt": "2026-03-29T10:00:00.000Z",
+    "data": {
+      "identity": {
+        "name": "Jean Dupont",
+        "headline": "Senior Backend Engineer",
+        "email": "jean.dupont@example.com",
+        "phone": "+33 6 12 34 56 78",
+        "location": "Paris, France"
+      },
+      "targetRoles": ["Senior Backend Engineer"],
+      "professionalSummaryMaster": "Ingenieur backend avec experience en Node.js, TypeScript, PostgreSQL et AWS.",
+      "experiences": [
+        {
+          "experienceId": "exp_01",
+          "title": "Backend Engineer",
+          "company": "TechCorp",
+          "location": "Paris",
+          "startDate": "2021-01",
+          "endDate": "2024-12",
+          "description": "Developpement de services backend",
+          "achievements": [
+            {
+              "text": "Developpement et maintenance d APIs REST",
+              "metric": "30% improvement",
+              "proofLevel": "high"
+            }
+          ],
+          "skillsUsed": ["Node.js", "TypeScript", "PostgreSQL", "Docker", "AWS", "REST API"]
+        }
+      ],
+      "education": [
+        {
+          "school": "EPITA",
+          "degree": "Master",
+          "field": "Informatique",
+          "year": 2018
+        }
+      ],
+      "skills": [
+        { "name": "Node.js", "years": 6 },
+        { "name": "TypeScript", "years": 5 },
+        { "name": "PostgreSQL", "years": 4 },
+        { "name": "Docker", "years": 4 },
+        { "name": "AWS", "years": 3 }
+      ],
+      "certifications": [],
+      "languages": [
+        { "name": "Francais", "level": "natif" },
+        { "name": "Anglais", "level": "professionnel" }
+      ],
+      "projects": [],
+      "references": [],
+      "constraints": {
+        "preferredCvLanguage": "fr",
+        "maxCvPages": 2,
+        "mustNotClaim": []
+      }
+    }
+  }' | python -m json.tool | tee profile-response.json
+
+curl -s -X POST http://localhost:3000/api/cvs/generate \
+  -H "Content-Type: application/json" \
+  -d '{"jobPostId":"job_02","language":"fr"}' \
+  | python -m json.tool | tee cv-generate-response.json
+
+```

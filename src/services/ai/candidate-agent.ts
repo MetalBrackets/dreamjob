@@ -41,6 +41,16 @@ interface CandidateAgentOutput {
   };
 }
 
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string");
+  }
+  if (typeof value === "string" && value.trim()) {
+    return [value];
+  }
+  return [];
+}
+
 const SYSTEM_PROMPT = `Tu es l'agent Candidat.
 Genere un CV cible, tres synthetique, uniquement a partir du profil fourni.
 N'invente rien.
@@ -49,6 +59,7 @@ Resume: 2 phrases max.
 Chaque experience: 3 bullets max, phrases tres courtes.
 omittedItems, generationNotes, warnings: 3 elements max.
 Si une preuve manque, laisse l'element de cote.
+Remplis skillsHighlighted, experiencesSelected, educationSelected, certificationsSelected, keywordsCovered, coverageMap et selfCheck des qu'il existe des donnees pertinentes dans le profil ou l'offre. Ne laisse pas ces champs vides sans raison.
 Retourne uniquement un JSON valide avec exactement les cles demandees.`;
 
 export async function generateTargetedCV(
@@ -158,13 +169,13 @@ Retourne le JSON maintenant.`;
       links: identity.links,
     },
     summary: output.summary || "",
-    skillsHighlighted: output.skillsHighlighted || [],
-    experiencesSelected: output.experiencesSelected || [],
-    educationSelected: output.educationSelected || [],
-    certificationsSelected: output.certificationsSelected || [],
-    keywordsCovered: output.keywordsCovered || [],
-    omittedItems: output.omittedItems || [],
-    generationNotes: output.generationNotes || [],
+    skillsHighlighted: toStringArray(output.skillsHighlighted),
+    experiencesSelected: Array.isArray(output.experiencesSelected) ? output.experiencesSelected : [],
+    educationSelected: toStringArray(output.educationSelected),
+    certificationsSelected: toStringArray(output.certificationsSelected),
+    keywordsCovered: toStringArray(output.keywordsCovered),
+    omittedItems: toStringArray(output.omittedItems),
+    generationNotes: toStringArray(output.generationNotes),
     coverageMap: output.coverageMap ?? {
       matchedRequirements: [],
       uncoveredRequirements: [],
@@ -174,6 +185,8 @@ Retourne le JSON maintenant.`;
       warnings: [],
     },
   };
+
+  cv.selfCheck.warnings = toStringArray(cv.selfCheck.warnings);
 
   return cv;
 }
