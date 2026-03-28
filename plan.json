@@ -236,7 +236,7 @@
       "4. Return 200 with updated profile",
       "5. Verify: curl PUT /api/profile with valid JSON updates the file, invalid JSON returns 400"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Resume Upload & Extraction Routes",

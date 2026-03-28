@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **PUT /api/profile Endpoint**: Added PUT /api/profile to src/routes/profile.ts. Validates request body against ProfileSchema (TypeBox), sets updatedAt to current ISO-8601 timestamp, writes to data/profile.json via store service, returns 200 with updated profile. Invalid bodies return 400 with descriptive errors from Fastify validation. Verified: valid PUT returns 200 with updated timestamp, invalid PUT (missing required fields) returns 400, subsequent GET returns persisted data.
+
+### 2026-03-28
 - **GET /api/profile Endpoint**: Created src/routes/profile.ts as a Fastify plugin implementing GET /api/profile. Reads data/profile.json via store service, returns 200 with profile data or 404 if no profile exists. Registered route in src/server.ts. Verified: returns 404 with `{"error":"No profile found"}` when no profile.json exists, returns 200 with full profile data after seeding.
 
 ### 2026-03-28
