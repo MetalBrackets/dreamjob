@@ -17,12 +17,6 @@ import {
 } from '../lib/chrome/capture'
 import { chromeStorage } from '../lib/chrome/storage'
 import { I18nProvider, useI18n } from '../i18n/I18nProvider'
-import {
-  mockAtsReview,
-  mockGeneratedCv,
-  mockRecruiterReview,
-  mockReviewAgreement,
-} from '../shared/mock-data'
 import '../shared/styles/global.css'
 import '../shared/styles/sidepanel.css'
 import type {
@@ -1954,8 +1948,6 @@ function SelectedOfferPage() {
     reason: CaptureCurrentJobFailureReason
     details?: string
   } | null>(null)
-  const generationTimeoutRef = React.useRef<number | null>(null)
-
   React.useEffect(() => {
     chromeStorage
       .getCapturedJob()
@@ -1965,14 +1957,6 @@ function SelectedOfferPage() {
       .catch(() => {
         setOffer(null)
       })
-  }, [])
-
-  React.useEffect(() => {
-    return () => {
-      if (generationTimeoutRef.current) {
-        window.clearTimeout(generationTimeoutRef.current)
-      }
-    }
   }, [])
 
   if (!offer) return <div className="panel">{t.common.loadingJob}</div>
@@ -2018,7 +2002,7 @@ function SelectedOfferPage() {
     setIsSaving(false)
   }
 
-  const handleGenerateResume = () => {
+  const handleGenerateResume = async () => {
     if (generationState === 'generating') return
 
     setGenerationState('generating')
@@ -2027,17 +2011,17 @@ function SelectedOfferPage() {
     setGeneratedCv(null)
     setReviewAgreement(null)
 
-    if (generationTimeoutRef.current) {
-      window.clearTimeout(generationTimeoutRef.current)
-    }
-
-    generationTimeoutRef.current = window.setTimeout(() => {
-      setAtsReview(mockAtsReview)
-      setRecruiterReview(mockRecruiterReview)
-      setGeneratedCv(mockGeneratedCv)
-      setReviewAgreement(mockReviewAgreement)
+    try {
+      const { jobPostId } = await apiClient.postJobRaw(offer!)
+      const result = await apiClient.generateCv(jobPostId, 'fr')
+      setGeneratedCv(result.cv)
+      setAtsReview(result.atsReview)
+      setRecruiterReview(result.recruiterReview)
+      setReviewAgreement(result.reviewAgreement)
       setGenerationState('generated')
-    }, 2000)
+    } catch {
+      setGenerationState('idle')
+    }
   }
 
   const renderList = (items: string[], emptyLabel?: string) => {
