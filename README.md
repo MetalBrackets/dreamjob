@@ -36,6 +36,25 @@ Click on ```Load unpack```
 find the correct folder inside ```extension-ui\dists``` Load it.
 once you have it you have to re-load chrome and it should work
 
+## Lancer en local
+
+**Backend** (depuis la racine du repo) :
+```bash
+npm i
+npm run dev       # Fastify avec hot reload (tsx watch)
+npm run seed      # Charger les donnees de test
+```
+
+**Extension UI** (depuis `extension-ui/`) :
+```bash
+cd extension-ui
+npm i
+npm run dev       # Serveur Vite
+npm run build     # Build pour charger dans Chrome
+```
+
+Les deux serveurs tournent sur des ports differents et peuvent etre lances en parallele sans conflit.
+
 ## Endpoints API
 
 > Pour les contrats complets, voir `backend-design.md` et `src/schemas/`.
