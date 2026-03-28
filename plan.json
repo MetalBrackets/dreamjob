@@ -89,7 +89,7 @@
       "3. Define targetRoles (string array) and professionalSummaryMaster (string) fields",
       "4. Verify: schemas produce correct JSON Schema output"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Type Definitions",

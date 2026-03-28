@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Profile Core Identity TypeBox Schemas**: Created src/schemas/profile.ts defining TypeBox schemas and static TypeScript types for Identity (name, headline, email, phone, location, links with linkedin/portfolio/github), Constraints (preferredCvLanguage, maxCvPages, mustNotClaim), TargetRoles (string array), and ProfessionalSummaryMaster (string). Verified: tsc --noEmit passes, all schemas produce correct JSON Schema output.
+
+### 2026-03-28
 - **File Path Constants**: Created src/services/paths.ts defining constants for all data file paths (profile.json, resume-upload.json, extraction.json, jobs-raw.json, jobs.json, cvs.json, ats-reviews.json, recruiter-reviews.json, review-agreements.json) and UPLOADS_DIR. All paths use path.join relative to process.cwd()/data/. Verified: tsc --noEmit passes.
 
 ### 2026-03-28
