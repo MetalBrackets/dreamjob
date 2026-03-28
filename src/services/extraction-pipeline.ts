@@ -10,6 +10,7 @@ import { EXTRACTION_PATH, RESUME_UPLOAD_PATH } from "./paths.js";
 import type { ResumeUpload } from "../schemas/resume-upload.js";
 import { extractTextFromPDF } from "./extraction.js";
 import { extractProfileFromText } from "./ai/openai.js";
+import { AiExtractionError, PostProcessingError } from "../errors.js";
 
 /**
  * Assign sequential experienceId values (exp_01, exp_02, ...) to experiences
@@ -157,7 +158,7 @@ export async function runExtractionPipeline(
   // Extract text from PDF
   const rawText = await extractTextFromPDF(resumeUpload.storagePath);
 
-  // Call AI extraction if API key is available, otherwise use empty scaffold
+  // Call AI extraction
   let data: ProfileData;
   let confidence: ConfidenceMap;
 
@@ -165,26 +166,21 @@ export async function runExtractionPipeline(
     const extraction = await extractProfileFromText(rawText);
     data = extraction.data;
     confidence = extraction.confidence;
-  } catch {
-    // Fallback to empty scaffold if AI extraction fails (e.g., no API key)
-    data = {
-      identity: { name: "", headline: "", email: "" },
-      targetRoles: [],
-      experiences: [],
-      education: [],
-      skills: [],
-    };
-    confidence = {};
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "AI extraction failed";
+    throw new AiExtractionError(message);
   }
 
-  // Post-processing: assign sequential experience IDs
-  assignExperienceIds(data);
-
-  // Post-processing: normalize date formats to YYYY-MM or YYYY
-  normalizeDates(data);
-
-  // Post-processing: initialize all review statuses to false
-  const reviewStatus = initReviewStatus(data);
+  // Post-processing
+  let reviewStatus: ReviewStatus;
+  try {
+    assignExperienceIds(data);
+    normalizeDates(data);
+    reviewStatus = initReviewStatus(data);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Post-processing failed";
+    throw new PostProcessingError(message);
+  }
 
   const result: ExtractionResult = {
     id: randomUUID(),

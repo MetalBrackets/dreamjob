@@ -10,6 +10,7 @@ import type { ExtractionResult } from "../schemas/extraction-result.js";
 import type { Profile } from "../schemas/profile.js";
 import { runExtractionPipeline } from "../services/extraction-pipeline.js";
 import { computeCompleteness } from "../services/completeness.js";
+import { PdfParseError, AiExtractionError, PostProcessingError } from "../errors.js";
 
 const allSections = [
   "identity", "targetRoles", "professionalSummaryMaster", "constraints",
@@ -163,6 +164,31 @@ export async function resumeRoutes(app: FastifyInstance) {
       const errorMessage = err instanceof Error ? err.message : "Extraction failed";
       const failed: ResumeUpload = { ...resumeUpload, status: "failed", error: errorMessage };
       await writeJSON<ResumeUpload>(RESUME_UPLOAD_PATH, failed);
+
+      if (err instanceof PdfParseError) {
+        return reply.code(400).send({
+          id: resumeUpload.id,
+          status: "failed",
+          error: errorMessage,
+        });
+      }
+
+      if (err instanceof AiExtractionError) {
+        return reply.code(500).send({
+          id: resumeUpload.id,
+          status: "failed",
+          error: `AI extraction error: ${errorMessage}`,
+        });
+      }
+
+      if (err instanceof PostProcessingError) {
+        return reply.code(500).send({
+          id: resumeUpload.id,
+          status: "failed",
+          error: `Post-processing error: ${errorMessage}`,
+        });
+      }
+
       return reply.code(500).send({
         id: resumeUpload.id,
         status: "failed",

@@ -728,7 +728,7 @@
       "4. Ensure each error type stores a distinct error message in resume-upload.json (basic failure path handled by pipeline trigger task)",
       "5. Verify: upload a corrupt file returns 400, simulate AI failure returns 500, both store distinct error messages"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Error Handling",
