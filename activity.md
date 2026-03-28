@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **ResumeUpload TypeBox Schema**: Created src/schemas/resume-upload.ts defining ResumeUploadSchema with id, originalFilename, storagePath, uploadedAt, status (union enum: uploaded/extracting/extracted/confirmed/failed), and optional error. Exported static TypeScript type ResumeUpload. Verified: tsc --noEmit passes, schema validates valid/invalid sample data correctly.
+
+### 2026-03-28
 - **Full Profile Schema Composition**: Composed ProfileDataSchema wrapping all sub-schemas (identity, targetRoles, professionalSummaryMaster, experiences, education, skills, certifications, languages, projects, references, constraints) and ProfileSchema with id, data, createdAt, updatedAt. Exported static TypeScript types ProfileData and Profile. Verified: tsc --noEmit passes, schema validates complete sample profile (valid returns true, invalid returns false).
 
 ### 2026-03-28
