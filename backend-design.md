@@ -117,6 +117,7 @@ Saved LinkedIn job posts the user wants to tailor their resume for.
 | Field           | Type     | Notes                                  |
 | --------------- | -------- | -------------------------------------- |
 | id              | Int      |                                        |
+| profileId       | Int      | FK → Profile                           |
 | title           | String   | Job title                              |
 | company         | String   |                                        |
 | description     | String   | Full job description text              |
@@ -134,11 +135,11 @@ Generated output from the AI tailoring process.
 | Field     | Type     | Notes                       |
 | --------- | -------- | --------------------------- |
 | id        | Int      |                             |
+| profileId | Int      | FK → Profile                |
 | jobPostId | Int      | FK → JobPost                |
 | content   | String   | The tailored resume content |
 | format    | String   | "markdown" or "json"        |
 | provider  | String   | Which AI generated it       |
-| createdAt | DateTime |                             |
 
 ---
 
@@ -165,7 +166,7 @@ Each sub-resource follows the same CRUD pattern:
 | PUT    | `/api/profile/{resource}/:id`    | Update one           |
 | DELETE | `/api/profile/{resource}/:id`    | Delete one           |
 
-Where `{resource}` is one of: `experience`, `education`, `skills`, `achievements`, `projects`, `references`.
+Where `{resource}` is one of: `experiences`, `educations`, `skills`, `achievements`, `projects`, `references`.
 
 ### Job Posts
 
@@ -197,6 +198,42 @@ Where `{resource}` is one of: `experience`, `education`, `skills`, `achievements
 ```
 
 The endpoint fetches the full profile + job post, sends them to the selected AI provider, and stores the result as a TailoredResume.
+
+---
+
+## Validation
+
+Fastify has built-in request validation via JSON Schema. Each route defines a schema for its request body and params, and Fastify rejects invalid requests with a `400` before the handler runs.
+
+### Approach
+
+- Define schemas with `@sinclair/typebox` (ships with Fastify) for type-safe schema + TypeScript type from a single definition.
+- Schemas live alongside their routes (co-located in each route file).
+- Only validate at the API boundary — no redundant checks inside services.
+
+### What to validate
+
+| Area         | Rules                                                                 |
+| ------------ | --------------------------------------------------------------------- |
+| Required fields | Reject missing required fields (e.g. Profile `name`, `email`)     |
+| Types        | Strings are strings, numbers are numbers, dates are ISO-8601 strings  |
+| Enums        | `contractType`, `experienceLevel`, `proficiency`, `format`, `provider` must be one of the allowed values |
+| String limits | Reasonable max lengths (e.g. `name` ≤ 200, `description` ≤ 10000)   |
+| ID params    | Route `:id` params must be positive integers                          |
+
+### Error format
+
+Fastify's default validation error response:
+
+```json
+{
+  "statusCode": 400,
+  "error": "Bad Request",
+  "message": "body/email must match format \"email\""
+}
+```
+
+No custom error handler needed — the default format is clear enough for a demo.
 
 ---
 
