@@ -2411,8 +2411,8 @@ function DashboardPage() {
                 <span>{application.company}</span>
               </div>
               <span className="status-pill">{application.status}</span>
-              <span>{application.followUpAt}</span>
-              <span>{application.matchScore}%</span>
+              <span>{application.followUpAt || '—'}</span>
+              <span>{application.matchScore > 0 ? `${application.matchScore}%` : '—'}</span>
             </div>
           ))}
         </div>

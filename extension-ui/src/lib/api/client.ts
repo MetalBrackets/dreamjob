@@ -8,6 +8,12 @@ import {
   type ServerProfile,
   type ServerProfileData,
 } from './profile-adapter'
+import {
+  serverApplicationsToApplicationItems,
+  serverCapturedJobToCapturedJobOffer,
+  type ServerApplicationItem,
+  type ServerCapturedJobOffer,
+} from './jobs-adapter'
 
 export { extractionToResumeMaster }
 
@@ -61,12 +67,14 @@ export const apiClient = {
 
   async getCapturedJob(): Promise<CapturedJobOffer> {
     if (appConfig.useMockData) return mockCapturedJob
-    return getJson<CapturedJobOffer>('/jobs/current')
+    const serverJob = await getJson<ServerCapturedJobOffer>('/jobs/current')
+    return serverCapturedJobToCapturedJobOffer(serverJob)
   },
 
   async getApplications(): Promise<ApplicationItem[]> {
     if (appConfig.useMockData) return mockApplications
-    return getJson<ApplicationItem[]>('/jobs')
+    const serverItems = await getJson<ServerApplicationItem[]>('/jobs')
+    return serverApplicationsToApplicationItems(serverItems)
   },
 
   async getInterviewPrep(): Promise<InterviewPrepPack> {
