@@ -304,7 +304,7 @@
       "4. Return 404 if no extraction exists, 409 if already confirmed",
       "5. Verify: confirming writes profile.json correctly, subsequent GET /api/profile returns extraction data"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Resume Upload & Extraction Routes",

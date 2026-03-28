@@ -2,10 +2,11 @@ import type { FastifyInstance } from "fastify";
 import { join } from "node:path";
 import { writeFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import { UPLOADS_DIR, RESUME_UPLOAD_PATH, EXTRACTION_PATH } from "../services/paths.js";
+import { UPLOADS_DIR, RESUME_UPLOAD_PATH, EXTRACTION_PATH, PROFILE_PATH } from "../services/paths.js";
 import { readJSON, writeJSON } from "../services/store.js";
 import type { ResumeUpload } from "../schemas/resume-upload.js";
 import type { ExtractionResult } from "../schemas/extraction-result.js";
+import type { Profile } from "../schemas/profile.js";
 import { runExtractionPipeline } from "../services/extraction-pipeline.js";
 
 export async function resumeRoutes(app: FastifyInstance) {
@@ -23,6 +24,33 @@ export async function resumeRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: "No resume has been uploaded" });
     }
     return reply.code(200).send(resumeUpload);
+  });
+
+  app.post("/api/resume/extraction/confirm", async (_request, reply) => {
+    const extraction = await readJSON<ExtractionResult>(EXTRACTION_PATH);
+    if (!extraction) {
+      return reply.code(404).send({ error: "No extraction exists" });
+    }
+
+    const resumeUpload = await readJSON<ResumeUpload>(RESUME_UPLOAD_PATH);
+    if (resumeUpload && resumeUpload.status === "confirmed") {
+      return reply.code(409).send({ error: "Extraction already confirmed" });
+    }
+
+    const profile: Profile = {
+      id: randomUUID(),
+      data: extraction.data,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await writeJSON<Profile>(PROFILE_PATH, profile);
+
+    if (resumeUpload) {
+      await writeJSON<ResumeUpload>(RESUME_UPLOAD_PATH, { ...resumeUpload, status: "confirmed" });
+    }
+
+    return reply.code(200).send(profile);
   });
 
   app.post("/api/resume/upload", async (request, reply) => {

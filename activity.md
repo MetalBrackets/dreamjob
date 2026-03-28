@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **POST /api/resume/extraction/confirm Endpoint**: Added POST /api/resume/extraction/confirm to src/routes/resume.ts. Reads data/extraction.json, copies ExtractionResult.data into data/profile.json as a new Profile document (with generated id, createdAt, updatedAt). Updates resume-upload.json status to 'confirmed'. Returns 200 with the new Profile, 404 if no extraction exists, 409 if already confirmed. Verified: returns 404 when no extraction.json, returns 200 with correct Profile after confirm, GET /api/profile returns the confirmed data, re-confirm returns 409, resume status shows 'confirmed', tsc --noEmit passes.
+
+### 2026-03-28
 - **GET /api/resume/extraction Endpoint**: Added GET /api/resume/extraction to src/routes/resume.ts. Reads data/extraction.json via store service, returns 200 with the full ExtractionResult document (extracted data, confidence map, review status), or 404 if no extraction exists. Verified: returns 404 with `{"error":"No extraction exists"}` when no extraction.json exists, returns 200 with correct ExtractionResult after upload+extraction, tsc --noEmit passes.
 
 ### 2026-03-28
