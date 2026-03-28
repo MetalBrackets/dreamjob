@@ -1,3 +1,6 @@
+import { writeFile } from "node:fs/promises";
+
+import { config } from "../config";
 import { CandidateRepository } from "../repositories/candidate-repository";
 import {
   ATSReview,
@@ -131,7 +134,7 @@ export class WorkflowService {
       throw new Error("Workflow failed before producing a result");
     }
 
-    return {
+    const result: WorkflowRunResult = {
       status: finalStatus,
       job_offer: jobOffer,
       generated_cv: latestGeneratedCv,
@@ -141,5 +144,21 @@ export class WorkflowService {
       addon_result: latestAddonResult,
       iterations: iterationCount
     };
+
+    void this.persistResult(result);
+
+    return result;
+  }
+
+  private async persistResult(result: WorkflowRunResult): Promise<void> {
+    try {
+      const formattedJson = JSON.stringify(result, null, 2) + "\n";
+      await writeFile(config.generatedResultPath, formattedJson, "utf8");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown error";
+      console.warn(
+        `Unable to write generated result to ${config.generatedResultPath}: ${message}`
+      );
+    }
   }
 }
