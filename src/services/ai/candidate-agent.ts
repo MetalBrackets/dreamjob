@@ -24,6 +24,10 @@ interface CandidateAgentOutput {
   keywordsCovered: string[];
   omittedItems: string[];
   generationNotes: string[];
+  coverageMap: {
+    matchedRequirements: Array<{ requirement: string; evidenceRef: string }>;
+    uncoveredRequirements: string[];
+  };
 }
 
 const SYSTEM_PROMPT = `You are a professional CV writer agent. Given a candidate's master profile and a target job posting, generate a tailored CV that maximizes the candidate's chances.
@@ -54,7 +58,13 @@ Return a JSON object with these exact keys:
   "certificationsSelected": string[] — certification names relevant to the role,
   "keywordsCovered": string[] — job keywords that are addressed in this CV,
   "omittedItems": string[] — profile items intentionally left out and why (e.g. "Omitted internship at X — not relevant to senior role"),
-  "generationNotes": string[] — notes about generation decisions (e.g. "Emphasized cloud experience to match job requirements")
+  "generationNotes": string[] — notes about generation decisions (e.g. "Emphasized cloud experience to match job requirements"),
+  "coverageMap": {
+    "matchedRequirements": [
+      { "requirement": string — a must-have or nice-to-have requirement from the job post, "evidenceRef": string — reference to the profile item that covers it (e.g. "exp_01: Led migration to AWS", "skill: Kubernetes", "cert: AWS Solutions Architect") }
+    ],
+    "uncoveredRequirements": string[] — job requirements (must-have or nice-to-have) that are NOT addressed by any profile evidence
+  }
 }
 
 ## GUIDELINES
@@ -63,7 +73,8 @@ Return a JSON object with these exact keys:
 - For experiencesSelected, only include experiences that add value. Rewrite bullets to emphasize relevance to the target role.
 - Order experiences by relevance, not just chronology.
 - keywordsCovered should list job keywords/tools/skills that appear in the CV content.
-- Be honest in omittedItems about what was left out and why.`;
+- Be honest in omittedItems about what was left out and why.
+- coverageMap must map EVERY must-have and nice-to-have requirement to either a matchedRequirements entry (with specific profile evidence) or an uncoveredRequirements entry. No requirement should be left unaccounted for.`;
 
 export async function generateTargetedCV(
   profile: Profile,
@@ -140,6 +151,10 @@ Generate the tailored CV now.`;
     keywordsCovered: output.keywordsCovered || [],
     omittedItems: output.omittedItems || [],
     generationNotes: output.generationNotes || [],
+    coverageMap: output.coverageMap ?? {
+      matchedRequirements: [],
+      uncoveredRequirements: [],
+    },
   };
 
   return cv;

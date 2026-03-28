@@ -28,6 +28,20 @@ export const ExperienceSelectedSchema = Type.Object({
 });
 export type ExperienceSelected = Static<typeof ExperienceSelectedSchema>;
 
+// --- Coverage map sub-schemas ---
+
+export const MatchedRequirementSchema = Type.Object({
+  requirement: Type.String(),
+  evidenceRef: Type.String(),
+});
+export type MatchedRequirement = Static<typeof MatchedRequirementSchema>;
+
+export const CoverageMapSchema = Type.Object({
+  matchedRequirements: Type.Array(MatchedRequirementSchema),
+  uncoveredRequirements: Type.Array(Type.String()),
+});
+export type CoverageMap = Static<typeof CoverageMapSchema>;
+
 // --- Full GeneratedCV schema ---
 
 export const GeneratedCVSchema = Type.Object({
@@ -46,5 +60,6 @@ export const GeneratedCVSchema = Type.Object({
   keywordsCovered: Type.Array(Type.String()),
   omittedItems: Type.Array(Type.String()),
   generationNotes: Type.Array(Type.String()),
+  coverageMap: Type.Optional(CoverageMapSchema),
 });
 export type GeneratedCV = Static<typeof GeneratedCVSchema>;

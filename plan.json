@@ -548,7 +548,7 @@
       "3. coverage_map.uncovered_requirements: array of requirements not addressed by the CV",
       "4. Verify: coverage map accurately reflects which job requirements are covered"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "AI Layer - Candidate Agent",
