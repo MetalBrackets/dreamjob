@@ -29,7 +29,7 @@
       "2. Add data/ to .gitignore (except .gitkeep if needed)",
       "3. Ensure data/ is auto-created on first run if missing"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Server Setup",

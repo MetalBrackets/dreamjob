@@ -43,6 +43,13 @@ coverage/
 .nyc_output/
 .pytest_cache/
 
+# Data files (keep directory structure via .gitkeep)
+data/*
+!data/.gitkeep
+!data/uploads/
+data/uploads/*
+!data/uploads/.gitkeep
+
 # Misc
 *.tsbuildinfo
 .turbo/
