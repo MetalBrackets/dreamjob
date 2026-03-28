@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **JobPost (Normalized) TypeBox Schema**: Created src/schemas/job-post.ts defining JobPostSchema with id, jobOfferRawId, title, company, description, url, salary (optional), location, remoteMode (enum: onsite/hybrid/remote), employmentType (enum: full_time/part_time/contract/internship), seniority (enum: entry/mid/senior/lead/executive), jobSummary (string), array fields (responsibilities, requirementsMustHave, requirementsNiceToHave, keywords, tools, languages), and optional fields (yearsExperienceMin, postedDate). Exported static TypeScript type JobPost and enum types. Verified: tsc --noEmit passes, schema validates valid data (true), valid without optionals (true), invalid remoteMode (false), and missing fields (false).
+
+### 2026-03-28
 - **JobOfferRaw TypeBox Schema**: Created src/schemas/job-offer-raw.ts defining JobOfferRawSchema with id, source, sourceUrl, capturedAt, htmlSnapshotRef (optional), rawText, and rawFields object (title, company, location, employment_type, salary, description, requirements, posted_date — all optional). Exported static TypeScript type JobOfferRaw. Verified: tsc --noEmit passes, schema validates valid data (true), valid with optional htmlSnapshotRef (true), and invalid/missing fields (false).
 
 ### 2026-03-28

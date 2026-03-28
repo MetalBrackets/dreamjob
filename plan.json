@@ -169,7 +169,7 @@
       "4. Export static TypeScript type",
       "5. Verify: schema validates sample normalized job post"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Type Definitions",
