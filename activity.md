@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **DELETE /api/jobs/:id Endpoint**: Added DELETE /api/jobs/:id to src/routes/jobs.ts. Finds the job by id in data/jobs.json, removes it from the collection, writes back. Returns 204 on success, 404 with `{"error":"Job post not found"}` if not found. Verified: DELETE /api/jobs/job_01 returns 204 and job no longer appears in GET /api/jobs, DELETE /api/jobs/job_99 returns 404, tsc --noEmit passes.
+
+### 2026-03-28
 - **PUT /api/jobs/:id Endpoint**: Added PUT /api/jobs/:id to src/routes/jobs.ts. Accepts JSON body with partial JobPost fields, finds the job by id in data/jobs.json, merges updates (preserving the original id), writes back to collection. Returns 200 with the updated job post, or 404 with `{"error":"Job post not found"}` if not found. Verified: PUT /api/jobs/job_01 with updated title/company returns 200 with merged fields, PUT /api/jobs/job_99 returns 404, persistence confirmed via subsequent GET, tsc --noEmit passes.
 
 ### 2026-03-28

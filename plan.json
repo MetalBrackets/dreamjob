@@ -443,7 +443,7 @@
       "2. Return 204 on success, 404 if not found",
       "3. Verify: delete a job, confirm it no longer appears in GET /api/jobs"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Job Normalization Service",
