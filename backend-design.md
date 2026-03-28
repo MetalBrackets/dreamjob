@@ -8,7 +8,6 @@
 | Framework | Fastify or Express |
 | Database | PostgreSQL |
 | ORM | Prisma |
-| Auth | Better-Auth (open source, MIT) -- handles email/password, OAuth, sessions, email verification, password reset. Manages its own `user`, `session`, and `account` tables. |
 | Validation | Zod |
 | Job Parsing | LLM-assisted extraction (Claude API) |
 | Resume Tailoring | LLM-assisted rewriting (Claude API) |
@@ -17,7 +16,7 @@
 
 ## Overview
 
-Backend system for a resume-tailoring application. Users build a master profile containing all career information, then generate targeted resumes matched to LinkedIn job posts.
+Single-user, locally-run backend for a resume-tailoring application. The user builds a master profile containing all career information, then generates targeted resumes matched to LinkedIn job posts. No authentication is needed -- each instance is used by one person on their own machine.
 
 ---
 
@@ -28,24 +27,15 @@ Backend system for a resume-tailoring application. Users build a master profile 
 
 ---
 
-### Core Tables
-
-#### Auth Tables (managed by Better-Auth)
-
-Better-Auth automatically creates and manages `user`, `session`, and `account` tables. These handle registration, login, OAuth providers, and session management. Do not modify these tables directly -- use the Better-Auth API.
-
----
-
 ### Master Profile Tables
 
 #### `profiles`
 
-One-to-one with user. Top-level personal/contact info.
+Top-level personal/contact info. One profile per instance.
 
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid | PK |
-| user_id | uuid | FK -> user (Better-Auth), unique |
 | first_name | varchar(100) | |
 | last_name | varchar(100) | |
 | headline | varchar(300) | professional headline |
@@ -217,7 +207,7 @@ Represents a scraped or manually entered LinkedIn job post.
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid | PK |
-| user_id | uuid | FK -> user (Better-Auth) |
+| profile_id | uuid | FK -> profiles |
 | source_url | varchar(500) | LinkedIn URL |
 | title | varchar(300) | not null |
 | company | varchar(200) | |
@@ -258,7 +248,7 @@ A resume generated from the master profile, customized for a specific job post.
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid | PK |
-| user_id | uuid | FK -> user (Better-Auth) |
+| profile_id | uuid | FK -> profiles |
 | job_post_id | uuid | FK -> job_posts, nullable |
 | name | varchar(200) | user-given label |
 | tailored_headline | varchar(300) | |
@@ -319,13 +309,6 @@ Which experiences and bullets are included in this version.
 
 ```
 /api
-├── /auth                            # handled by Better-Auth (mounted as route handler)
-│   ├── POST   /sign-up
-│   ├── POST   /sign-in
-│   ├── POST   /sign-out
-│   ├── GET    /session              # get current session
-│   └── ...                          # OAuth, email verification, password reset, etc.
-│
 ├── /profile
 │   ├── GET    /                    # get master profile
 │   ├── PUT    /                    # update profile info
