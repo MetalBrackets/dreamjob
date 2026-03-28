@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { ensureDataDirs } from "./ensure-dirs.js";
 import { profileRoutes } from "./routes/profile.js";
+import { resumeRoutes } from "./routes/resume.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -19,6 +20,7 @@ await app.register(multipart, {
 await ensureDataDirs();
 
 await app.register(profileRoutes);
+await app.register(resumeRoutes);
 
 const start = async () => {
   try {

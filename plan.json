@@ -249,7 +249,7 @@
       "5. Save file to data/uploads/resume.pdf (overwrite if exists)",
       "6. Verify: upload a PDF via curl, check file saved to data/uploads/"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Resume Upload & Extraction Routes",
