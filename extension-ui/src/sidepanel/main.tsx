@@ -10,19 +10,13 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react'
-import { apiClient, type ResumeUploadResponse } from '../lib/api/client'
+import { apiClient, extractionToResumeMaster } from '../lib/api/client'
 import {
   captureCurrentJob,
   type CaptureCurrentJobFailureReason,
 } from '../lib/chrome/capture'
 import { chromeStorage } from '../lib/chrome/storage'
 import { I18nProvider, useI18n } from '../i18n/I18nProvider'
-import {
-  mockAtsReview,
-  mockGeneratedCv,
-  mockRecruiterReview,
-  mockReviewAgreement,
-} from '../shared/mock-data'
 import '../shared/styles/global.css'
 import '../shared/styles/sidepanel.css'
 import type {
@@ -112,85 +106,6 @@ function getResumeCompletion(resumeMaster: ResumeMaster) {
   return Math.round((completed / checks.length) * 100)
 }
 
-function mapExtractionToResumeMaster(
-  data: ResumeUploadResponse['extractedData']['data'],
-): Partial<ResumeMaster> {
-  const profiles: ResumeProfileLink[] = []
-  if (data.identity.links) {
-    const { linkedin, portfolio, github } = data.identity.links
-    if (linkedin) profiles.push({ id: createId('link'), label: 'LinkedIn', value: linkedin })
-    if (portfolio) profiles.push({ id: createId('link'), label: 'Portfolio', value: portfolio })
-    if (github) profiles.push({ id: createId('link'), label: 'GitHub', value: github })
-  }
-
-  return {
-    fullName: data.identity.name,
-    title: data.identity.headline,
-    location: data.identity.location ?? '',
-    summary: data.professionalSummaryMaster ?? '',
-    profiles,
-    experience: data.experiences.map((exp) => ({
-      id: createId('exp'),
-      role: exp.title,
-      company: exp.company,
-      location: exp.location ?? '',
-      startDate: exp.startDate,
-      endDate: exp.endDate ?? '',
-      current: !exp.endDate,
-      description: exp.description ?? '',
-      highlights: exp.achievements.map((a) => a.text),
-    })),
-    education: data.education.map((edu) => ({
-      id: createId('edu'),
-      institution: edu.school,
-      degree: edu.degree,
-      fieldOfStudy: edu.field ?? '',
-      startDate: '',
-      endDate: edu.year ? String(edu.year) : '',
-      description: '',
-    })),
-    skills: data.skills.map((s) => ({
-      id: createId('skill'),
-      name: s.name,
-      level: s.level ?? '',
-      details: s.category ?? '',
-    })),
-    languages: (data.languages ?? []).map((l) => ({
-      id: createId('lang'),
-      name: l.name,
-      proficiency: l.level ?? '',
-      certification: '',
-    })),
-    projects: (data.projects ?? []).map((p) => ({
-      id: createId('proj'),
-      name: p.name,
-      role: '',
-      startDate: '',
-      endDate: '',
-      current: false,
-      description: p.description ?? '',
-      highlights: p.technologies ?? [],
-      link: p.url ?? '',
-    })),
-    certifications: (data.certifications ?? []).map((c) => ({
-      id: createId('cert'),
-      name: c.name,
-      issuer: c.issuer ?? '',
-      date: c.date ?? '',
-      expiresAt: '',
-      credentialId: '',
-    })),
-    references: (data.references ?? []).map((r) => ({
-      id: createId('ref'),
-      name: r.name,
-      relationship: r.relationship ?? '',
-      company: r.company ?? '',
-      email: r.email ?? '',
-      phone: r.phone ?? '',
-      notes: '',
-    })),
-  }
-}
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { locale, setLocale, t } = useI18n()
@@ -514,8 +429,8 @@ function MasterResumePage() {
     setExtractionError('')
     try {
       const result = await apiClient.uploadResume(file)
-      const mapped = mapExtractionToResumeMaster(result.extractedData.data)
-      setResumeMaster((current) => (current ? { ...current, ...mapped } : current))
+      const mapped = extractionToResumeMaster(result.extractedData.data, resumeMaster ?? undefined)
+      setResumeMaster(mapped)
       setExtractionState('done')
     } catch (err) {
       setExtractionState('error')
@@ -2033,8 +1948,6 @@ function SelectedOfferPage() {
     reason: CaptureCurrentJobFailureReason
     details?: string
   } | null>(null)
-  const generationTimeoutRef = React.useRef<number | null>(null)
-
   React.useEffect(() => {
     chromeStorage
       .getCapturedJob()
@@ -2044,14 +1957,6 @@ function SelectedOfferPage() {
       .catch(() => {
         setOffer(null)
       })
-  }, [])
-
-  React.useEffect(() => {
-    return () => {
-      if (generationTimeoutRef.current) {
-        window.clearTimeout(generationTimeoutRef.current)
-      }
-    }
   }, [])
 
   if (!offer) return <div className="panel">{t.common.loadingJob}</div>
@@ -2097,7 +2002,7 @@ function SelectedOfferPage() {
     setIsSaving(false)
   }
 
-  const handleGenerateResume = () => {
+  const handleGenerateResume = async () => {
     if (generationState === 'generating') return
 
     setGenerationState('generating')
@@ -2106,17 +2011,17 @@ function SelectedOfferPage() {
     setGeneratedCv(null)
     setReviewAgreement(null)
 
-    if (generationTimeoutRef.current) {
-      window.clearTimeout(generationTimeoutRef.current)
-    }
-
-    generationTimeoutRef.current = window.setTimeout(() => {
-      setAtsReview(mockAtsReview)
-      setRecruiterReview(mockRecruiterReview)
-      setGeneratedCv(mockGeneratedCv)
-      setReviewAgreement(mockReviewAgreement)
+    try {
+      const { jobPostId } = await apiClient.postJobRaw(offer!)
+      const result = await apiClient.generateCv(jobPostId, 'fr')
+      setGeneratedCv(result.cv)
+      setAtsReview(result.atsReview)
+      setRecruiterReview(result.recruiterReview)
+      setReviewAgreement(result.reviewAgreement)
       setGenerationState('generated')
-    }, 2000)
+    } catch {
+      setGenerationState('idle')
+    }
   }
 
   const renderList = (items: string[], emptyLabel?: string) => {
@@ -2490,8 +2395,8 @@ function DashboardPage() {
                 <span>{application.company}</span>
               </div>
               <span className="status-pill">{application.status}</span>
-              <span>{application.followUpAt}</span>
-              <span>{application.matchScore}%</span>
+              <span>{application.followUpAt || '—'}</span>
+              <span>{application.matchScore > 0 ? `${application.matchScore}%` : '—'}</span>
             </div>
           ))}
         </div>

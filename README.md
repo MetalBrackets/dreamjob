@@ -68,6 +68,16 @@ Les deux serveurs tournent sur des ports differents et peuvent etre lances en pa
 | `GET` | `/api/profile` | Recuperer le profil utilisateur |
 | `PUT` | `/api/profile` | Remplacer le profil complet |
 
+**`PUT /api/profile`** — Corps de la requete :
+```jsonc
+{
+  "id": "string",                // identifiant du profil
+  "data": ProfileData,           // voir Objets de donnees cles
+  "createdAt": "ISO 8601",
+  "updatedAt": "ISO 8601"
+}
+```
+
 ### CV (upload & extraction)
 
 | Methode | Route | Description |
@@ -79,6 +89,17 @@ Les deux serveurs tournent sur des ports differents et peuvent etre lances en pa
 | `PUT` | `/api/resume/extraction/review` | Marquer une section comme relue |
 | `GET` | `/api/resume/completeness` | Progression, score, checklist |
 
+**`POST /api/resume/upload`** — Multipart form-data, un seul fichier PDF (`application/pdf`), max 10 Mo.
+
+**`PUT /api/resume/extraction/review`** — Corps de la requete :
+```jsonc
+{
+  "section": "string",   // "identity" | "targetRoles" | "professionalSummaryMaster" | "constraints" | "experiences" | "education" | "skills" | "certifications" | "languages" | "projects" | "references"
+  "itemId": "string",    // (optionnel) requis pour les sections de type tableau
+  "reviewed": true       // boolean
+}
+```
+
 ### Offres d'emploi (brutes)
 
 | Methode | Route | Description |
@@ -86,6 +107,29 @@ Les deux serveurs tournent sur des ports differents et peuvent etre lances en pa
 | `POST` | `/api/jobs/raw` | Capturer une offre depuis l'extension |
 | `GET` | `/api/jobs/raw` | Lister toutes les captures brutes |
 | `GET` | `/api/jobs/raw/:id` | Recuperer une capture par ID |
+| `GET` | `/api/jobs/current` | Recuperer la derniere offre capturee |
+
+**`POST /api/jobs/raw`** — Corps de la requete :
+```jsonc
+{
+  "source": "string",           // (requis) source de l'offre
+  "sourceUrl": "string",        // (requis) URL de la source
+  "rawText": "string",          // (requis) texte brut de l'offre
+  "htmlSnapshotRef": "string",  // (optionnel) reference au snapshot HTML
+  "rawFields": {                // (optionnel) champs structures
+    "title": "string",
+    "company": "string",
+    "location": "string",
+    "employment_type": "string",
+    "salary": "string",
+    "description": "string",
+    "requirements": "string",
+    "posted_date": "string"
+  }
+}
+```
+
+**`GET /api/jobs/raw/:id`** — Parametre de route : `id` (string).
 
 ### Offres d'emploi (normalisees)
 
@@ -96,16 +140,52 @@ Les deux serveurs tournent sur des ports differents et peuvent etre lances en pa
 | `PUT` | `/api/jobs/:id` | Modifier une offre |
 | `DELETE` | `/api/jobs/:id` | Supprimer une offre |
 
+**`GET /api/jobs/:id`**, **`PUT /api/jobs/:id`**, **`DELETE /api/jobs/:id`** — Parametre de route : `id` (string).
+
+**`PUT /api/jobs/:id`** — Corps de la requete (tous les champs sont optionnels) :
+```jsonc
+{
+  "title": "string",                    // max 200 car.
+  "company": "string",                  // max 200 car.
+  "description": "string",              // max 10 000 car.
+  "url": "string",
+  "salary": "string",
+  "location": "string",                 // max 200 car.
+  "remoteMode": "onsite | hybrid | remote",
+  "employmentType": "full_time | part_time | contract | internship",
+  "seniority": "entry | mid | senior | lead | executive",
+  "jobSummary": "string",               // max 10 000 car.
+  "responsibilities": ["string"],
+  "requirementsMustHave": ["string"],
+  "requirementsNiceToHave": ["string"],
+  "keywords": ["string"],
+  "tools": ["string"],
+  "languages": ["string"],
+  "yearsExperienceMin": 0,              // nombre
+  "postedDate": "string"
+}
+```
+
 ### CV generes & reviews
 
 | Methode | Route | Description |
 |---------|-------|-------------|
-| `POST` | `/api/cvs/generate` | Lancer la generation (body: `{ jobPostId, language }`) |
+| `POST` | `/api/cvs/generate` | Lancer la generation d'un CV |
 | `GET` | `/api/cvs` | Lister tous les CV generes |
 | `GET` | `/api/cvs/:id` | Recuperer un CV |
 | `DELETE` | `/api/cvs/:id` | Supprimer un CV |
 | `GET` | `/api/cvs/:id/ats-review` | Review ATS du CV |
 | `GET` | `/api/cvs/:id/recruiter-review` | Review recruteur du CV |
+
+**`POST /api/cvs/generate`** — Corps de la requete :
+```jsonc
+{
+  "jobPostId": "string",  // (requis) ID de l'offre ciblee
+  "language": "string"     // (requis) langue du CV genere
+}
+```
+
+**`GET /api/cvs/:id`**, **`DELETE /api/cvs/:id`**, **`GET /api/cvs/:id/ats-review`**, **`GET /api/cvs/:id/recruiter-review`** — Parametre de route : `id` (string).
 
 ## Objets de donnees cles
 
