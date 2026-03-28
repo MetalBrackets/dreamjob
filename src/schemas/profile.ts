@@ -10,11 +10,11 @@ export const LinksSchema = Type.Object({
 export type Links = Static<typeof LinksSchema>;
 
 export const IdentitySchema = Type.Object({
-  name: Type.String(),
-  headline: Type.String(),
-  email: Type.String(),
-  phone: Type.Optional(Type.String()),
-  location: Type.Optional(Type.String()),
+  name: Type.String({ minLength: 1, maxLength: 200 }),
+  headline: Type.String({ maxLength: 300 }),
+  email: Type.String({ minLength: 1, maxLength: 200 }),
+  phone: Type.Optional(Type.String({ maxLength: 50 })),
+  location: Type.Optional(Type.String({ maxLength: 200 })),
   links: Type.Optional(LinksSchema),
 });
 export type Identity = Static<typeof IdentitySchema>;

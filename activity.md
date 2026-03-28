@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Profile Route Validation Schema (src/schemas/profile.ts)**: Added request validation constraints to the PUT /api/profile route's body schema via the IdentitySchema in profile.ts. Added minLength: 1 and maxLength: 200 to identity.name (required, non-empty), maxLength: 300 to identity.headline, minLength: 1 and maxLength: 200 to identity.email (required, non-empty), maxLength: 50 to identity.phone, and maxLength: 200 to identity.location. Fastify's built-in Ajv schema validation now enforces these constraints, returning 400 Bad Request with descriptive error messages for invalid PUT /api/profile requests. Verified: empty name returns 400, name exceeding 200 chars returns 400, missing required fields returns 400, valid request returns 200, tsc --noEmit passes, server starts on port 3000.
+
+### 2026-03-28
 - **Shared Validation Definitions (src/schemas/shared.ts)**: Created src/schemas/shared.ts defining shared enum and constraint definitions for reuse across route validation schemas. Re-exports RemoteModeEnum, EmploymentTypeEnum, SeniorityEnum from job-post.ts and FinalStatusSchema from review-agreement.ts. Defines new LevelEnum (beginner/intermediate/advanced/expert/native) for skill and language level validation. Defines NameString (maxLength 200) and DescriptionString (maxLength 10000) shared constraint types. Defines IdParamsSchema as Type.Object({ id: Type.String({ minLength: 1 }) }) for use as a shared :id param schema across all parameterized routes. Exports static TypeScript types Level and IdParams. Verified: tsc --noEmit passes, server starts on port 3002, GET /api/cvs returns 200.
 
 ### 2026-03-28

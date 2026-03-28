@@ -685,7 +685,7 @@
       "1. Add body schema to PUT /api/profile with required fields (identity.name, identity.email) and string limits",
       "2. Verify: invalid PUT /api/profile returns 400 with descriptive error"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Validation",
