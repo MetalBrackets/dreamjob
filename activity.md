@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **NPM Scripts Verified**: Confirmed all four npm scripts work correctly — `dev` (tsx watch src/server.ts) starts with hot reload, `build` (tsc) compiles to dist/, `start` (node dist/server.js) runs compiled output, `seed` (tsx src/seed.ts) runs seed placeholder. Created src/seed.ts placeholder for the seed script.
+
+### 2026-03-28
 - **Fastify Server Entry Point**: Created src/server.ts with Fastify initialization (logger enabled), registered @fastify/cors (origin localhost:5173) and @fastify/multipart (10MB limit), ensureDataDirs on startup, and listen on PORT (default 3000). Verified: server starts, GET / returns 404, tsc --noEmit passes.
 
 ### 2026-03-28

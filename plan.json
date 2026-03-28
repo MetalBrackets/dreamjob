@@ -54,7 +54,7 @@
       "4. Add 'seed' script: tsx src/seed.ts",
       "5. Verify: npm run dev starts with hot reload, npm run build compiles to dist/"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Storage Layer",
