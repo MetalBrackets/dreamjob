@@ -1867,6 +1867,7 @@ function SelectedOfferPage() {
   const { t } = useI18n()
   const [offer, setOffer] = React.useState<CapturedJobOffer | null>(null)
   const [isSaving, setIsSaving] = React.useState(false)
+  const [resumeRequestPreview, setResumeRequestPreview] = React.useState('')
   const [saveState, setSaveState] = React.useState<'idle' | 'saved' | 'error'>(
     'idle',
   )
@@ -1929,6 +1930,14 @@ function SelectedOfferPage() {
     setIsSaving(false)
   }
 
+  const handleGenerateResume = () => {
+    const requestPayload = {
+      job_offer: offer,
+    }
+
+    setResumeRequestPreview(JSON.stringify(requestPayload, null, 2))
+  }
+
   return (
     <div className="page-stack">
       <section className="hero-card compact">
@@ -1969,9 +1978,15 @@ function SelectedOfferPage() {
                 {saveError?.details ? <pre className="debug-block">{saveError.details}</pre> : null}
               </div>
             ) : null}
-            <button className="primary-button">
+            <button className="primary-button" onClick={handleGenerateResume}>
               {t.selectedOffer.generateResume}
             </button>
+            {resumeRequestPreview ? (
+              <div className="panel-note">
+                <p>{t.selectedOffer.generateResumePreview}</p>
+                <pre className="debug-block">{resumeRequestPreview}</pre>
+              </div>
+            ) : null}
             <button className="secondary-button">
               {t.selectedOffer.generateCoverLetter}
             </button>
