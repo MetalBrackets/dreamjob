@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Extraction Post-Processing (ID assignment, review status init, date normalization)**: Updated src/services/extraction-pipeline.ts to call AI extraction (extractProfileFromText) after PDF text extraction, then apply three post-processing steps: (1) assignExperienceIds — overwrites experience IDs with sequential exp_01, exp_02, ... format, (2) normalizeDates — converts date strings (e.g., "January 2020", "01/2020", "2020-01-15") to ISO partial format (YYYY-MM or YYYY) for experiences and certifications, (3) initReviewStatus — initializes all reviewStatus entries to false for every section and item (scalar sections like identity get a boolean false, array sections like experiences/skills get a Record keyed by ID/name with false values). Falls back to empty scaffold if AI extraction fails (e.g., missing API key). Verified: module loads correctly, tsc --noEmit passes, server starts without errors, all post-processing functions present and integrated into pipeline.
+
+### 2026-03-28
 - **AI Structured Extraction (extractProfileFromText)**: Created src/services/ai/openai.ts implementing extractProfileFromText(text) which sends resume text to OpenAI GPT-4o with JSON mode, using a detailed system prompt that maps output to the exact ProfileData and ConfidenceMap schemas. Returns { data: ProfileData, confidence: ConfidenceMap }. Uses lazy client initialization so the module loads without OPENAI_API_KEY (throws descriptive error only when called). Handles API errors: missing API key throws "OPENAI_API_KEY is not set", empty response throws "OpenAI returned an empty response", malformed JSON throws parse error, missing keys throws descriptive error. Ensures required ProfileData fields have defaults (empty identity, empty arrays). Verified: function exports correctly, missing API key throws correct error, tsc --noEmit passes.
 
 ### 2026-03-28

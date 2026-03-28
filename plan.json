@@ -371,7 +371,7 @@
       "6. On failure, set resume-upload status to 'failed' with error message",
       "7. Verify: post-processed extraction has valid IDs, all review statuses are false"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Completeness Service",
