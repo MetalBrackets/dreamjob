@@ -9,7 +9,7 @@
       "4. Create .env.example with OPENAI_API_KEY and PORT=3000",
       "5. Verify: npm install completes without errors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Project Scaffolding",
