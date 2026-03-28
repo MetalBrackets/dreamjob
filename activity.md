@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **GET /api/profile Endpoint**: Created src/routes/profile.ts as a Fastify plugin implementing GET /api/profile. Reads data/profile.json via store service, returns 200 with profile data or 404 if no profile exists. Registered route in src/server.ts. Verified: returns 404 with `{"error":"No profile found"}` when no profile.json exists, returns 200 with full profile data after seeding.
+
+### 2026-03-28
 - **ReviewAgreement TypeBox Schema**: Created src/schemas/review-agreement.ts defining FinalStatusSchema (union enum: FINAL_APPROVED/REJECTED/NEEDS_REVISION) and ReviewAgreementSchema with id, jobPostId, cvId, cvGenerationOk, atsOk, recruiterOk, reviewAgreementOk booleans, finalStatus, rejectionReasons array, and iterationCount integer. Exported static TypeScript types FinalStatus and ReviewAgreement. Verified: tsc --noEmit passes, schema validates valid data (true), missing fields (false), invalid finalStatus (false), REJECTED with reasons (true), and NEEDS_REVISION (true).
 
 ### 2026-03-28

@@ -224,7 +224,7 @@
       "3. Return 200 with profile data, or 404 if no profile exists",
       "4. Verify: curl GET /api/profile returns profile data after seeding"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Profile Routes",

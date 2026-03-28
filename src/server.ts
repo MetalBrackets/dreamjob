@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { ensureDataDirs } from "./ensure-dirs.js";
+import { profileRoutes } from "./routes/profile.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -17,7 +18,7 @@ await app.register(multipart, {
 
 await ensureDataDirs();
 
-// Route plugins will be registered here under /api prefix as they are implemented
+await app.register(profileRoutes);
 
 const start = async () => {
   try {
