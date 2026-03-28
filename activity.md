@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **ReviewAgreement Construction Verification (src/services/cv-generator.ts)**: Verified that ReviewAgreement construction and storage is fully implemented in the orchestrator. The `orchestrate()` function builds a ReviewAgreement object (lines 131-137) with id (ra_ prefix + UUID), jobPostId, cvId, and spreads all fields from `evaluateDecision()` output (cvGenerationOk, atsOk, recruiterOk, reviewAgreementOk, finalStatus, rejectionReasons). The iterationCount is set from the orchestrator's loop counter. finalStatus is FINAL_APPROVED when all agents pass, REJECTED when CV generation fails or max iterations exhausted, and NEEDS_REVISION during the revision loop. rejectionReasons are aggregated from each failing component with scores and recommendations. The ReviewAgreement is stored by appending to data/review-agreements.json (lines 154-158). Verified: tsc --noEmit passes, server starts on port 3001, GET /api/cvs returns 200.
+
+### 2026-03-28
 - **Revision Loop in Orchestrator (src/services/cv-generator.ts)**: Added revision loop to `orchestrate()` that retries CV generation with feedback when ATS or Recruiter reviews fail, up to a maximum of 2 revision iterations (3 total attempts). When ATS fails, feeds the ATSReview back as `revisionContext.previousAtsReview`. When Recruiter fails, feeds RecruiterReview back as `revisionContext.previousRecruiterReview`. When both fail, consolidates both reviews into a single revision context. After exhausting max iterations without approval, finalStatus is set to REJECTED. The `iterationCount` in the ReviewAgreement tracks how many attempts were made. Verified: tsc --noEmit passes, server starts, GET /api/cvs returns 200.
 
 ### 2026-03-28

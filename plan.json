@@ -652,7 +652,7 @@
       "5. Store in data/review-agreements.json",
       "6. Verify: approved pipeline stores ReviewAgreement with FINAL_APPROVED, rejected stores with reasons"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Orchestration",
