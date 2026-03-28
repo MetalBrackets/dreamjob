@@ -1,12 +1,13 @@
 import OpenAI from "openai";
 import type { ProfileData } from "../../schemas/profile.js";
 import type { ConfidenceMap, ConfidenceEntry } from "../../schemas/extraction-result.js";
+import { AiServiceUnavailableError } from "../../errors.js";
 
 let _client: OpenAI | null = null;
 
 export function getClient(): OpenAI {
   if (!process.env.OPENAI_API_KEY) {
-    throw new Error(
+    throw new AiServiceUnavailableError(
       "OPENAI_API_KEY is not set. Please set the OPENAI_API_KEY environment variable.",
     );
   }
@@ -35,15 +36,32 @@ export async function chatCompletion(
     jsonMode = false,
   } = options;
 
-  const response = await getClient().chat.completions.create({
-    model,
-    temperature,
-    ...(jsonMode ? { response_format: { type: "json_object" as const } } : {}),
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-  });
+  let response;
+  try {
+    response = await getClient().chat.completions.create({
+      model,
+      temperature,
+      ...(jsonMode ? { response_format: { type: "json_object" as const } } : {}),
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    });
+  } catch (err: unknown) {
+    if (err instanceof AiServiceUnavailableError) {
+      throw err;
+    }
+    if (err instanceof OpenAI.RateLimitError) {
+      throw new AiServiceUnavailableError("OpenAI rate limit exceeded. Please try again later.");
+    }
+    if (err instanceof OpenAI.APIConnectionError) {
+      throw new AiServiceUnavailableError("Unable to connect to OpenAI API. Please try again later.");
+    }
+    if (err instanceof OpenAI.InternalServerError) {
+      throw new AiServiceUnavailableError("OpenAI service is temporarily unavailable. Please try again later.");
+    }
+    throw err;
+  }
 
   const content = response.choices[0]?.message?.content;
   if (!content) {

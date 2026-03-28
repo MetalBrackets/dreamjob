@@ -30,3 +30,14 @@ export class PostProcessingError extends Error {
     this.name = "PostProcessingError";
   }
 }
+
+/**
+ * Thrown when an AI service is unavailable (missing API key, rate limit, transient error).
+ * Should map to 503 Service Unavailable.
+ */
+export class AiServiceUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AiServiceUnavailableError";
+  }
+}

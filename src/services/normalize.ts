@@ -3,12 +3,13 @@ import type { JobOfferRaw } from "../schemas/job-offer-raw.js";
 import type { JobPost } from "../schemas/job-post.js";
 import { readCollection, writeCollection } from "./store.js";
 import { JOBS_PATH } from "./paths.js";
+import { AiServiceUnavailableError } from "../errors.js";
 
 let _client: OpenAI | null = null;
 
 function getClient(): OpenAI {
   if (!process.env.OPENAI_API_KEY) {
-    throw new Error(
+    throw new AiServiceUnavailableError(
       "OPENAI_API_KEY is not set. Cannot perform job normalization.",
     );
   }

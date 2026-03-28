@@ -6,6 +6,7 @@ import { profileRoutes } from "./routes/profile.js";
 import { resumeRoutes } from "./routes/resume.js";
 import { jobsRoutes } from "./routes/jobs.js";
 import { cvsRoutes } from "./routes/cvs.js";
+import { AiServiceUnavailableError } from "./errors.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -21,10 +22,22 @@ await app.register(multipart, {
 
 await ensureDataDirs();
 
+app.setErrorHandler((error, _request, reply) => {
+  if (error instanceof AiServiceUnavailableError) {
+    return reply.code(503).send({ error: error.message });
+  }
+  // Let Fastify handle validation errors and other errors
+  reply.send(error);
+});
+
 await app.register(profileRoutes);
 await app.register(resumeRoutes);
 await app.register(jobsRoutes);
 await app.register(cvsRoutes);
+
+if (!process.env.OPENAI_API_KEY) {
+  app.log.warn("OPENAI_API_KEY is not set. AI-powered endpoints (resume extraction, job normalization, CV generation) will return 503.");
+}
 
 const start = async () => {
   try {

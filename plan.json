@@ -739,7 +739,7 @@
       "3. Handle OpenAI rate limits and transient errors with descriptive error responses",
       "4. Verify: start server without API key, confirm AI endpoints return 503 not crash"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Integration",

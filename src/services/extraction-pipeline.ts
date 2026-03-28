@@ -10,7 +10,7 @@ import { EXTRACTION_PATH, RESUME_UPLOAD_PATH } from "./paths.js";
 import type { ResumeUpload } from "../schemas/resume-upload.js";
 import { extractTextFromPDF } from "./extraction.js";
 import { extractProfileFromText } from "./ai/openai.js";
-import { AiExtractionError, PostProcessingError } from "../errors.js";
+import { AiExtractionError, AiServiceUnavailableError, PostProcessingError } from "../errors.js";
 
 /**
  * Assign sequential experienceId values (exp_01, exp_02, ...) to experiences
@@ -167,6 +167,9 @@ export async function runExtractionPipeline(
     data = extraction.data;
     confidence = extraction.confidence;
   } catch (err: unknown) {
+    if (err instanceof AiServiceUnavailableError) {
+      throw err;
+    }
     const message = err instanceof Error ? err.message : "AI extraction failed";
     throw new AiExtractionError(message);
   }
