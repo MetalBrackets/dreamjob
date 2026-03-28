@@ -19,7 +19,7 @@
       "2. Install dev deps: typescript, tsx, @types/node",
       "3. Verify: all dependencies resolve and tsc --noEmit passes on an empty project"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Project Scaffolding",
