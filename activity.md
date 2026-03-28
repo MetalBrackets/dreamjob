@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **GET /api/resume/completeness Endpoint**: Added GET /api/resume/completeness to src/routes/resume.ts and created src/services/completeness.ts with pure function computeCompleteness(). Reads data/extraction.json, computes progress (reviewed/total items * 100), strengthScore (point-based: identity 15, 1+ exp 15, 2+ exp 25, exp with 2+ achievements 5 each max 15, 1+ education 10, 5+ skills 10, 10+ skills 15, certifications 5, projects 5, languages 5, summary 5), missingSections (sections with no data), unresolvedSections (sections with unreviewed items), checklist (label/met pairs), and canMarkComplete (identity + all experiences + all education + all skills reviewed). Returns 200 with computed result, 404 if no extraction exists. Verified: returns 404 when no extraction.json, returns correct 0% progress with all unreviewed, returns 100% progress and canMarkComplete true after marking all reviewed, tsc --noEmit passes.
+
+### 2026-03-28
 - **PUT /api/resume/extraction/review Endpoint**: Added PUT /api/resume/extraction/review to src/routes/resume.ts. Accepts JSON body with section (string, required), itemId (string, optional for array sections), and reviewed (boolean, required). Reads data/extraction.json, updates the matching reviewStatus entry — scalar sections (identity, targetRoles, professionalSummaryMaster, constraints) set directly, array sections (experiences, education, skills, certifications, languages, projects, references) require itemId to identify the item. Returns 200 with updated reviewStatus, 404 if no extraction exists, 400 if section/item not found or missing required fields. Verified: returns 404 when no extraction.json, marks identity as reviewed (scalar), marks experience exp_01 as reviewed (array), rejects unknown sections, rejects missing itemId for array sections, persistence confirmed via GET, tsc --noEmit passes.
 
 ### 2026-03-28

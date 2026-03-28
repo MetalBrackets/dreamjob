@@ -8,8 +8,18 @@ import type { ResumeUpload } from "../schemas/resume-upload.js";
 import type { ExtractionResult } from "../schemas/extraction-result.js";
 import type { Profile } from "../schemas/profile.js";
 import { runExtractionPipeline } from "../services/extraction-pipeline.js";
+import { computeCompleteness } from "../services/completeness.js";
 
 export async function resumeRoutes(app: FastifyInstance) {
+  app.get("/api/resume/completeness", async (_request, reply) => {
+    const extraction = await readJSON<ExtractionResult>(EXTRACTION_PATH);
+    if (!extraction) {
+      return reply.code(404).send({ error: "No extraction exists" });
+    }
+    const result = computeCompleteness(extraction);
+    return reply.code(200).send(result);
+  });
+
   app.get("/api/resume/extraction", async (_request, reply) => {
     const extraction = await readJSON<ExtractionResult>(EXTRACTION_PATH);
     if (!extraction) {

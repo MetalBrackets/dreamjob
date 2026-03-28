@@ -331,7 +331,7 @@
       "4. Return 404 if no extraction exists",
       "5. Verify: returns accurate progress percentage, canMarkComplete is false until all sections reviewed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Extraction Service",
