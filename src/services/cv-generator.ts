@@ -5,6 +5,7 @@ import type { GeneratedCV } from "../schemas/generated-cv.js";
 import type { ATSReview } from "../schemas/ats-review.js";
 import type { RecruiterReview } from "../schemas/recruiter-review.js";
 import type { ReviewAgreement } from "../schemas/review-agreement.js";
+import type { AddonResult } from "../schemas/addon-result.js";
 import { readCollection, writeCollection } from "./store.js";
 import {
   CVS_PATH,
@@ -21,6 +22,7 @@ export interface OrchestratorResult {
   atsReview: ATSReview;
   recruiterReview: RecruiterReview;
   reviewAgreement: ReviewAgreement;
+  addonResult: AddonResult;
 }
 
 export interface DecisionInput {
@@ -75,6 +77,49 @@ export function evaluateDecision(input: DecisionInput): DecisionResult {
     reviewAgreementOk,
     finalStatus,
     rejectionReasons,
+  };
+}
+
+export function buildAddonResult(
+  cv: GeneratedCV,
+  atsReview: ATSReview,
+  recruiterReview: RecruiterReview,
+  reviewAgreement: ReviewAgreement
+): AddonResult {
+  const status: "accepted" | "rejected" =
+    reviewAgreement.finalStatus === "FINAL_APPROVED" ? "accepted" : "rejected";
+
+  const atsScore = atsReview.score;
+  const recruiterScore = recruiterReview.score;
+  const overallScore = Math.round((atsScore + recruiterScore) / 2);
+
+  const strengths: string[] = [
+    ...atsReview.matchedKeywords.map((k) => `Matched keyword: ${k}`),
+    ...recruiterReview.strengths,
+  ];
+
+  const weaknesses: string[] = [
+    ...atsReview.missingKeywords.map((k) => `Missing keyword: ${k}`),
+    ...atsReview.formatFlags,
+    ...recruiterReview.concerns,
+  ];
+
+  const recommendations: string[] = [
+    ...atsReview.recommendations,
+    ...recruiterReview.recommendations,
+  ];
+
+  return {
+    status,
+    overall_score: overallScore,
+    scores: { ats_score: atsScore, recruiter_score: recruiterScore },
+    strengths,
+    weaknesses,
+    recommendations,
+    rejection_reasons: reviewAgreement.rejectionReasons,
+    cv_id: cv.id,
+    job_post_id: reviewAgreement.jobPostId,
+    iteration_count: reviewAgreement.iterationCount,
   };
 }
 
@@ -157,5 +202,7 @@ export async function orchestrate(
   agreements.push(reviewAgreement);
   await writeCollection(REVIEW_AGREEMENTS_PATH, agreements);
 
-  return { cv, atsReview, recruiterReview, reviewAgreement };
+  const addonResult = buildAddonResult(cv, atsReview, recruiterReview, reviewAgreement);
+
+  return { cv, atsReview, recruiterReview, reviewAgreement, addonResult };
 }

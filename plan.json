@@ -665,7 +665,7 @@
       "5. Return complete AddonResult regardless of outcome",
       "6. Verify: accepted result has correct scores and aggregated feedback, rejected result includes rejection reasons"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Validation",
