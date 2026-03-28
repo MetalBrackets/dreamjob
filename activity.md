@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **GeneratedCV TypeBox Schema**: Created src/schemas/generated-cv.ts defining CvHeaderSchema (fullName, headline, contact object, optional links), ExperienceSelectedSchema (experienceId, rewrittenBullets array), and full GeneratedCVSchema with id, profileId, jobPostId, version, language, title, header, summary, skillsHighlighted array, experiencesSelected array, educationSelected array, certificationsSelected array, keywordsCovered array, omittedItems array, generationNotes array. Exported static TypeScript types CvHeader, ExperienceSelected, and GeneratedCV. Verified: tsc --noEmit passes, schema validates valid data (true) and missing fields (false).
+
+### 2026-03-28
 - **JobPost (Normalized) TypeBox Schema**: Created src/schemas/job-post.ts defining JobPostSchema with id, jobOfferRawId, title, company, description, url, salary (optional), location, remoteMode (enum: onsite/hybrid/remote), employmentType (enum: full_time/part_time/contract/internship), seniority (enum: entry/mid/senior/lead/executive), jobSummary (string), array fields (responsibilities, requirementsMustHave, requirementsNiceToHave, keywords, tools, languages), and optional fields (yearsExperienceMin, postedDate). Exported static TypeScript type JobPost and enum types. Verified: tsc --noEmit passes, schema validates valid data (true), valid without optionals (true), invalid remoteMode (false), and missing fields (false).
 
 ### 2026-03-28

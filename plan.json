@@ -181,7 +181,7 @@
       "4. Add keywordsCovered, omittedItems, generationNotes arrays",
       "5. Export static TypeScript type"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Type Definitions",
