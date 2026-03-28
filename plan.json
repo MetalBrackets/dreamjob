@@ -525,7 +525,7 @@
       "4. Add error handling for missing API key (throw descriptive error at startup)",
       "5. Verify: client initializes without error when API key is set"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "AI Layer - Candidate Agent",

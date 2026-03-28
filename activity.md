@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **OpenAI SDK Client Setup (src/services/ai/openai.ts)**: Refactored src/services/ai/openai.ts to export the lazy-initialized OpenAI client via getClient(), and added two reusable helper functions: chatCompletion() for plain text completions and chatCompletionJSON<T>() for JSON-mode completions with automatic parsing. Both accept a ChatCompletionOptions interface (systemPrompt, userPrompt, model, temperature, jsonMode). Refactored extractProfileFromText to use the new chatCompletionJSON helper internally. Error handling: missing API key throws descriptive error on first use (lazy init), empty responses throw, malformed JSON throws with preview. Verified: tsc --noEmit passes, server starts without errors, existing extraction pipeline unchanged.
+
+### 2026-03-28
 - **GET /api/cvs/:id/recruiter-review Endpoint**: Added GET /api/cvs/:id/recruiter-review to src/routes/cvs.ts. Finds the RecruiterReview by cvId in data/recruiter-reviews.json collection. Returns 200 with the RecruiterReview object, or 404 with `{"error":"Recruiter review not found"}` if no review exists for that CV. Verified: GET /api/cvs/cv_01/recruiter-review returns 200 with correct review data, GET /api/cvs/cv_99/recruiter-review returns 404, tsc --noEmit passes.
 
 ### 2026-03-28

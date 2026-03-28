@@ -4,16 +4,65 @@ import type { ConfidenceMap, ConfidenceEntry } from "../../schemas/extraction-re
 
 let _client: OpenAI | null = null;
 
-function getClient(): OpenAI {
+export function getClient(): OpenAI {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error(
-      "OPENAI_API_KEY is not set. Cannot perform AI extraction.",
+      "OPENAI_API_KEY is not set. Please set the OPENAI_API_KEY environment variable.",
     );
   }
   if (!_client) {
     _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   }
   return _client;
+}
+
+export interface ChatCompletionOptions {
+  systemPrompt: string;
+  userPrompt: string;
+  model?: string;
+  temperature?: number;
+  jsonMode?: boolean;
+}
+
+export async function chatCompletion(
+  options: ChatCompletionOptions,
+): Promise<string> {
+  const {
+    systemPrompt,
+    userPrompt,
+    model = "gpt-4o",
+    temperature = 0.3,
+    jsonMode = false,
+  } = options;
+
+  const response = await getClient().chat.completions.create({
+    model,
+    temperature,
+    ...(jsonMode ? { response_format: { type: "json_object" as const } } : {}),
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error("OpenAI returned an empty response");
+  }
+  return content;
+}
+
+export async function chatCompletionJSON<T = unknown>(
+  options: ChatCompletionOptions,
+): Promise<T> {
+  const content = await chatCompletion({ ...options, jsonMode: true });
+  try {
+    return JSON.parse(content) as T;
+  } catch {
+    throw new Error(
+      `Failed to parse OpenAI response as JSON: ${content.slice(0, 200)}`,
+    );
+  }
 }
 
 export interface ExtractionOutput {
@@ -86,30 +135,14 @@ Rules:
 export async function extractProfileFromText(
   text: string,
 ): Promise<ExtractionOutput> {
-  const response = await getClient().chat.completions.create({
-    model: "gpt-4o",
+  const parsed = await chatCompletionJSON<{
+    data: ProfileData;
+    confidence: ConfidenceMap;
+  }>({
+    systemPrompt: SYSTEM_PROMPT,
+    userPrompt: `Extract structured profile data from the following resume text:\n\n${text}`,
     temperature: 0.1,
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `Extract structured profile data from the following resume text:\n\n${text}`,
-      },
-    ],
   });
-
-  const content = response.choices[0]?.message?.content;
-  if (!content) {
-    throw new Error("OpenAI returned an empty response");
-  }
-
-  let parsed: { data: ProfileData; confidence: ConfidenceMap };
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    throw new Error(`Failed to parse OpenAI response as JSON: ${content.slice(0, 200)}`);
-  }
 
   if (!parsed.data || !parsed.confidence) {
     throw new Error(
