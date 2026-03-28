@@ -457,7 +457,7 @@
       "6. Append normalized job to data/jobs.json",
       "7. Verify: normalize a raw LinkedIn job capture, confirm all fields populated correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "CV Generation Routes",

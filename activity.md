@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Job Normalization Service via OpenAI**: Rewrote src/services/normalize.ts to use OpenAI GPT-4o for intelligent job post normalization. The normalizeJobOffer(raw) function now sends raw text and structured fields to OpenAI with a detailed system prompt to extract all JobPost fields (title, company, description, location, remoteMode, employmentType, seniority, jobSummary, responsibilities, requirementsMustHave, requirementsNiceToHave, keywords, tools, languages, yearsExperienceMin, postedDate). Validates enum values with fallbacks. Falls back to basic field mapping when OPENAI_API_KEY is not set (graceful degradation). Uses lazy OpenAI client initialization matching the pattern in ai/openai.ts. Verified: POST /api/jobs/raw returns 201 with correctly structured normalized job post, fallback works without API key, all fields populated from rawFields, tsc --noEmit passes.
+
+### 2026-03-28
 - **DELETE /api/jobs/:id Endpoint**: Added DELETE /api/jobs/:id to src/routes/jobs.ts. Finds the job by id in data/jobs.json, removes it from the collection, writes back. Returns 204 on success, 404 with `{"error":"Job post not found"}` if not found. Verified: DELETE /api/jobs/job_01 returns 204 and job no longer appears in GET /api/jobs, DELETE /api/jobs/job_99 returns 404, tsc --noEmit passes.
 
 ### 2026-03-28
