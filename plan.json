@@ -147,7 +147,7 @@
       "5. Define full ExtractionResult schema: id, resumeUploadId, extractedAt, rawText, data (Profile shape), confidence, reviewStatus",
       "6. Verify: schema validates sample extraction result"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Type Definitions",

@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **ExtractionResult TypeBox Schema**: Created src/schemas/extraction-result.ts defining ConfidenceEntry (score 0-1, source enum: extracted/inferred/missing), ConfidenceMap (mirrors ProfileData sections with ConfidenceEntry leaves, Record-based for array sections), ReviewStatus (per-section boolean tracking with Record-based for array sections), CompletionStatus (markedComplete boolean, markedCompleteAt nullable string), and full ExtractionResult (id, resumeUploadId, extractedAt, rawText, data as ProfileData, confidence, reviewStatus, completionStatus). Exported all static TypeScript types. Verified: tsc --noEmit passes, schema validates valid data (true), missing fields (false), and out-of-range confidence score (false).
+
+### 2026-03-28
 - **ResumeUpload TypeBox Schema**: Created src/schemas/resume-upload.ts defining ResumeUploadSchema with id, originalFilename, storagePath, uploadedAt, status (union enum: uploaded/extracting/extracted/confirmed/failed), and optional error. Exported static TypeScript type ResumeUpload. Verified: tsc --noEmit passes, schema validates valid/invalid sample data correctly.
 
 ### 2026-03-28
