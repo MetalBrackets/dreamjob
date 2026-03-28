@@ -57,6 +57,16 @@ export async function cvsRoutes(app: FastifyInstance) {
     return reply.code(200).send(result);
   });
 
+  app.get("/api/cvs/:id/ats-review", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const atsReviews = await readCollection<ATSReview>(ATS_REVIEWS_PATH);
+    const review = atsReviews.find((r) => r.cvId === id);
+    if (!review) {
+      return reply.code(404).send({ error: "ATS review not found" });
+    }
+    return reply.code(200).send(review);
+  });
+
   app.delete("/api/cvs/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
     const cvs = await readCollection<GeneratedCV>(CVS_PATH);

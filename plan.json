@@ -503,7 +503,7 @@
       "2. Return 200 with ATSReview, or 404 if not found",
       "3. Verify: returns correct ATS review for a generated CV"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Review Routes",

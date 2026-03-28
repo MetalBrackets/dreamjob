@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **GET /api/cvs/:id/ats-review Endpoint**: Added GET /api/cvs/:id/ats-review to src/routes/cvs.ts. Finds the ATS review by cvId in data/ats-reviews.json collection. Returns 200 with the ATSReview object, or 404 with `{"error":"ATS review not found"}` if no review exists for that CV. Verified: GET /api/cvs/cv_01/ats-review returns 200 with correct review data, GET /api/cvs/cv_99/ats-review returns 404, tsc --noEmit passes.
+
+### 2026-03-28
 - **DELETE /api/cvs/:id Endpoint**: Added DELETE /api/cvs/:id to src/routes/cvs.ts. Finds the CV by id in data/cvs.json, removes it from the collection, and also cleans up all associated records: removes matching entries (by cvId) from data/ats-reviews.json, data/recruiter-reviews.json, and data/review-agreements.json. Returns 204 on success, 404 with `{"error":"CV not found"}` if not found. Verified: DELETE /api/cvs/cv_01 returns 204 and CV is removed, associated ats-reviews/recruiter-reviews/review-agreements are also removed, DELETE /api/cvs/cv_99 returns 404, tsc --noEmit passes.
 
 ### 2026-03-28
