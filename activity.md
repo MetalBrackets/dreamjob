@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **GET /api/cvs/:id/recruiter-review Endpoint**: Added GET /api/cvs/:id/recruiter-review to src/routes/cvs.ts. Finds the RecruiterReview by cvId in data/recruiter-reviews.json collection. Returns 200 with the RecruiterReview object, or 404 with `{"error":"Recruiter review not found"}` if no review exists for that CV. Verified: GET /api/cvs/cv_01/recruiter-review returns 200 with correct review data, GET /api/cvs/cv_99/recruiter-review returns 404, tsc --noEmit passes.
+
+### 2026-03-28
 - **GET /api/cvs/:id/ats-review Endpoint**: Added GET /api/cvs/:id/ats-review to src/routes/cvs.ts. Finds the ATS review by cvId in data/ats-reviews.json collection. Returns 200 with the ATSReview object, or 404 with `{"error":"ATS review not found"}` if no review exists for that CV. Verified: GET /api/cvs/cv_01/ats-review returns 200 with correct review data, GET /api/cvs/cv_99/ats-review returns 404, tsc --noEmit passes.
 
 ### 2026-03-28

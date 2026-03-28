@@ -67,6 +67,16 @@ export async function cvsRoutes(app: FastifyInstance) {
     return reply.code(200).send(review);
   });
 
+  app.get("/api/cvs/:id/recruiter-review", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const recruiterReviews = await readCollection<RecruiterReview>(RECRUITER_REVIEWS_PATH);
+    const review = recruiterReviews.find((r) => r.cvId === id);
+    if (!review) {
+      return reply.code(404).send({ error: "Recruiter review not found" });
+    }
+    return reply.code(200).send(review);
+  });
+
   app.delete("/api/cvs/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
     const cvs = await readCollection<GeneratedCV>(CVS_PATH);

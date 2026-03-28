@@ -513,7 +513,7 @@
       "2. Return 200 with RecruiterReview, or 404 if not found",
       "3. Verify: returns correct recruiter review for a generated CV"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "AI Layer",
