@@ -113,7 +113,7 @@
       "6. Define Reference schema: name, title, company, email, phone, relationship",
       "7. Verify: schemas validate sample data"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Type Definitions",

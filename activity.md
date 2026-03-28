@@ -3,6 +3,9 @@
 ## Session Log
 
 ### 2026-03-28
+- **Supporting Profile TypeBox Schemas**: Added Education (school, degree, field, year), Skill (name, category, level, years, evidenceRefs), Certification (name, issuer, date), Language (name, level), Project (name, description, url, technologies), and Reference (name, title, company, email, phone, relationship) schemas with static TypeScript types to src/schemas/profile.ts. Verified: tsc --noEmit passes, all schemas produce correct JSON Schema output with proper required/optional fields.
+
+### 2026-03-28
 - **Experience TypeBox Schema**: Added Achievement sub-schema (text, metric, proofLevel) and Experience schema (experienceId, title, company, location, startDate, endDate, description, achievements array, skillsUsed array) to src/schemas/profile.ts. Verified: tsc --noEmit passes, schema validates sample data correctly (valid returns true, invalid returns false).
 
 ### 2026-03-28

@@ -53,3 +53,53 @@ export const ExperienceSchema = Type.Object({
   skillsUsed: Type.Array(Type.String()),
 });
 export type Experience = Static<typeof ExperienceSchema>;
+
+// --- Supporting Profile types ---
+
+export const EducationSchema = Type.Object({
+  school: Type.String(),
+  degree: Type.String(),
+  field: Type.Optional(Type.String()),
+  year: Type.Optional(Type.Number()),
+});
+export type Education = Static<typeof EducationSchema>;
+
+export const SkillSchema = Type.Object({
+  name: Type.String(),
+  category: Type.Optional(Type.String()),
+  level: Type.Optional(Type.String()),
+  years: Type.Optional(Type.Number()),
+  evidenceRefs: Type.Optional(Type.Array(Type.String())),
+});
+export type Skill = Static<typeof SkillSchema>;
+
+export const CertificationSchema = Type.Object({
+  name: Type.String(),
+  issuer: Type.Optional(Type.String()),
+  date: Type.Optional(Type.String()),
+});
+export type Certification = Static<typeof CertificationSchema>;
+
+export const LanguageSchema = Type.Object({
+  name: Type.String(),
+  level: Type.Optional(Type.String()),
+});
+export type Language = Static<typeof LanguageSchema>;
+
+export const ProjectSchema = Type.Object({
+  name: Type.String(),
+  description: Type.Optional(Type.String()),
+  url: Type.Optional(Type.String()),
+  technologies: Type.Optional(Type.Array(Type.String())),
+});
+export type Project = Static<typeof ProjectSchema>;
+
+export const ReferenceSchema = Type.Object({
+  name: Type.String(),
+  title: Type.Optional(Type.String()),
+  company: Type.Optional(Type.String()),
+  email: Type.Optional(Type.String()),
+  phone: Type.Optional(Type.String()),
+  relationship: Type.Optional(Type.String()),
+});
+export type Reference = Static<typeof ReferenceSchema>;
