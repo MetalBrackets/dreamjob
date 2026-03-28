@@ -1,10 +1,12 @@
 import type { FastifyInstance } from "fastify";
+import { Type } from "@sinclair/typebox";
 import type { Profile } from "../schemas/profile.js";
 import type { JobPost } from "../schemas/job-post.js";
 import type { GeneratedCV } from "../schemas/generated-cv.js";
 import type { ATSReview } from "../schemas/ats-review.js";
 import type { RecruiterReview } from "../schemas/recruiter-review.js";
 import type { ReviewAgreement } from "../schemas/review-agreement.js";
+import { IdParamsSchema } from "../schemas/shared.js";
 import { readJSON, readCollection, writeCollection } from "../services/store.js";
 import {
   PROFILE_PATH,
@@ -16,13 +18,18 @@ import {
 } from "../services/paths.js";
 import { orchestrate } from "../services/cv-generator.js";
 
+const GenerateBodySchema = Type.Object({
+  jobPostId: Type.String({ minLength: 1 }),
+  language: Type.String({ minLength: 1 }),
+});
+
 export async function cvsRoutes(app: FastifyInstance) {
   app.get("/api/cvs", async (_request, reply) => {
     const cvs = await readCollection<GeneratedCV>(CVS_PATH);
     return reply.code(200).send(cvs);
   });
 
-  app.get("/api/cvs/:id", async (request, reply) => {
+  app.get("/api/cvs/:id", { schema: { params: IdParamsSchema } }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const cvs = await readCollection<GeneratedCV>(CVS_PATH);
     const cv = cvs.find((c) => c.id === id);
@@ -32,14 +39,8 @@ export async function cvsRoutes(app: FastifyInstance) {
     return reply.code(200).send(cv);
   });
 
-  app.post("/api/cvs/generate", async (request, reply) => {
-    const body = request.body as { jobPostId?: string; language?: string };
-
-    if (!body || !body.jobPostId || !body.language) {
-      return reply.code(400).send({
-        error: "Missing required fields: jobPostId and language are required",
-      });
-    }
+  app.post("/api/cvs/generate", { schema: { body: GenerateBodySchema } }, async (request, reply) => {
+    const body = request.body as { jobPostId: string; language: string };
 
     const profile = await readJSON<Profile>(PROFILE_PATH);
     if (!profile) {
@@ -57,7 +58,7 @@ export async function cvsRoutes(app: FastifyInstance) {
     return reply.code(200).send(result);
   });
 
-  app.get("/api/cvs/:id/ats-review", async (request, reply) => {
+  app.get("/api/cvs/:id/ats-review", { schema: { params: IdParamsSchema } }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const atsReviews = await readCollection<ATSReview>(ATS_REVIEWS_PATH);
     const review = atsReviews.find((r) => r.cvId === id);
@@ -67,7 +68,7 @@ export async function cvsRoutes(app: FastifyInstance) {
     return reply.code(200).send(review);
   });
 
-  app.get("/api/cvs/:id/recruiter-review", async (request, reply) => {
+  app.get("/api/cvs/:id/recruiter-review", { schema: { params: IdParamsSchema } }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const recruiterReviews = await readCollection<RecruiterReview>(RECRUITER_REVIEWS_PATH);
     const review = recruiterReviews.find((r) => r.cvId === id);
@@ -77,7 +78,7 @@ export async function cvsRoutes(app: FastifyInstance) {
     return reply.code(200).send(review);
   });
 
-  app.delete("/api/cvs/:id", async (request, reply) => {
+  app.delete("/api/cvs/:id", { schema: { params: IdParamsSchema } }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const cvs = await readCollection<GeneratedCV>(CVS_PATH);
     const index = cvs.findIndex((c) => c.id === id);

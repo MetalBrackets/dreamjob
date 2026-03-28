@@ -716,7 +716,7 @@
       "2. Add params schema to /api/cvs/:id, /api/cvs/:id/ats-review, /api/cvs/:id/recruiter-review",
       "3. Verify: invalid CVs requests return 400 with descriptive errors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Error Handling",
