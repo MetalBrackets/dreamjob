@@ -52,12 +52,12 @@ export function evaluateDecision(input: DecisionInput): DecisionResult {
   }
   if (!atsOk) {
     rejectionReasons.push(
-      `ATS review failed (score: ${input.atsReview.score}). ${input.atsReview.recommendations.join("; ")}`
+      `ATS review failed (score: ${input.atsReview.score}). ${input.atsReview.recommendations.join("; ")}`,
     );
   }
   if (!recruiterOk) {
     rejectionReasons.push(
-      `Recruiter review failed (score: ${input.recruiterReview.score}). ${input.recruiterReview.recommendations.join("; ")}`
+      `Recruiter review failed (score: ${input.recruiterReview.score}). ${input.recruiterReview.recommendations.join("; ")}`,
     );
   }
 
@@ -84,7 +84,7 @@ export function buildAddonResult(
   cv: GeneratedCV,
   atsReview: ATSReview,
   recruiterReview: RecruiterReview,
-  reviewAgreement: ReviewAgreement
+  reviewAgreement: ReviewAgreement,
 ): AddonResult {
   const status: "accepted" | "rejected" =
     reviewAgreement.finalStatus === "FINAL_APPROVED" ? "accepted" : "rejected";
@@ -122,13 +122,13 @@ export function buildAddonResult(
     iteration_count: reviewAgreement.iterationCount,
   };
 }
-
-const MAX_REVISION_ITERATIONS = 2;
+// iterationCount starts at 1 + MAX_REVISION_ITERATIONS = 2
+const MAX_REVISION_ITERATIONS = 1;
 
 export async function orchestrate(
   profile: Profile,
   jobPost: JobPost,
-  language: string
+  language: string,
 ): Promise<OrchestratorResult> {
   const rules = { language, truthfulnessMode: "strict" as const };
 
@@ -148,7 +148,8 @@ export async function orchestrate(
     decision.finalStatus === "NEEDS_REVISION" &&
     iterationCount < MAX_REVISION_ITERATIONS + 1
   ) {
-    const revisionContext: import("./ai/candidate-agent.js").RevisionContext = {};
+    const revisionContext: import("./ai/candidate-agent.js").RevisionContext =
+      {};
     if (!decision.atsOk) {
       revisionContext.previousAtsReview = atsReview;
     }
@@ -191,18 +192,23 @@ export async function orchestrate(
   await writeCollection(ATS_REVIEWS_PATH, atsReviews);
 
   const recruiterReviews = await readCollection<RecruiterReview>(
-    RECRUITER_REVIEWS_PATH
+    RECRUITER_REVIEWS_PATH,
   );
   recruiterReviews.push(recruiterReview);
   await writeCollection(RECRUITER_REVIEWS_PATH, recruiterReviews);
 
   const agreements = await readCollection<ReviewAgreement>(
-    REVIEW_AGREEMENTS_PATH
+    REVIEW_AGREEMENTS_PATH,
   );
   agreements.push(reviewAgreement);
   await writeCollection(REVIEW_AGREEMENTS_PATH, agreements);
 
-  const addonResult = buildAddonResult(cv, atsReview, recruiterReview, reviewAgreement);
+  const addonResult = buildAddonResult(
+    cv,
+    atsReview,
+    recruiterReview,
+    reviewAgreement,
+  );
 
   return { cv, atsReview, recruiterReview, reviewAgreement, addonResult };
 }

@@ -46,49 +46,37 @@ export async function reviewCVAsRecruiter(
 ): Promise<RecruiterReview> {
   const rules = { ...DEFAULT_SCORING_RULES, ...scoringRules };
 
-  const userPrompt = `## TARGET JOB POSTING
-Title: ${jobPost.title}
-Company: ${jobPost.company}
-Seniority: ${jobPost.seniority}
-Location: ${jobPost.location} (${jobPost.remoteMode})
-Employment: ${jobPost.employmentType}
+  const userPrompt = `Offre:
+${JSON.stringify({
+  title: jobPost.title,
+  seniority: jobPost.seniority,
+  jobSummary: jobPost.jobSummary,
+  requirementsMustHave: jobPost.requirementsMustHave,
+  requirementsNiceToHave: jobPost.requirementsNiceToHave,
+  keywords: jobPost.keywords,
+})}
 
-Job Summary: ${jobPost.jobSummary}
+CV:
+${JSON.stringify({
+  title: cv.title,
+  summary: cv.summary,
+  skillsHighlighted: cv.skillsHighlighted,
+  experiencesSelected: cv.experiencesSelected,
+  educationSelected: cv.educationSelected,
+  certificationsSelected: cv.certificationsSelected,
+  keywordsCovered: cv.keywordsCovered,
+})}
 
-Responsibilities:
-${jobPost.responsibilities.map((r) => `- ${r}`).join("\n")}
+Regles:
+${JSON.stringify({
+  passingScore: rules.passingScore,
+  weightCredibility: rules.weightCredibility,
+  weightReadability: rules.weightReadability,
+  weightCoherence: rules.weightCoherence,
+  weightEvidence: rules.weightEvidence,
+})}
 
-Must-Have Requirements:
-${jobPost.requirementsMustHave.map((r) => `- ${r}`).join("\n")}
-
-Nice-to-Have Requirements:
-${jobPost.requirementsNiceToHave.map((r) => `- ${r}`).join("\n")}
-
-Keywords: ${jobPost.keywords.join(", ")}
-
-## GENERATED CV TO REVIEW
-Title: ${cv.title}
-Summary: ${cv.summary}
-
-Skills Highlighted: ${cv.skillsHighlighted.join(", ")}
-
-Experiences:
-${cv.experiencesSelected
-  .map(
-    (exp) =>
-      `- Experience ${exp.experienceId}:\n${exp.rewrittenBullets.map((b) => `  â€¢ ${b}`).join("\n")}`,
-  )
-  .join("\n")}
-
-Education: ${cv.educationSelected.join("; ")}
-Certifications: ${cv.certificationsSelected.join("; ")}
-Keywords Covered: ${cv.keywordsCovered.join(", ")}
-
-## SCORING RULES
-- Passing score: ${rules.passingScore}
-- Weights: Credibility ${rules.weightCredibility * 100}%, Readability ${rules.weightReadability * 100}%, Coherence ${rules.weightCoherence * 100}%, Evidence ${rules.weightEvidence * 100}%
-
-Evaluate this CV from a recruiter's perspective now.`;
+Retourne le JSON maintenant.`;
 
   const output = await chatCompletionJSON<RecruiterAgentOutput>({
     systemPrompt: SYSTEM_PROMPT,

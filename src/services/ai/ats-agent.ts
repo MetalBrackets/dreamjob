@@ -47,52 +47,38 @@ export async function reviewCVAsATS(
 ): Promise<ATSReview> {
   const rules = { ...DEFAULT_SCORING_RULES, ...scoringRules };
 
-  const userPrompt = `## TARGET JOB POSTING
-Title: ${jobPost.title}
-Company: ${jobPost.company}
-Seniority: ${jobPost.seniority}
-Location: ${jobPost.location} (${jobPost.remoteMode})
-Employment: ${jobPost.employmentType}
+  const userPrompt = `Offre:
+${JSON.stringify({
+  title: jobPost.title,
+  seniority: jobPost.seniority,
+  requirementsMustHave: jobPost.requirementsMustHave,
+  requirementsNiceToHave: jobPost.requirementsNiceToHave,
+  keywords: jobPost.keywords,
+  tools: jobPost.tools,
+  languages: jobPost.languages,
+  yearsExperienceMin: jobPost.yearsExperienceMin ?? null,
+})}
 
-Job Summary: ${jobPost.jobSummary}
+CV:
+${JSON.stringify({
+  title: cv.title,
+  summary: cv.summary,
+  skillsHighlighted: cv.skillsHighlighted,
+  experiencesSelected: cv.experiencesSelected,
+  educationSelected: cv.educationSelected,
+  certificationsSelected: cv.certificationsSelected,
+  keywordsCovered: cv.keywordsCovered,
+})}
 
-Responsibilities:
-${jobPost.responsibilities.map((r) => `- ${r}`).join("\n")}
+Regles:
+${JSON.stringify({
+  passingScore: rules.passingScore,
+  weightKeywords: rules.weightKeywords,
+  weightHardFilters: rules.weightHardFilters,
+  weightStructure: rules.weightStructure,
+})}
 
-Must-Have Requirements:
-${jobPost.requirementsMustHave.map((r) => `- ${r}`).join("\n")}
-
-Nice-to-Have Requirements:
-${jobPost.requirementsNiceToHave.map((r) => `- ${r}`).join("\n")}
-
-Keywords: ${jobPost.keywords.join(", ")}
-Tools: ${jobPost.tools.join(", ")}
-Languages: ${jobPost.languages.join(", ")}
-${jobPost.yearsExperienceMin ? `Minimum Years Experience: ${jobPost.yearsExperienceMin}` : ""}
-
-## GENERATED CV TO REVIEW
-Title: ${cv.title}
-Summary: ${cv.summary}
-
-Skills Highlighted: ${cv.skillsHighlighted.join(", ")}
-
-Experiences:
-${cv.experiencesSelected
-  .map(
-    (exp) =>
-      `- Experience ${exp.experienceId}:\n${exp.rewrittenBullets.map((b) => `  â€¢ ${b}`).join("\n")}`,
-  )
-  .join("\n")}
-
-Education: ${cv.educationSelected.join("; ")}
-Certifications: ${cv.certificationsSelected.join("; ")}
-Keywords Covered: ${cv.keywordsCovered.join(", ")}
-
-## SCORING RULES
-- Passing score: ${rules.passingScore}
-- Weight: Keywords ${rules.weightKeywords * 100}%, Hard Filters ${rules.weightHardFilters * 100}%, Structure ${rules.weightStructure * 100}%
-
-Evaluate this CV against the job posting now.`;
+Retourne le JSON maintenant.`;
 
   const output = await chatCompletionJSON<ATSAgentOutput>({
     systemPrompt: SYSTEM_PROMPT,

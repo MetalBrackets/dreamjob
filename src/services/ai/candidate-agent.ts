@@ -99,40 +99,37 @@ ${parts.join("\n\n")}
     }
   }
 
-  const userPrompt = `## CANDIDATE MASTER PROFILE
-${JSON.stringify(profile.data, null, 2)}
+  const userPrompt = `Profil:
+${JSON.stringify(profile.data)}
 
-## TARGET JOB POSTING
-Title: ${jobPost.title}
-Company: ${jobPost.company}
-Seniority: ${jobPost.seniority}
-Location: ${jobPost.location} (${jobPost.remoteMode})
-Employment: ${jobPost.employmentType}
+Offre:
+${JSON.stringify({
+  title: jobPost.title,
+  company: jobPost.company,
+  seniority: jobPost.seniority,
+  location: jobPost.location,
+  remoteMode: jobPost.remoteMode,
+  employmentType: jobPost.employmentType,
+  jobSummary: jobPost.jobSummary,
+  responsibilities: jobPost.responsibilities,
+  requirementsMustHave: jobPost.requirementsMustHave,
+  requirementsNiceToHave: jobPost.requirementsNiceToHave,
+  keywords: jobPost.keywords,
+  tools: jobPost.tools,
+  languages: jobPost.languages,
+  yearsExperienceMin: jobPost.yearsExperienceMin ?? null,
+})}
 
-Job Summary: ${jobPost.jobSummary}
+Regles:
+${JSON.stringify({
+  language,
+  maxPages: maxPages ?? null,
+  tone: tone ?? "professional",
+  truthfulnessMode: truthfulnessMode ?? "strict",
+})}
+${revisionSection ? `\n\nRevision:\n${revisionSection}` : ""}
 
-Responsibilities:
-${jobPost.responsibilities.map((r) => `- ${r}`).join("\n")}
-
-Must-Have Requirements:
-${jobPost.requirementsMustHave.map((r) => `- ${r}`).join("\n")}
-
-Nice-to-Have Requirements:
-${jobPost.requirementsNiceToHave.map((r) => `- ${r}`).join("\n")}
-
-Keywords: ${jobPost.keywords.join(", ")}
-Tools: ${jobPost.tools.join(", ")}
-Languages: ${jobPost.languages.join(", ")}
-${jobPost.yearsExperienceMin ? `Minimum Years Experience: ${jobPost.yearsExperienceMin}` : ""}
-
-## GENERATION RULES
-- Language: ${language}
-- Max pages: ${maxPages ?? "no limit"}
-- Tone: ${tone ?? "professional"}
-- Truthfulness mode: ${truthfulnessMode ?? "strict"} (strict = never stretch the truth, flexible = allow minor rephrasing for impact)
-${revisionSection}
-
-Generate the tailored CV now.`;
+Retourne le JSON maintenant.`;
 
   const output = await chatCompletionJSON<CandidateAgentOutput>({
     systemPrompt: SYSTEM_PROMPT,
