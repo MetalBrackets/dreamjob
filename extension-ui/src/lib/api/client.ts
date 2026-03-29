@@ -20,7 +20,6 @@ import {
   type ServerOrchestratorResult,
   type CvGenerationResult,
 } from './cvs-adapter'
-
 export { extractionToResumeMaster }
 
 export interface ResumeUploadResponse {

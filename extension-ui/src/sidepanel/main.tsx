@@ -43,6 +43,7 @@ import type {
   ResumeVolunteeringItem,
   CapturedJobOffer,
   GeneratedCv,
+  LinkedInPerson,
   RecruiterReview,
   ReviewAgreement,
 } from '../shared/types'
@@ -2028,6 +2029,11 @@ function SelectedOfferPage() {
   const [generatedCv, setGeneratedCv] = React.useState<GeneratedCv | null>(null)
   const [reviewAgreement, setReviewAgreement] =
     React.useState<ReviewAgreement | null>(null)
+  const [peopleSearchStatus, setPeopleSearchStatus] = React.useState<
+    'idle' | 'running' | 'completed' | 'failed'
+  >('idle')
+  const [peopleSearchResults, setPeopleSearchResults] = React.useState<LinkedInPerson[]>([])
+  const [peopleSearchExpanded, setPeopleSearchExpanded] = React.useState(false)
   const [saveState, setSaveState] = React.useState<'idle' | 'saved' | 'error'>(
     'idle',
   )
@@ -2178,6 +2184,30 @@ function SelectedOfferPage() {
     )
   }
 
+  const handleFindContacts = () => {
+    if (peopleSearchStatus === 'running' || !offer) return
+
+    setPeopleSearchStatus('running')
+    setPeopleSearchResults([])
+    setPeopleSearchExpanded(false)
+
+    chrome.runtime.sendMessage(
+      {
+        type: 'dreamjob:people-search',
+        company: offer.raw_fields.company,
+        role: offer.raw_fields.title,
+      },
+      (response) => {
+        if (response?.ok) {
+          setPeopleSearchResults(response.people)
+          setPeopleSearchStatus('completed')
+        } else {
+          setPeopleSearchStatus('failed')
+        }
+      },
+    )
+  }
+
   const showGeneratedLayout = generationState !== 'idle'
   const showDecisionBanner =
     generationState === 'generated' && Boolean(reviewAgreement)
@@ -2233,6 +2263,17 @@ function SelectedOfferPage() {
             <button className="secondary-button" onClick={() => void handleSaveDashboard()}>
               {t.selectedOffer.saveDashboard}
             </button>
+            {generationState === 'generated' ? (
+              <button
+                className="secondary-button"
+                onClick={handleFindContacts}
+                disabled={peopleSearchStatus === 'running'}
+              >
+                {peopleSearchStatus === 'running'
+                  ? `Searching...`
+                  : `Find Contacts at ${offer.raw_fields.company}`}
+              </button>
+            ) : null}
           </div>
           {dashboardSaveState === 'saved' ? (
             <p className="panel-note">{t.selectedOffer.saveDashboardSuccess}</p>
@@ -2472,6 +2513,56 @@ function SelectedOfferPage() {
               </>
             )}
           </article>
+        </section>
+      ) : null}
+
+      {peopleSearchStatus !== 'idle' ? (
+        <section className="panel">
+          <h2
+            style={{ cursor: peopleSearchStatus === 'completed' ? 'pointer' : 'default' }}
+            onClick={() => {
+              if (peopleSearchStatus === 'completed') setPeopleSearchExpanded((v) => !v)
+            }}
+          >
+            {peopleSearchStatus === 'running'
+              ? `Searching contacts at ${offer.raw_fields.company}...`
+              : peopleSearchStatus === 'completed'
+                ? `Found ${peopleSearchResults.length} contact${peopleSearchResults.length !== 1 ? 's' : ''} at ${offer.raw_fields.company}`
+                : 'Contact search unavailable'}
+            {peopleSearchStatus === 'completed' && peopleSearchResults.length > 0 ? (
+              <span style={{ fontSize: '0.75em', marginLeft: '0.5em' }}>
+                {peopleSearchExpanded ? '\u25B2' : '\u25BC'}
+              </span>
+            ) : null}
+          </h2>
+          {peopleSearchStatus === 'running' ? (
+            <div className="generation-progress-block">
+              <div className="progress-track">
+                <div className="progress-fill progress-fill-animated" />
+              </div>
+            </div>
+          ) : null}
+          {peopleSearchExpanded && peopleSearchResults.length > 0 ? (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {peopleSearchResults.map((person, i) => (
+                <li key={i} style={{ padding: '0.5em 0', borderBottom: '1px solid var(--border)' }}>
+                  <a
+                    href={person.profile_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontWeight: 600 }}
+                  >
+                    {person.name}
+                  </a>
+                  {person.headline ? (
+                    <span style={{ display: 'block', fontSize: '0.85em', opacity: 0.7 }}>
+                      {person.headline}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
 
