@@ -111,6 +111,37 @@ function getDefaultFollowUpDate(daysFromNow = 3) {
   const date = new Date()
   date.setDate(date.getDate() + daysFromNow)
   return date.toISOString().slice(0, 10)
+function getScorePillClass(score: number) {
+  return score >= 75 ? 'score-pill score-pill-good' : 'score-pill score-pill-bad'
+}
+
+function getReviewTagClass(status: string) {
+  if (status === 'pass') return 'tag tag-pass'
+  if (status === 'fail') return 'tag tag-fail'
+  return 'tag'
+}
+
+function getPassedStateClass(passed: boolean) {
+  return passed ? 'review-state review-state-pass' : 'review-state review-state-fail'
+}
+
+function normalizeCoveredKeywords(keywords: string[]) {
+  const seen = new Set<string>()
+
+  return keywords
+    .flatMap((keyword) => keyword.split(/[|,;]/))
+    .map((keyword) => keyword.replace(/\s+/g, ' ').trim())
+    .filter((keyword) => keyword.length > 0)
+    .filter((keyword) => {
+      const words = keyword.split(' ').filter(Boolean)
+      return keyword.length <= 48 && words.length <= 5
+    })
+    .filter((keyword) => {
+      const normalized = keyword.toLowerCase()
+      if (seen.has(normalized)) return false
+      seen.add(normalized)
+      return true
+    })
 }
 
 function buildFallbackGeneratedCv(
@@ -2208,6 +2239,10 @@ function SelectedOfferPage() {
   const showDecisionBanner =
     generationState === 'generated' && Boolean(reviewAgreement)
   const isApproved = reviewAgreement?.final_status === 'FINAL_APPROVED'
+  const coveredKeywords = normalizeCoveredKeywords(
+    generatedCv?.keywords_covered ?? [],
+  )
+
   return (
     <div className="page-stack">
       <section className="hero-card compact">
@@ -2376,13 +2411,17 @@ function SelectedOfferPage() {
 
                 <div className="resume-preview-section">
                   <h4>{t.selectedOffer.resumeKeywordsTitle}</h4>
-                  <div className="tag-list">
-                    {(generatedCv?.keywords_covered ?? []).map((keyword) => (
-                      <span key={keyword} className="tag">
-                        {keyword}
-                      </span>
-                    ))}
-                  </div>
+                  {coveredKeywords.length > 0 ? (
+                    <div className="keyword-cloud">
+                      {coveredKeywords.map((keyword) => (
+                        <span key={keyword} className="keyword-pill">
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="muted-text">{t.resumeMaster.noItems}</p>
+                  )}
                 </div>
               </div>
 
@@ -2417,14 +2456,15 @@ function SelectedOfferPage() {
               <>
                 <div className="review-card-head">
                   <h2>{t.selectedOffer.atsPanelTitle}</h2>
-                  <span className="status-pill">
+                  <span className={`status-pill ${getScorePillClass(atsReview?.score ?? 0)}`}>
                     {`${t.selectedOffer.scoreLabel}: ${atsReview?.score ?? 0}`}
                   </span>
                 </div>
                 <p className="panel-note">
-                  {`${t.selectedOffer.passedLabel}: ${
-                    atsReview?.passed ? t.selectedOffer.yes : t.selectedOffer.no
-                  }`}
+                  {t.selectedOffer.passedLabel}:{' '}
+                  <span className={getPassedStateClass(Boolean(atsReview?.passed))}>
+                    {atsReview?.passed ? t.selectedOffer.yes : t.selectedOffer.no}
+                  </span>
                 </p>
                 <h3>{t.selectedOffer.hardFiltersTitle}</h3>
                 <div className="stack-sm">
@@ -2432,7 +2472,7 @@ function SelectedOfferPage() {
                     <div key={item.filter} className="hard-filter-card">
                       <div className="hard-filter-head">
                         <strong>{item.filter}</strong>
-                        <span className="tag">{item.status}</span>
+                        <span className={getReviewTagClass(item.status)}>{item.status}</span>
                       </div>
                       <p>{item.evidence}</p>
                     </div>
@@ -2478,16 +2518,17 @@ function SelectedOfferPage() {
               <>
                 <div className="review-card-head">
                   <h2>{t.selectedOffer.recruiterPanelTitle}</h2>
-                  <span className="status-pill">
+                  <span className={`status-pill ${getScorePillClass(recruiterReview?.score ?? 0)}`}>
                     {`${t.selectedOffer.scoreLabel}: ${recruiterReview?.score ?? 0}`}
                   </span>
                 </div>
                 <p className="panel-note">
-                  {`${t.selectedOffer.passedLabel}: ${
-                    recruiterReview?.passed
+                  {t.selectedOffer.passedLabel}:{' '}
+                  <span className={getPassedStateClass(Boolean(recruiterReview?.passed))}>
+                    {recruiterReview?.passed
                       ? t.selectedOffer.yes
-                      : t.selectedOffer.no
-                  }`}
+                      : t.selectedOffer.no}
+                  </span>
                 </p>
                 <div className="review-score-grid">
                   <span>{`${t.selectedOffer.readabilityLabel}: ${recruiterReview?.readability_score ?? 0}`}</span>
