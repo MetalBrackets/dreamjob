@@ -106,59 +106,58 @@ function getResumeCompletion(resumeMaster: ResumeMaster) {
   return Math.round((completed / checks.length) * 100)
 }
 
-
 function Shell({ children }: { children: React.ReactNode }) {
   const { locale, setLocale, t } = useI18n()
 
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
-        <div>
-          <div className="brand-mark">DJ</div>
-          <div className="brand-copy">
-            <strong>{t.shell.appName}</strong>
-            <span>{t.shell.appTagline}</span>
+        <div className="sidebar-head">
+          <div>
+            <div className="brand-mark">DJ</div>
+            <span className="brand-copy">
+              <strong>{t.shell.appName}</strong>
+            </span>
+          </div>
+
+          <div className="locale-switcher">
+            <div className="locale-actions">
+              <button
+                type="button"
+                className={`locale-button${locale === 'fr' ? ' active' : ''}`}
+                onClick={() => setLocale('fr')}
+              >
+                {t.common.french}
+              </button>
+              <button
+                type="button"
+                className={`locale-button${locale === 'en' ? ' active' : ''}`}
+                onClick={() => setLocale('en')}
+              >
+                {t.common.english}
+              </button>
+            </div>
           </div>
         </div>
 
         <nav className="nav-list">
           <NavLink to="/" end className="nav-link">
-            <FileText size={16} />
-            {t.nav.masterResume}
+            <LayoutDashboard size={16} />
+            {t.nav.dashboard}
           </NavLink>
           <NavLink to="/offer" className="nav-link">
             <Briefcase size={16} />
             {t.nav.selectedOffer}
           </NavLink>
-          <NavLink to="/dashboard" className="nav-link">
-            <LayoutDashboard size={16} />
-            {t.nav.dashboard}
+          <NavLink to="/resume" className="nav-link">
+            <FileText size={16} />
+            {t.nav.masterResume}
           </NavLink>
           <NavLink to="/interview" className="nav-link">
             <Sparkles size={16} />
             {t.nav.interviewPrep}
           </NavLink>
         </nav>
-
-        <div className="locale-switcher">
-          <span>{t.common.localeLabel}</span>
-          <div className="locale-actions">
-            <button
-              type="button"
-              className={`locale-button${locale === 'fr' ? ' active' : ''}`}
-              onClick={() => setLocale('fr')}
-            >
-              {t.common.french}
-            </button>
-            <button
-              type="button"
-              className={`locale-button${locale === 'en' ? ' active' : ''}`}
-              onClick={() => setLocale('en')}
-            >
-              {t.common.english}
-            </button>
-          </div>
-        </div>
       </aside>
 
       <main className="app-main">{children}</main>
@@ -429,12 +428,17 @@ function MasterResumePage() {
     setExtractionError('')
     try {
       const result = await apiClient.uploadResume(file)
-      const mapped = extractionToResumeMaster(result.extractedData.data, resumeMaster ?? undefined)
+      const mapped = extractionToResumeMaster(
+        result.extractedData.data,
+        resumeMaster ?? undefined,
+      )
       setResumeMaster(mapped)
       setExtractionState('done')
     } catch (err) {
       setExtractionState('error')
-      setExtractionError(err instanceof Error ? err.message : 'Extraction failed')
+      setExtractionError(
+        err instanceof Error ? err.message : 'Extraction failed',
+      )
     }
   }
 
@@ -512,7 +516,11 @@ function MasterResumePage() {
             <label className="secondary-button inline-button upload-button">
               <Upload size={14} />
               {r.sourceFile.upload}
-              <input type="file" accept=".pdf,application/pdf" onChange={handleSourceDocumentUpload} />
+              <input
+                type="file"
+                accept=".pdf,application/pdf"
+                onChange={handleSourceDocumentUpload}
+              />
             </label>
           }
         />
@@ -544,7 +552,10 @@ function MasterResumePage() {
         )}
         {extractionState === 'error' && (
           <div className="stack-sm">
-            <p className="muted-text" style={{ color: 'var(--color-danger, #c0392b)' }}>
+            <p
+              className="muted-text"
+              style={{ color: 'var(--color-danger, #c0392b)' }}
+            >
               {extractionError}
             </p>
             {lastUploadedFileRef.current && (
@@ -1962,9 +1973,10 @@ function SelectedOfferPage() {
   if (!offer) return <div className="panel">{t.common.loadingJob}</div>
 
   const displayTitle = offer.raw_fields.title || offer.source_url
-  const offerMeta = [offer.raw_fields.company, offer.raw_fields.location]
+  const offerMeta = [offer.raw_fields.company, offer.raw_fields.employment_type]
     .filter(Boolean)
     .join(' | ')
+  const offerDescription = offer.raw_fields.description || offer.raw_text
   const missingFieldsText = offer.missing_fields?.join(', ')
   const getCaptureErrorMessage = (reason: CaptureCurrentJobFailureReason) => {
     switch (reason) {
@@ -2026,7 +2038,9 @@ function SelectedOfferPage() {
 
   const renderList = (items: string[], emptyLabel?: string) => {
     if (items.length === 0) {
-      return <p className="muted-text">{emptyLabel ?? t.resumeMaster.noItems}</p>
+      return (
+        <p className="muted-text">{emptyLabel ?? t.resumeMaster.noItems}</p>
+      )
     }
 
     return (
@@ -2039,54 +2053,53 @@ function SelectedOfferPage() {
   }
 
   const showGeneratedLayout = generationState !== 'idle'
-  const showDecisionBanner = generationState === 'generated' && Boolean(reviewAgreement)
+  const showDecisionBanner =
+    generationState === 'generated' && Boolean(reviewAgreement)
   const isApproved = reviewAgreement?.final_status === 'FINAL_APPROVED'
   return (
     <div className="page-stack">
       <section className="hero-card compact">
-        <span className="eyebrow">{t.selectedOffer.eyebrow}</span>
-        <h1>{displayTitle}</h1>
-        <p>{offerMeta}</p>
-        {missingFieldsText ? (
-          <p className="panel-note">
-            {`${t.selectedOffer.missingFieldsLabel}: ${missingFieldsText}`}
-          </p>
-        ) : null}
+        <div className="selected-offer-hero-head">
+          <div>
+            <span className="eyebrow">{t.selectedOffer.eyebrow}</span>
+            <h1>{displayTitle}</h1>
+            <p>{offerMeta}</p>
+            {offerDescription ? (
+              <p className="offer-description-preview">{offerDescription}</p>
+            ) : null}
+            {saveState === 'error' ? (
+              <div className="panel-note">
+                <p>
+                  {getCaptureErrorMessage(saveError?.reason ?? 'no-job-found')}
+                </p>
+                {saveError?.details ? (
+                  <pre className="debug-block">{saveError.details}</pre>
+                ) : null}
+              </div>
+            ) : null}
+            {missingFieldsText ? (
+              <p className="panel-note">
+                {`${t.selectedOffer.missingFieldsLabel}: ${missingFieldsText}`}
+              </p>
+            ) : null}
+          </div>
+
+          <button
+            className="secondary-button"
+            onClick={() => void handleStoreCurrentOffer()}
+            disabled={isSaving}
+          >
+            {isSaving ? t.common.loadingJob : t.selectedOffer.storeCurrentOffer}
+          </button>
+        </div>
       </section>
 
       {!showGeneratedLayout ? (
-        <section className="grid two-col">
+        <section>
           <article className="panel">
-            <h2>{t.selectedOffer.descriptionTitle}</h2>
-            <p>{offer.raw_text}</p>
-          </article>
-
-          <article className="panel">
-            <h2>{t.selectedOffer.actionsTitle}</h2>
-            <div className="action-stack">
-              <button
-                className="secondary-button"
-                onClick={() => void handleStoreCurrentOffer()}
-                disabled={isSaving}
-              >
-                {isSaving ? t.common.loadingJob : t.selectedOffer.storeCurrentOffer}
-              </button>
-              {saveState === 'saved' ? (
-                <p className="panel-note">{t.selectedOffer.storeSuccess}</p>
-              ) : null}
-              {saveState === 'error' ? (
-                <div className="panel-note">
-                  <p>{getCaptureErrorMessage(saveError?.reason ?? 'no-job-found')}</p>
-                  {saveError?.details ? (
-                    <pre className="debug-block">{saveError.details}</pre>
-                  ) : null}
-                </div>
-              ) : null}
+            <div className="action-bar">
               <button className="primary-button" onClick={handleGenerateResume}>
                 {t.selectedOffer.generateResume}
-              </button>
-              <button className="secondary-button">
-                {t.selectedOffer.generateCoverLetter}
               </button>
               <button className="secondary-button">
                 {t.selectedOffer.saveDashboard}
@@ -2110,111 +2123,116 @@ function SelectedOfferPage() {
 
       {showGeneratedLayout ? (
         <section className="panel tailored-preview-panel">
-            <h2>
-              {generationState === 'generated'
-                ? t.selectedOffer.previewTitle
-                : t.selectedOffer.generatingTitle}
-            </h2>
-            <p className="panel-note">
-              {generationState === 'generated'
-                ? t.selectedOffer.generationDoneBody
-                : t.selectedOffer.generatingBody}
-            </p>
+          <h2>
+            {generationState === 'generated'
+              ? t.selectedOffer.previewTitle
+              : t.selectedOffer.generatingTitle}
+          </h2>
+          <p className="panel-note">
+            {generationState === 'generated'
+              ? t.selectedOffer.generationDoneBody
+              : t.selectedOffer.generatingBody}
+          </p>
 
-            {generationState === 'generating' ? (
-              <div className="generation-progress-block">
-                <div className="progress-track">
-                  <div className="progress-fill progress-fill-animated" />
+          {generationState === 'generating' ? (
+            <div className="generation-progress-block">
+              <div className="progress-track">
+                <div className="progress-fill progress-fill-animated" />
+              </div>
+            </div>
+          ) : (
+            <div className="resume-preview-sheet">
+              <header className="resume-preview-header">
+                <div>
+                  <h3>{generatedCv?.header.full_name}</h3>
+                  <p>{generatedCv?.header.headline}</p>
+                </div>
+                <div className="resume-contact-list">
+                  <span>{generatedCv?.header.contact.email}</span>
+                  <span>{generatedCv?.header.contact.phone}</span>
+                  {Object.entries(generatedCv?.header.links ?? {}).map(
+                    ([key, value]) => (
+                      <span key={key}>{value}</span>
+                    ),
+                  )}
+                </div>
+              </header>
+
+              <div className="resume-preview-section">
+                <h4>{t.selectedOffer.resumeSummaryTitle}</h4>
+                <p>
+                  {generatedCv?.summary ?? t.selectedOffer.previewPlaceholder}
+                </p>
+              </div>
+
+              <div className="resume-preview-section">
+                <h4>{t.selectedOffer.resumeSkillsTitle}</h4>
+                <div className="tag-list">
+                  {generatedCv?.skills_highlighted.map((skill) => (
+                    <span key={skill} className="tag">
+                      {skill}
+                    </span>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <div className="resume-preview-sheet">
-                <header className="resume-preview-header">
-                  <div>
-                    <h3>{generatedCv?.header.full_name}</h3>
-                    <p>{generatedCv?.header.headline}</p>
-                  </div>
-                  <div className="resume-contact-list">
-                    <span>{generatedCv?.header.contact.email}</span>
-                    <span>{generatedCv?.header.contact.phone}</span>
-                    {Object.entries(generatedCv?.header.links ?? {}).map(
-                      ([key, value]) => (
-                        <span key={key}>{value}</span>
-                      ),
-                    )}
-                  </div>
-                </header>
 
-                <div className="resume-preview-section">
-                  <h4>{t.selectedOffer.resumeSummaryTitle}</h4>
-                  <p>{generatedCv?.summary ?? t.selectedOffer.previewPlaceholder}</p>
+              <div className="resume-preview-section">
+                <h4>{t.selectedOffer.resumeExperienceTitle}</h4>
+                <div className="stack-sm">
+                  {generatedCv?.experiences_selected.map((experience) => (
+                    <div
+                      key={experience.experience_id}
+                      className="resume-preview-block"
+                    >
+                      <strong>{experience.experience_id}</strong>
+                      <ul className="simple-list">
+                        {experience.rewritten_bullets.map((bullet) => (
+                          <li key={bullet}>{bullet}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
+              </div>
 
+              <div className="grid two-col">
                 <div className="resume-preview-section">
-                  <h4>{t.selectedOffer.resumeSkillsTitle}</h4>
-                  <div className="tag-list">
-                    {generatedCv?.skills_highlighted.map((skill) => (
-                      <span key={skill} className="tag">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="resume-preview-section">
-                  <h4>{t.selectedOffer.resumeExperienceTitle}</h4>
+                  <h4>{t.selectedOffer.resumeEducationTitle}</h4>
                   <div className="stack-sm">
-                    {generatedCv?.experiences_selected.map((experience) => (
-                      <div key={experience.experience_id} className="resume-preview-block">
-                        <strong>{experience.experience_id}</strong>
-                        <ul className="simple-list">
-                          {experience.rewritten_bullets.map((bullet) => (
-                            <li key={bullet}>{bullet}</li>
-                          ))}
-                        </ul>
+                    {generatedCv?.education_selected.map((education) => (
+                      <div key={`${education.school}-${education.year}`}>
+                        <strong>{education.school}</strong>
+                        <p>{`${education.degree} | ${education.year}`}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid two-col">
-                  <div className="resume-preview-section">
-                    <h4>{t.selectedOffer.resumeEducationTitle}</h4>
-                    <div className="stack-sm">
-                      {generatedCv?.education_selected.map((education) => (
-                        <div key={`${education.school}-${education.year}`}>
-                          <strong>{education.school}</strong>
-                          <p>{`${education.degree} | ${education.year}`}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="resume-preview-section">
-                    <h4>{t.selectedOffer.resumeKeywordsTitle}</h4>
-                    <div className="tag-list">
-                      {generatedCv?.keywords_covered.map((keyword) => (
-                        <span key={keyword} className="tag">
-                          {keyword}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid two-col">
-                  <div className="resume-preview-section">
-                    <h4>{t.selectedOffer.resumeNotesTitle}</h4>
-                    {renderList(generatedCv?.generation_notes ?? [])}
-                  </div>
-
-                  <div className="resume-preview-section">
-                    <h4>{t.selectedOffer.resumeOmittedTitle}</h4>
-                    {renderList(generatedCv?.omitted_items ?? [])}
+                <div className="resume-preview-section">
+                  <h4>{t.selectedOffer.resumeKeywordsTitle}</h4>
+                  <div className="tag-list">
+                    {generatedCv?.keywords_covered.map((keyword) => (
+                      <span key={keyword} className="tag">
+                        {keyword}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
-            )}
+
+              <div className="grid two-col">
+                <div className="resume-preview-section">
+                  <h4>{t.selectedOffer.resumeNotesTitle}</h4>
+                  {renderList(generatedCv?.generation_notes ?? [])}
+                </div>
+
+                <div className="resume-preview-section">
+                  <h4>{t.selectedOffer.resumeOmittedTitle}</h4>
+                  {renderList(generatedCv?.omitted_items ?? [])}
+                </div>
+              </div>
+            </div>
+          )}
         </section>
       ) : null}
 
@@ -2325,14 +2343,15 @@ function SelectedOfferPage() {
 
       {showGeneratedLayout ? (
         <section className="panel">
-          <h2>{t.selectedOffer.compactActionsTitle}</h2>
           <div className="action-bar">
             <button
               className="secondary-button"
               onClick={() => void handleStoreCurrentOffer()}
               disabled={isSaving}
             >
-              {isSaving ? t.common.loadingJob : t.selectedOffer.storeCurrentOffer}
+              {isSaving
+                ? t.common.loadingJob
+                : t.selectedOffer.storeCurrentOffer}
             </button>
             <button
               className="primary-button"
@@ -2340,9 +2359,6 @@ function SelectedOfferPage() {
               disabled={generationState === 'generating'}
             >
               {t.selectedOffer.generateResume}
-            </button>
-            <button className="secondary-button">
-              {t.selectedOffer.generateCoverLetter}
             </button>
             <button className="secondary-button">
               {t.selectedOffer.saveDashboard}
@@ -2353,7 +2369,9 @@ function SelectedOfferPage() {
           ) : null}
           {saveState === 'error' ? (
             <div className="panel-note">
-              <p>{getCaptureErrorMessage(saveError?.reason ?? 'no-job-found')}</p>
+              <p>
+                {getCaptureErrorMessage(saveError?.reason ?? 'no-job-found')}
+              </p>
               {saveError?.details ? (
                 <pre className="debug-block">{saveError.details}</pre>
               ) : null}
@@ -2396,7 +2414,11 @@ function DashboardPage() {
               </div>
               <span className="status-pill">{application.status}</span>
               <span>{application.followUpAt || '—'}</span>
-              <span>{application.matchScore > 0 ? `${application.matchScore}%` : '—'}</span>
+              <span>
+                {application.matchScore > 0
+                  ? `${application.matchScore}%`
+                  : '—'}
+              </span>
             </div>
           ))}
         </div>
@@ -2454,9 +2476,9 @@ function App() {
       <HashRouter>
         <Shell>
           <Routes>
-            <Route path="/" element={<MasterResumePage />} />
+            <Route path="/" element={<DashboardPage />} />
             <Route path="/offer" element={<SelectedOfferPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/resume" element={<MasterResumePage />} />
             <Route path="/interview" element={<InterviewPrepPage />} />
           </Routes>
         </Shell>
