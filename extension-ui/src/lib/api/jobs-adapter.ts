@@ -47,6 +47,7 @@ const VALID_RAW_FIELD_KEYS: Array<keyof CapturedJobOfferRawFields> = [
   'company',
   'location',
   'employment_type',
+  'description',
 ]
 
 export function serverApplicationsToApplicationItems(
@@ -81,6 +82,7 @@ export function serverCapturedJobToCapturedJobOffer(
       company: job.raw_fields.company ?? '',
       location: job.raw_fields.location ?? '',
       employment_type: job.raw_fields.employment_type ?? '',
+      description: job.raw_fields.description ?? '',
     },
     missing_fields: job.missing_fields?.filter(
       (f): f is keyof CapturedJobOfferRawFields =>

@@ -1,7 +1,8 @@
-import { mockCapturedJob, mockResumeMaster } from '../../shared/mock-data'
-import type { CapturedJobOffer, ResumeMaster } from '../../shared/types'
+import { mockApplications, mockCapturedJob, mockResumeMaster } from '../../shared/mock-data'
+import type { ApplicationItem, CapturedJobOffer, ResumeMaster } from '../../shared/types'
 
 const RESUME_MASTER_KEY = 'resumeMaster'
+const APPLICATIONS_KEY = 'applications'
 
 export const chromeStorage = {
   async getCapturedJob(): Promise<CapturedJobOffer> {
@@ -36,6 +37,7 @@ export const chromeStorage = {
         company: capturedJob.company ?? '',
         location: capturedJob.location ?? '',
         employment_type: '',
+        description: capturedJob.description ?? '',
       },
       missing_fields: (capturedJob.missingFields as CapturedJobOffer['missing_fields']) ?? [],
     }
@@ -49,6 +51,17 @@ export const chromeStorage = {
   async saveResumeMaster(resumeMaster: ResumeMaster): Promise<void> {
     await chrome.storage.local.set({
       [RESUME_MASTER_KEY]: resumeMaster,
+    })
+  },
+
+  async getApplications(): Promise<ApplicationItem[]> {
+    const result = await chrome.storage.local.get(APPLICATIONS_KEY)
+    return (result[APPLICATIONS_KEY] as ApplicationItem[] | undefined) ?? mockApplications
+  },
+
+  async saveApplications(applications: ApplicationItem[]): Promise<void> {
+    await chrome.storage.local.set({
+      [APPLICATIONS_KEY]: applications,
     })
   },
 }

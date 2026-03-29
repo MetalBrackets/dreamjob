@@ -164,6 +164,7 @@ const extractJobOffer = (): CapturedJobOffer | null => {
       company,
       location,
       employment_type: employmentType,
+      description: rawText,
     },
     missing_fields: missingFields,
   }
