@@ -17,6 +17,7 @@ import {
   FileText,
   LayoutDashboard,
   Plus,
+  RefreshCw,
   Sparkles,
   Trash2,
   Upload,
@@ -2274,11 +2275,17 @@ function SelectedOfferPage() {
           </div>
 
           <button
-            className="secondary-button"
+            type="button"
+            className="secondary-button refresh-offer-button"
             onClick={() => void handleStoreCurrentOffer()}
             disabled={isSaving}
+            aria-label={t.selectedOffer.storeCurrentOffer}
+            title={t.selectedOffer.storeCurrentOffer}
           >
-            {isSaving ? t.common.loadingJob : t.selectedOffer.storeCurrentOffer}
+            <RefreshCw
+              size={16}
+              className={isSaving ? 'refresh-offer-button-icon is-spinning' : 'refresh-offer-button-icon'}
+            />
           </button>
         </div>
       </section>
@@ -2331,11 +2338,6 @@ function SelectedOfferPage() {
               ? t.selectedOffer.previewTitle
               : t.selectedOffer.generatingTitle}
           </h2>
-          <p className="panel-note">
-            {generationState === 'generated'
-              ? t.selectedOffer.generationDoneBody
-              : t.selectedOffer.generatingBody}
-          </p>
 
           {generationState === 'generating' ? (
             <div className="generation-progress-block">
