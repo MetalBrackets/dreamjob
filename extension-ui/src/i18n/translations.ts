@@ -289,6 +289,8 @@ export const translations = {
       noFormatFlags: 'No format flags',
       generateCoverLetter: 'Generate cover letter',
       saveDashboard: 'Save to dashboard',
+      saveDashboardSuccess: 'Saved to dashboard.',
+      saveDashboardError: 'Could not save this offer to the dashboard.',
     },
     dashboard: {
       eyebrow: 'Application tracker',
@@ -603,6 +605,8 @@ export const translations = {
       noFormatFlags: 'Aucune alerte de format',
       generateCoverLetter: 'Générer une lettre de motivation',
       saveDashboard: 'Ajouter au suivi',
+      saveDashboardSuccess: 'Ajouté au suivi.',
+      saveDashboardError: "Impossible d'ajouter cette offre au suivi.",
     },
     dashboard: {
       eyebrow: 'Suivi des candidatures',

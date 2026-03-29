@@ -1,4 +1,5 @@
 import { appConfig } from '../config'
+import { chromeStorage } from '../chrome/storage'
 import { mockApplications, mockCapturedJob, mockInterviewPrep, mockResumeMaster } from '../../shared/mock-data'
 import type { ApplicationItem, CapturedJobOffer, InterviewPrepPack, ResumeMaster } from '../../shared/types'
 import {
@@ -96,10 +97,10 @@ export const apiClient = {
     if (appConfig.useMockData) return mockApplications
     try {
       const serverItems = await getJson<ServerApplicationItem[]>('/jobs')
-      if (serverItems.length === 0) return mockApplications
+      if (serverItems.length === 0) return chromeStorage.getApplications()
       return serverApplicationsToApplicationItems(serverItems)
     } catch {
-      return mockApplications
+      return chromeStorage.getApplications()
     }
   },
 

@@ -1965,6 +1965,9 @@ function SelectedOfferPage() {
     reason: CaptureCurrentJobFailureReason
     details?: string
   } | null>(null)
+  const [dashboardSaveState, setDashboardSaveState] = React.useState<
+    'idle' | 'saved' | 'error'
+  >('idle')
   React.useEffect(() => {
     chromeStorage
       .getCapturedJob()
@@ -2046,6 +2049,46 @@ function SelectedOfferPage() {
     }
   }
 
+  const handleSaveDashboard = async () => {
+    setDashboardSaveState('idle')
+
+    try {
+      const title = offer.raw_fields.title || offer.source_url
+      const company = offer.raw_fields.company || 'Unknown company'
+      const appliedAt = new Date().toISOString().slice(0, 10)
+      const matchScore = atsReview?.score ?? recruiterReview?.score ?? 0
+
+      const nextItem: ApplicationItem = {
+        id: `app-${offer.captured_at || Date.now()}`,
+        title,
+        company,
+        status: 'saved',
+        appliedAt,
+        followUpAt: '',
+        matchScore,
+      }
+
+      const currentApplications = await chromeStorage.getApplications()
+      const existingIndex = currentApplications.findIndex(
+        (item) => item.title === title && item.company === company,
+      )
+
+      const updatedApplications =
+        existingIndex === -1
+          ? [nextItem, ...currentApplications]
+          : currentApplications.map((item, index) =>
+              index === existingIndex
+                ? { ...item, ...nextItem, id: item.id }
+                : item,
+            )
+
+      await chromeStorage.saveApplications(updatedApplications)
+      setDashboardSaveState('saved')
+    } catch {
+      setDashboardSaveState('error')
+    }
+  }
+
   const renderList = (items: string[], emptyLabel?: string) => {
     if (items.length === 0) {
       return (
@@ -2114,10 +2157,16 @@ function SelectedOfferPage() {
             >
               {t.selectedOffer.generateResume}
             </button>
-            <button className="secondary-button">
+            <button className="secondary-button" onClick={() => void handleSaveDashboard()}>
               {t.selectedOffer.saveDashboard}
             </button>
           </div>
+          {dashboardSaveState === 'saved' ? (
+            <p className="panel-note">{t.selectedOffer.saveDashboardSuccess}</p>
+          ) : null}
+          {dashboardSaveState === 'error' ? (
+            <p className="panel-note">{t.selectedOffer.saveDashboardError}</p>
+          ) : null}
         </article>
       </section>
 
@@ -2180,7 +2229,7 @@ function SelectedOfferPage() {
               <div className="resume-preview-section">
                 <h4>{t.selectedOffer.resumeSkillsTitle}</h4>
                 <div className="tag-list">
-                  {generatedCv?.skills_highlighted.map((skill) => (
+                  {(generatedCv?.skills_highlighted ?? []).map((skill) => (
                     <span key={skill} className="tag">
                       {skill}
                     </span>
@@ -2191,14 +2240,14 @@ function SelectedOfferPage() {
               <div className="resume-preview-section">
                 <h4>{t.selectedOffer.resumeExperienceTitle}</h4>
                 <div className="stack-sm">
-                  {generatedCv?.experiences_selected.map((experience) => (
+                  {(generatedCv?.experiences_selected ?? []).map((experience) => (
                     <div
                       key={experience.experience_id}
                       className="resume-preview-block"
                     >
                       <strong>{experience.experience_id}</strong>
                       <ul className="simple-list">
-                        {experience.rewritten_bullets.map((bullet) => (
+                        {(experience.rewritten_bullets ?? []).map((bullet) => (
                           <li key={bullet}>{bullet}</li>
                         ))}
                       </ul>
@@ -2211,7 +2260,7 @@ function SelectedOfferPage() {
                 <div className="resume-preview-section">
                   <h4>{t.selectedOffer.resumeEducationTitle}</h4>
                   <div className="stack-sm">
-                    {generatedCv?.education_selected.map((education) => (
+                    {(generatedCv?.education_selected ?? []).map((education) => (
                       <div key={`${education.school}-${education.year}`}>
                         <strong>{education.school}</strong>
                         <p>{`${education.degree} | ${education.year}`}</p>
@@ -2223,7 +2272,7 @@ function SelectedOfferPage() {
                 <div className="resume-preview-section">
                   <h4>{t.selectedOffer.resumeKeywordsTitle}</h4>
                   <div className="tag-list">
-                    {generatedCv?.keywords_covered.map((keyword) => (
+                    {(generatedCv?.keywords_covered ?? []).map((keyword) => (
                       <span key={keyword} className="tag">
                         {keyword}
                       </span>
@@ -2274,7 +2323,7 @@ function SelectedOfferPage() {
                 </p>
                 <h3>{t.selectedOffer.hardFiltersTitle}</h3>
                 <div className="stack-sm">
-                  {atsReview?.hard_filters_status.map((item) => (
+                  {(atsReview?.hard_filters_status ?? []).map((item) => (
                     <div key={item.filter} className="hard-filter-card">
                       <div className="hard-filter-head">
                         <strong>{item.filter}</strong>
@@ -2286,7 +2335,7 @@ function SelectedOfferPage() {
                 </div>
                 <h3>{t.selectedOffer.matchedKeywordsTitle}</h3>
                 <div className="tag-list">
-                  {atsReview?.matched_keywords.map((keyword) => (
+                  {(atsReview?.matched_keywords ?? []).map((keyword) => (
                     <span key={keyword} className="tag">
                       {keyword}
                     </span>
@@ -2294,7 +2343,7 @@ function SelectedOfferPage() {
                 </div>
                 <h3>{t.selectedOffer.missingKeywordsTitle}</h3>
                 <div className="tag-list">
-                  {atsReview?.missing_keywords.map((keyword) => (
+                  {(atsReview?.missing_keywords ?? []).map((keyword) => (
                     <span key={keyword} className="tag">
                       {keyword}
                     </span>
