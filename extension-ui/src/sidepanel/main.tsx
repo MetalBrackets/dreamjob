@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter, NavLink, Route, Routes } from 'react-router-dom'
+import { HashRouter, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import {
   Briefcase,
   FileText,
@@ -189,12 +189,24 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="app-shell">
       <aside className="app-sidebar">
         <div className="sidebar-head">
-          <div>
-            <div className="brand-mark">DJ</div>
-            <span className="brand-copy">
-              <strong>{t.shell.appName}</strong>
-            </span>
-          </div>
+          <nav className="nav-list">
+            <NavLink to="/" end className="nav-link">
+              <LayoutDashboard size={16} />
+              {t.nav.dashboard}
+            </NavLink>
+            <NavLink to="/offer" className="nav-link">
+              <Briefcase size={16} />
+              {t.nav.selectedOffer}
+            </NavLink>
+            <NavLink to="/resume" className="nav-link">
+              <FileText size={16} />
+              {t.nav.masterResume}
+            </NavLink>
+            <NavLink to="/interview" className="nav-link">
+              <Sparkles size={16} />
+              {t.nav.interviewPrep}
+            </NavLink>
+          </nav>
 
           <div className="locale-switcher">
             <div className="locale-actions">
@@ -215,25 +227,6 @@ function Shell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </div>
-
-        <nav className="nav-list">
-          <NavLink to="/" end className="nav-link">
-            <LayoutDashboard size={16} />
-            {t.nav.dashboard}
-          </NavLink>
-          <NavLink to="/offer" className="nav-link">
-            <Briefcase size={16} />
-            {t.nav.selectedOffer}
-          </NavLink>
-          <NavLink to="/resume" className="nav-link">
-            <FileText size={16} />
-            {t.nav.masterResume}
-          </NavLink>
-          <NavLink to="/interview" className="nav-link">
-            <Sparkles size={16} />
-            {t.nav.interviewPrep}
-          </NavLink>
-        </nav>
       </aside>
 
       <main className="app-main">{children}</main>
@@ -2135,7 +2128,7 @@ function SelectedOfferPage() {
         id: `app-${offer.captured_at || Date.now()}`,
         title,
         company,
-        status: 'saved',
+        status: 'applied',
         appliedAt,
         followUpAt: '',
         matchScore,
@@ -2481,10 +2474,51 @@ function SelectedOfferPage() {
 
 function DashboardPage() {
   const { t } = useI18n()
-  const applications = useAsyncValue(() => apiClient.getApplications())
+  const navigate = useNavigate()
+  const [applications, setApplications] = React.useState<ApplicationItem[] | null>(
+    null,
+  )
 
-  if (!applications)
-    return <div className="panel">{t.common.loadingApplications}</div>
+  React.useEffect(() => {
+    apiClient
+      .getApplications()
+      .then(setApplications)
+      .catch(() => setApplications([]))
+  }, [])
+
+  if (!applications) return <div className="panel">{t.common.loadingApplications}</div>
+
+  const getFollowUpLabel = (followUpAt: string) => {
+    if (!followUpAt) return t.dashboard.noFollowUp
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const followUpDate = new Date(followUpAt)
+    followUpDate.setHours(0, 0, 0, 0)
+
+    const diffDays = Math.round(
+      (followUpDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    )
+
+    if (diffDays <= 0) return t.dashboard.followUpNow
+    if (diffDays <= 3) return t.dashboard.followUpSoon
+    return `${t.dashboard.followUpLater} ${followUpAt}`
+  }
+
+  const handleStatusChange = async (
+    applicationId: string,
+    nextStatus: ApplicationItem['status'],
+  ) => {
+    const nextApplications = applications.map((application) =>
+      application.id === applicationId
+        ? { ...application, status: nextStatus }
+        : application,
+    )
+
+    setApplications(nextApplications)
+    await chromeStorage.saveApplications(nextApplications)
+  }
 
   return (
     <div className="page-stack">
@@ -2499,7 +2533,7 @@ function DashboardPage() {
           <span>{t.dashboard.role}</span>
           <span>{t.dashboard.status}</span>
           <span>{t.dashboard.followUp}</span>
-          <span>{t.dashboard.score}</span>
+          <span>{t.dashboard.actions}</span>
         </div>
         <div className="table-body">
           {applications.map((application: ApplicationItem) => (
@@ -2508,13 +2542,36 @@ function DashboardPage() {
                 <strong>{application.title}</strong>
                 <span>{application.company}</span>
               </div>
-              <span className="status-pill">{application.status}</span>
-              <span>{application.followUpAt || '—'}</span>
-              <span>
-                {application.matchScore > 0
-                  ? `${application.matchScore}%`
-                  : '—'}
-              </span>
+              <label className="dashboard-status-field">
+                <span className="sr-only">{t.dashboard.status}</span>
+                <select
+                  className="dashboard-status-select"
+                  value={application.status}
+                  onChange={(event) =>
+                    void handleStatusChange(
+                      application.id,
+                      event.target.value as ApplicationItem['status'],
+                    )
+                  }
+                >
+                  <option value="saved">{t.dashboard.statusPending}</option>
+                  <option value="applied">{t.dashboard.statusSent}</option>
+                  <option value="interviewing">
+                    {t.dashboard.statusInterviewSet}
+                  </option>
+                  <option value="offered">{t.dashboard.statusOffer}</option>
+                  <option value="rejected">{t.dashboard.statusRejected}</option>
+                  <option value="withdrawn">{t.dashboard.statusWithdrawn}</option>
+                </select>
+              </label>
+              <span>{getFollowUpLabel(application.followUpAt)}</span>
+              <button
+                type="button"
+                className="secondary-button dashboard-action-button"
+                onClick={() => navigate('/interview')}
+              >
+                {t.dashboard.openInterviewPrep}
+              </button>
             </div>
           ))}
         </div>
@@ -2588,3 +2645,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>,
 )
+
+
+

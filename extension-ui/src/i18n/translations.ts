@@ -300,6 +300,18 @@ export const translations = {
       status: 'Status',
       followUp: 'Follow up',
       score: 'Score',
+      actions: 'Actions',
+      noFollowUp: 'No follow-up planned',
+      followUpNow: 'Action needed now',
+      followUpSoon: 'Action needed soon',
+      followUpLater: 'Upcoming',
+      openInterviewPrep: 'Prep interview',
+      statusPending: 'Pending',
+      statusSent: 'Sent',
+      statusInterviewSet: 'Interview set',
+      statusOffer: 'Offer',
+      statusRejected: 'Rejected',
+      statusWithdrawn: 'Withdrawn',
     },
     interviewPrep: {
       eyebrow: 'Interview prep',
@@ -616,6 +628,18 @@ export const translations = {
       status: 'Statut',
       followUp: 'Relance',
       score: 'Score',
+      actions: 'Actions',
+      noFollowUp: 'Aucune relance prévue',
+      followUpNow: 'Action à faire maintenant',
+      followUpSoon: 'Action à faire bientôt',
+      followUpLater: 'À venir',
+      openInterviewPrep: 'Prépa entretien',
+      statusPending: 'En attente',
+      statusSent: 'Envoyée',
+      statusInterviewSet: 'Entretien calé',
+      statusOffer: 'Offre',
+      statusRejected: 'Refusée',
+      statusWithdrawn: 'Retirée',
     },
     interviewPrep: {
       eyebrow: "PrÃ©paration d'entretien",
@@ -634,3 +658,5 @@ export const translations = {
     },
   },
 } as const
+
+

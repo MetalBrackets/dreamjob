@@ -96,9 +96,24 @@ export const apiClient = {
   async getApplications(): Promise<ApplicationItem[]> {
     if (appConfig.useMockData) return mockApplications
     try {
+      const localApplications = await chromeStorage.getApplications()
       const serverItems = await getJson<ServerApplicationItem[]>('/jobs')
-      if (serverItems.length === 0) return chromeStorage.getApplications()
-      return serverApplicationsToApplicationItems(serverItems)
+      const serverApplications = serverApplicationsToApplicationItems(serverItems)
+      const mergedApplications = [...localApplications]
+
+      for (const serverApplication of serverApplications) {
+        const existingIndex = mergedApplications.findIndex(
+          (item) =>
+            item.title === serverApplication.title &&
+            item.company === serverApplication.company,
+        )
+
+        if (existingIndex === -1) {
+          mergedApplications.push(serverApplication)
+        }
+      }
+
+      return mergedApplications
     } catch {
       return chromeStorage.getApplications()
     }
