@@ -51,6 +51,129 @@ function toStringArray(value: unknown): string[] {
   return [];
 }
 
+function toExperienceSelectedArray(value: unknown): Array<{
+  experienceId: string;
+  rewrittenBullets: string[];
+}> {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item, index) => {
+      if (!item || typeof item !== "object") return null;
+      const record = item as Record<string, unknown>;
+
+      const experienceId =
+        typeof record.experienceId === "string" && record.experienceId.trim()
+          ? record.experienceId.trim()
+          : typeof record.title === "string" && record.title.trim()
+            ? record.title.trim()
+            : `Experience ${index + 1}`;
+
+      const rewrittenBullets =
+        toStringArray(record.rewrittenBullets).length > 0
+          ? toStringArray(record.rewrittenBullets)
+          : toStringArray(record.achievements);
+
+      return {
+        experienceId,
+        rewrittenBullets,
+      };
+    })
+    .filter(
+      (
+        item,
+      ): item is {
+        experienceId: string;
+        rewrittenBullets: string[];
+      } => Boolean(item),
+    );
+}
+
+function normalizeCoverageMap(value: unknown): {
+  matchedRequirements: Array<{ requirement: string; evidenceRef: string }>;
+  uncoveredRequirements: string[];
+} {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+
+    if (Array.isArray(record.matchedRequirements) || Array.isArray(record.uncoveredRequirements)) {
+      const matchedRequirements = Array.isArray(record.matchedRequirements)
+        ? record.matchedRequirements
+            .map((item) => {
+              if (!item || typeof item !== "object") return null;
+              const match = item as Record<string, unknown>;
+              if (typeof match.requirement !== "string" || typeof match.evidenceRef !== "string") {
+                return null;
+              }
+              return {
+                requirement: match.requirement,
+                evidenceRef: match.evidenceRef,
+              };
+            })
+            .filter(
+              (
+                item,
+              ): item is {
+                requirement: string;
+                evidenceRef: string;
+              } => Boolean(item),
+            )
+        : [];
+
+      return {
+        matchedRequirements,
+        uncoveredRequirements: toStringArray(record.uncoveredRequirements),
+      };
+    }
+
+    const uncoveredRequirements = Object.entries(record)
+      .filter(([, covered]) => covered === false)
+      .map(([requirement]) => requirement);
+
+    return {
+      matchedRequirements: [],
+      uncoveredRequirements,
+    };
+  }
+
+  return {
+    matchedRequirements: [],
+    uncoveredRequirements: [],
+  };
+}
+
+function normalizeSelfCheck(value: unknown): {
+  unsupportedClaimsFound: boolean;
+  warnings: string[];
+} {
+  if (Array.isArray(value) || typeof value === "string") {
+    const warnings = toStringArray(value);
+    return {
+      unsupportedClaimsFound: warnings.length > 0,
+      warnings,
+    };
+  }
+
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const warnings = toStringArray(record.warnings);
+    const unsupportedClaimsFound =
+      typeof record.unsupportedClaimsFound === "boolean"
+        ? record.unsupportedClaimsFound
+        : warnings.length > 0;
+
+    return {
+      unsupportedClaimsFound,
+      warnings,
+    };
+  }
+
+  return {
+    unsupportedClaimsFound: false,
+    warnings: [],
+  };
+}
+
 const SYSTEM_PROMPT = `Tu es l'agent Candidat.
 Genere un CV cible, tres synthetique, uniquement a partir du profil fourni.
 N'invente rien.
@@ -170,23 +293,15 @@ Retourne le JSON maintenant.`;
     },
     summary: output.summary || "",
     skillsHighlighted: toStringArray(output.skillsHighlighted),
-    experiencesSelected: Array.isArray(output.experiencesSelected) ? output.experiencesSelected : [],
+    experiencesSelected: toExperienceSelectedArray(output.experiencesSelected),
     educationSelected: toStringArray(output.educationSelected),
     certificationsSelected: toStringArray(output.certificationsSelected),
     keywordsCovered: toStringArray(output.keywordsCovered),
     omittedItems: toStringArray(output.omittedItems),
     generationNotes: toStringArray(output.generationNotes),
-    coverageMap: output.coverageMap ?? {
-      matchedRequirements: [],
-      uncoveredRequirements: [],
-    },
-    selfCheck: output.selfCheck ?? {
-      unsupportedClaimsFound: false,
-      warnings: [],
-    },
+    coverageMap: normalizeCoverageMap(output.coverageMap),
+    selfCheck: normalizeSelfCheck(output.selfCheck),
   };
-
-  cv.selfCheck.warnings = toStringArray(cv.selfCheck.warnings);
 
   return cv;
 }
