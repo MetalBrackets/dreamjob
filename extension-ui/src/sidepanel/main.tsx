@@ -2627,7 +2627,6 @@ function DashboardPage() {
       <section className="hero-card compact">
         <span className="eyebrow">{t.dashboard.eyebrow}</span>
         <h1>{`${applications.length} ${t.dashboard.heroSuffix}`}</h1>
-        <p>{t.dashboard.heroText}</p>
       </section>
 
       <section className="panel">

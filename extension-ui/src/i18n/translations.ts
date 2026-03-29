@@ -39,14 +39,16 @@ export const translations = {
       remove: 'Remove',
       sourceFile: {
         title: 'Source file',
-        description: 'Keep one reference document such as a previous resume, CV, or exported profile.',
+        description:
+          'Keep one reference document such as a previous resume, CV, or exported profile.',
         upload: 'Upload file',
         remove: 'Remove source file',
         empty: 'No source file attached yet.',
       },
       summary: {
         title: 'Summary',
-        description: 'Describe who the user is, their positioning, and what matters in their career story.',
+        description:
+          'Describe who the user is, their positioning, and what matters in their career story.',
         fullName: 'Full name',
         fullNamePlaceholder: 'Full name',
         profileTitle: 'Title',
@@ -59,7 +61,8 @@ export const translations = {
       },
       profiles: {
         title: 'Profiles',
-        description: 'Important contact points and profile links such as email, phone, LinkedIn, portfolio, or website.',
+        description:
+          'Important contact points and profile links such as email, phone, LinkedIn, portfolio, or website.',
         add: 'Add profile',
         newItem: 'New profile',
         itemSubtitle: 'Add the profile value or link',
@@ -70,7 +73,8 @@ export const translations = {
       },
       experience: {
         title: 'Experience',
-        description: 'Track each job as its own entry with dates, company, responsibilities, and achievements.',
+        description:
+          'Track each job as its own entry with dates, company, responsibilities, and achievements.',
         add: 'Add experience',
         newItem: 'New experience',
         itemSubtitle: 'Add a company or organization',
@@ -104,11 +108,13 @@ export const translations = {
         startDate: 'Start date',
         endDate: 'End date',
         descriptionLabel: 'Description',
-        descriptionPlaceholder: 'Relevant details, specialization, honors, or context',
+        descriptionPlaceholder:
+          'Relevant details, specialization, honors, or context',
       },
       projects: {
         title: 'Projects',
-        description: 'Capture personal, freelance, academic, entrepreneurial, or internal projects.',
+        description:
+          'Capture personal, freelance, academic, entrepreneurial, or internal projects.',
         add: 'Add project',
         newItem: 'New project',
         itemSubtitle: 'Add a role or contribution',
@@ -155,7 +161,8 @@ export const translations = {
       },
       interests: {
         title: 'Interests',
-        description: 'Add personal interests that help round out the user profile.',
+        description:
+          'Add personal interests that help round out the user profile.',
         add: 'Add interest',
         placeholder: 'Interest, hobby, cause, or domain',
       },
@@ -175,7 +182,8 @@ export const translations = {
       },
       certifications: {
         title: 'Certifications',
-        description: 'Record professional, academic, and technical certifications.',
+        description:
+          'Record professional, academic, and technical certifications.',
         add: 'Add certification',
         newItem: 'New certification',
         itemSubtitle: 'Add an issuer',
@@ -190,7 +198,8 @@ export const translations = {
       },
       publications: {
         title: 'Publications',
-        description: 'Add written works, conference appearances, articles, or citations.',
+        description:
+          'Add written works, conference appearances, articles, or citations.',
         add: 'Add publication',
         newItem: 'New publication',
         itemSubtitle: 'Add a publisher or outlet',
@@ -206,7 +215,8 @@ export const translations = {
       },
       volunteering: {
         title: 'Volunteering',
-        description: 'Keep non-paid or community contributions in the master profile.',
+        description:
+          'Keep non-paid or community contributions in the master profile.',
         add: 'Add volunteering',
         newItem: 'New volunteering',
         itemSubtitle: 'Add a role',
@@ -249,15 +259,20 @@ export const translations = {
       storeSuccess: 'Current LinkedIn offer saved.',
       storeError: 'Could not capture the current LinkedIn offer.',
       storeErrorNoActiveTab: 'No active browser tab was found.',
-      storeErrorMessageFailed: 'The side panel could not contact the LinkedIn page.',
-      storeErrorNoJobFound: 'This page did not return a complete LinkedIn job offer.',
-      storeErrorCacheFailed: 'The job offer was read but could not be saved locally.',
+      storeErrorMessageFailed:
+        'The side panel could not contact the LinkedIn page.',
+      storeErrorNoJobFound:
+        'This page did not return a complete LinkedIn job offer.',
+      storeErrorCacheFailed:
+        'The job offer was read but could not be saved locally.',
       missingFieldsLabel: 'Missing capture fields',
       generateResume: 'Generate tailored resume',
       generatingTitle: 'Generating tailored resume',
-      generatingBody: 'Mocking the candidate, ATS, and recruiter workflow before backend integration.',
+      generatingBody:
+        'Mocking the candidate, ATS, and recruiter workflow before backend integration.',
       generationDoneTitle: 'Tailored resume result',
-      generationDoneBody: 'Preview on the left, evaluator outputs on the right.',
+      generationDoneBody:
+        'Preview on the left, evaluator outputs on the right.',
       approvedBanner: 'You are a match for this offer.',
       rejectedBanner: "You aren't a match for this offer unfortunately.",
       previewTitle: 'Final resume preview',
@@ -295,7 +310,8 @@ export const translations = {
     dashboard: {
       eyebrow: 'Application tracker',
       heroSuffix: 'active records',
-      heroText: 'Follow-up dates and interview milestones stay visible in one place.',
+      heroText:
+        'Follow-up dates and interview milestones stay visible in one place.',
       role: 'Role',
       status: 'Status',
       followUp: 'Follow up',
@@ -316,7 +332,8 @@ export const translations = {
     interviewPrep: {
       eyebrow: 'Interview prep',
       title: 'Structured preparation pack',
-      intro: 'Company context, likely questions, story prompts, and follow-up draft.',
+      intro:
+        'Company context, likely questions, story prompts, and follow-up draft.',
       snapshotTitle: 'Company snapshot',
       questionsTitle: 'Likely questions',
       storiesTitle: 'Stories to prepare',
@@ -343,7 +360,7 @@ export const translations = {
       masterResume: 'CV maître',
       selectedOffer: 'Offre sélectionnée',
       dashboard: 'Suivi',
-      interviewPrep: "Prépa entretien",
+      interviewPrep: 'Prépa entretien',
     },
     shell: {
       appName: 'DreamJob',
@@ -367,14 +384,16 @@ export const translations = {
       remove: 'Supprimer',
       sourceFile: {
         title: 'Fichier source',
-        description: 'Conservez un document de référence comme un ancien CV, un profil exporté ou un curriculum vitae.',
+        description:
+          'Conservez un document de référence comme un ancien CV, un profil exporté ou un curriculum vitae.',
         upload: 'Importer un fichier',
         remove: 'Retirer le fichier source',
         empty: 'Aucun fichier source attaché pour le moment.',
       },
       summary: {
         title: 'Résumé',
-        description: "Décrivez qui est l'utilisateur, son positionnement et ce qui compte dans son parcours.",
+        description:
+          "Décrivez qui est l'utilisateur, son positionnement et ce qui compte dans son parcours.",
         fullName: 'Nom complet',
         fullNamePlaceholder: 'Nom complet',
         profileTitle: 'Titre',
@@ -383,11 +402,12 @@ export const translations = {
         locationPlaceholder: 'Ville, pays ou à distance',
         professionalSummary: 'Résumé professionnel',
         professionalSummaryPlaceholder:
-          "Rédigez un résumé source de vérité complet, pas une version limitée à une page.",
+          'Rédigez un résumé source de vérité complet, pas une version limitée à une page.',
       },
       profiles: {
         title: 'Profils',
-        description: 'Points de contact et liens importants comme email, téléphone, LinkedIn, portfolio ou site web.',
+        description:
+          'Points de contact et liens importants comme email, téléphone, LinkedIn, portfolio ou site web.',
         add: 'Ajouter un profil',
         newItem: 'Nouveau profil',
         itemSubtitle: 'Ajoutez la valeur ou le lien du profil',
@@ -398,7 +418,8 @@ export const translations = {
       },
       experience: {
         title: 'Expérience',
-        description: 'Suivez chaque emploi séparément avec dates, entreprise, responsabilités et réalisations.',
+        description:
+          'Suivez chaque emploi séparément avec dates, entreprise, responsabilités et réalisations.',
         add: 'Ajouter une expérience',
         newItem: 'Nouvelle expérience',
         itemSubtitle: 'Ajoutez une entreprise ou organisation',
@@ -412,14 +433,16 @@ export const translations = {
         startDate: 'Date de début',
         endDate: 'Date de fin',
         descriptionLabel: 'Description',
-        descriptionPlaceholder: "Qu'a fait l'utilisateur dans cette organisation ?",
+        descriptionPlaceholder:
+          "Qu'a fait l'utilisateur dans cette organisation ?",
         highlights: 'Points clés',
         addHighlight: 'Ajouter un point clé',
         highlightPlaceholder: 'Réalisation, responsabilité ou impact',
       },
       education: {
         title: 'Formation',
-        description: "Conservez toutes les études, pas seulement le dernier diplôme.",
+        description:
+          'Conservez toutes les études, pas seulement le dernier diplôme.',
         add: 'Ajouter une formation',
         newItem: 'Nouvelle formation',
         itemSubtitle: 'Ajoutez un diplôme ou un programme',
@@ -432,11 +455,13 @@ export const translations = {
         startDate: 'Date de début',
         endDate: 'Date de fin',
         descriptionLabel: 'Description',
-        descriptionPlaceholder: 'Détails utiles, spécialisation, mentions ou contexte',
+        descriptionPlaceholder:
+          'Détails utiles, spécialisation, mentions ou contexte',
       },
       projects: {
         title: 'Projets',
-        description: 'Capturez les projets personnels, freelance, académiques, entrepreneuriaux ou internes.',
+        description:
+          'Capturez les projets personnels, freelance, académiques, entrepreneuriaux ou internes.',
         add: 'Ajouter un projet',
         newItem: 'Nouveau projet',
         itemSubtitle: 'Ajoutez un rôle ou une contribution',
@@ -450,14 +475,16 @@ export const translations = {
         linkPlaceholder: 'https://...',
         current: 'Projet en cours',
         descriptionLabel: 'Description',
-        descriptionPlaceholder: "Quel est ce projet et pourquoi est-il important ?",
+        descriptionPlaceholder:
+          'Quel est ce projet et pourquoi est-il important ?',
         highlights: 'Points clés',
         addHighlight: 'Ajouter un point clé',
         highlightPlaceholder: 'Résultat, contribution ou impact',
       },
       skills: {
         title: 'Compétences',
-        description: "Listez ce que l'utilisateur maîtrise et dans quel contexte.",
+        description:
+          "Listez ce que l'utilisateur maîtrise et dans quel contexte.",
         add: 'Ajouter une compétence',
         newItem: 'Nouvelle compétence',
         itemSubtitle: 'Ajoutez un niveau ou une force',
@@ -466,7 +493,8 @@ export const translations = {
         level: 'Niveau',
         levelPlaceholder: 'Débutant, confirmé, avancé...',
         details: 'Détails',
-        detailsPlaceholder: "Comment l'utilisateur connaît ou utilise cette compétence ?",
+        detailsPlaceholder:
+          "Comment l'utilisateur connaît ou utilise cette compétence ?",
       },
       languages: {
         title: 'Langues',
@@ -489,7 +517,8 @@ export const translations = {
       },
       awards: {
         title: 'Récompenses',
-        description: 'Conservez les distinctions, prix et reconnaissances officielles.',
+        description:
+          'Conservez les distinctions, prix et reconnaissances officielles.',
         add: 'Ajouter une récompense',
         newItem: 'Nouvelle récompense',
         itemSubtitle: 'Ajoutez un organisme émetteur',
@@ -503,7 +532,8 @@ export const translations = {
       },
       certifications: {
         title: 'Certifications',
-        description: 'Conservez les certifications professionnelles, académiques ou techniques.',
+        description:
+          'Conservez les certifications professionnelles, académiques ou techniques.',
         add: 'Ajouter une certification',
         newItem: 'Nouvelle certification',
         itemSubtitle: 'Ajoutez un organisme émetteur',
@@ -518,7 +548,8 @@ export const translations = {
       },
       publications: {
         title: 'Publications',
-        description: 'Ajoutez les articles, conférences, apparitions ou citations.',
+        description:
+          'Ajoutez les articles, conférences, apparitions ou citations.',
         add: 'Ajouter une publication',
         newItem: 'Nouvelle publication',
         itemSubtitle: 'Ajoutez un éditeur ou un média',
@@ -534,7 +565,8 @@ export const translations = {
       },
       volunteering: {
         title: 'Bénévolat',
-        description: 'Conservez les contributions non rémunérées ou associatives dans le profil maître.',
+        description:
+          'Conservez les contributions non rémunérées ou associatives dans le profil maître.',
         add: 'Ajouter un bénévolat',
         newItem: 'Nouveau bénévolat',
         itemSubtitle: 'Ajoutez un rôle',
@@ -550,7 +582,8 @@ export const translations = {
       },
       references: {
         title: 'Références',
-        description: "Conservez les personnes qui peuvent recommander l'utilisateur.",
+        description:
+          "Conservez les personnes qui peuvent recommander l'utilisateur.",
         add: 'Ajouter une référence',
         newItem: 'Nouvelle référence',
         itemSubtitle: 'Ajoutez une relation',
@@ -565,7 +598,8 @@ export const translations = {
         phone: 'Téléphone',
         phonePlaceholder: '+33...',
         notes: 'Notes',
-        notesPlaceholder: 'Sur quoi cette personne peut-elle recommander le candidat ?',
+        notesPlaceholder:
+          'Sur quoi cette personne peut-elle recommander le candidat ?',
       },
     },
     selectedOffer: {
@@ -577,17 +611,21 @@ export const translations = {
       storeSuccess: "L'offre LinkedIn actuelle a été enregistrée.",
       storeError: "Impossible de capturer l'offre LinkedIn actuelle.",
       storeErrorNoActiveTab: "Aucun onglet actif n'a été trouvé.",
-      storeErrorMessageFailed: "Le panneau latéral n'a pas pu contacter la page LinkedIn.",
-      storeErrorNoJobFound: "Cette page n'a pas renvoyé d'offre LinkedIn complète.",
-      storeErrorCacheFailed: "L'offre a été lue mais n'a pas pu être enregistrée localement.",
+      storeErrorMessageFailed:
+        "Le panneau latéral n'a pas pu contacter la page LinkedIn.",
+      storeErrorNoJobFound:
+        "Cette page n'a pas renvoyé d'offre LinkedIn complète.",
+      storeErrorCacheFailed:
+        "L'offre a été lue mais n'a pas pu être enregistrée localement.",
       missingFieldsLabel: 'Champs de capture manquants',
       generateResume: 'Générer un CV ciblé',
       generatingTitle: 'Génération du CV ciblé',
-      generatingBody: "Simulation du workflow candidat, ATS et recruteur avant l'intégration backend.",
+      generatingBody:
+        "Simulation du workflow candidat, ATS et recruteur avant l'intégration backend.",
       generationDoneTitle: 'Résultat du CV ciblé',
       generationDoneBody: 'Aperçu à gauche, sorties des évaluateurs à droite.',
       approvedBanner: 'Vous correspondez a cette offre.',
-      rejectedBanner: "Vous ne correspondez malheureusement pas a cette offre.",
+      rejectedBanner: 'Vous ne correspondez malheureusement pas a cette offre.',
       previewTitle: 'Aperçu du CV final',
       previewPlaceholder: 'Placeholder pour le CV',
       resumeSummaryTitle: 'Resume',
@@ -623,28 +661,30 @@ export const translations = {
     dashboard: {
       eyebrow: 'Suivi des candidatures',
       heroSuffix: 'dossiers actifs',
-      heroText: 'Les relances et étapes d’entretien restent visibles au même endroit.',
+      heroText:
+        'Les relances et étapes d’entretien restent visibles au même endroit.',
       role: 'Poste',
       status: 'Statut',
       followUp: 'Relance',
       score: 'Score',
       actions: 'Actions',
-      noFollowUp: 'Rien � faire',
+      noFollowUp: 'Rien à faire',
       followUpNow: 'Maintenant',
-      followUpSoon: 'Bient�t',
+      followUpSoon: 'Bientôt',
       followUpLater: 'Plus tard',
-      openInterviewPrep: 'Pr�pa entretien',
+      openInterviewPrep: 'Prépa entretien',
       statusPending: 'En attente',
-      statusSent: 'Envoy�e',
-      statusInterviewSet: 'Entretien cal�',
+      statusSent: 'Envoyée',
+      statusInterviewSet: 'Entretien calé',
       statusOffer: 'Offre',
-      statusRejected: 'Refus�e',
-      statusWithdrawn: 'Retir�e',
+      statusRejected: 'Refusée',
+      statusWithdrawn: 'Retirée',
     },
     interviewPrep: {
       eyebrow: "Préparation d'entretien",
       title: 'Pack de préparation structuré',
-      intro: 'Contexte entreprise, questions probables, histoires à préparer et relance.',
+      intro:
+        'Contexte entreprise, questions probables, histoires à préparer et relance.',
       snapshotTitle: "Vue d'ensemble entreprise",
       questionsTitle: 'Questions probables',
       storiesTitle: 'Histoires à préparer',
@@ -658,6 +698,3 @@ export const translations = {
     },
   },
 } as const
-
-
-
