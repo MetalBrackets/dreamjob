@@ -2104,20 +2104,22 @@ function SelectedOfferPage() {
         </div>
       </section>
 
-      {!showGeneratedLayout ? (
-        <section>
-          <article className="panel">
-            <div className="action-bar">
-              <button className="primary-button" onClick={handleGenerateResume}>
-                {t.selectedOffer.generateResume}
-              </button>
-              <button className="secondary-button">
-                {t.selectedOffer.saveDashboard}
-              </button>
-            </div>
-          </article>
-        </section>
-      ) : null}
+      <section>
+        <article className="panel">
+          <div className="action-bar">
+            <button
+              className="primary-button"
+              onClick={handleGenerateResume}
+              disabled={generationState === 'generating'}
+            >
+              {t.selectedOffer.generateResume}
+            </button>
+            <button className="secondary-button">
+              {t.selectedOffer.saveDashboard}
+            </button>
+          </div>
+        </article>
+      </section>
 
       {showDecisionBanner ? (
         <section
@@ -2351,44 +2353,6 @@ function SelectedOfferPage() {
         </section>
       ) : null}
 
-      {showGeneratedLayout ? (
-        <section className="panel">
-          <div className="action-bar">
-            <button
-              className="secondary-button"
-              onClick={() => void handleStoreCurrentOffer()}
-              disabled={isSaving}
-            >
-              {isSaving
-                ? t.common.loadingJob
-                : t.selectedOffer.storeCurrentOffer}
-            </button>
-            <button
-              className="primary-button"
-              onClick={handleGenerateResume}
-              disabled={generationState === 'generating'}
-            >
-              {t.selectedOffer.generateResume}
-            </button>
-            <button className="secondary-button">
-              {t.selectedOffer.saveDashboard}
-            </button>
-          </div>
-          {saveState === 'saved' ? (
-            <p className="panel-note">{t.selectedOffer.storeSuccess}</p>
-          ) : null}
-          {saveState === 'error' ? (
-            <div className="panel-note">
-              <p>
-                {getCaptureErrorMessage(saveError?.reason ?? 'no-job-found')}
-              </p>
-              {saveError?.details ? (
-                <pre className="debug-block">{saveError.details}</pre>
-              ) : null}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
     </div>
   )
 }
