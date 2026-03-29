@@ -3,6 +3,7 @@ import { join } from "node:path";
 const DATA_DIR = join(process.cwd(), "data");
 
 export const UPLOADS_DIR = join(DATA_DIR, "uploads");
+export const CV_EXPORTS_DIR = join(DATA_DIR, "exports");
 
 export const PROFILE_PATH = join(DATA_DIR, "profile.json");
 export const RESUME_UPLOAD_PATH = join(DATA_DIR, "resume-upload.json");

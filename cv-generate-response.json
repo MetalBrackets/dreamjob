@@ -1,6 +1,6 @@
 {
     "cv": {
-        "id": "cv_88d3671a",
+        "id": "cv_e470a4be",
         "profileId": "profile_01",
         "jobPostId": "job_02",
         "version": 1,
@@ -26,15 +26,11 @@
         ],
         "experiencesSelected": [
             {
-                "title": "Backend Engineer",
-                "company": "TechCorp",
-                "location": "Paris",
-                "startDate": "2021-01",
-                "endDate": "2024-12",
-                "bullets": [
-                    "D\u00c3\u00a9veloppement et maintenance d'APIs REST",
-                    "Am\u00c3\u00a9lioration des performances API de 30%",
-                    "Utilisation de AWS et Docker"
+                "experienceId": "Backend Engineer",
+                "rewrittenBullets": [
+                    "Développement et maintenance d'APIs REST",
+                    "Amélioration des performances API de 30%",
+                    "Collaboration avec les équipes produit et frontend"
                 ]
             }
         ],
@@ -47,32 +43,39 @@
             "REST APIs",
             "PostgreSQL",
             "Docker",
-            "AWS"
+            "AWS",
+            "CI/CD"
         ],
         "omittedItems": [
-            "Exp\u00c3\u00a9rience CI/CD non d\u00c3\u00a9taill\u00c3\u00a9e",
-            "Preuve de design syst\u00c3\u00a8me manquante",
-            "Exp\u00c3\u00a9rience avec Kubernetes et Terraform non mentionn\u00c3\u00a9e"
+            "Aucune expérience directe avec Kubernetes ou Terraform.",
+            "Pas de mention explicite de design système.",
+            "Projets spécifiques non listés."
         ],
         "generationNotes": [
-            "Focalisation sur les comp\u00c3\u00a9tences et exp\u00c3\u00a9riences v\u00c3\u00a9rifiables",
-            "Respect de la langue et du format professionnel",
-            "Inclusion des recommandations de r\u00c3\u00a9vision"
+            "Les expériences sont basées sur les données fournies.",
+            "Les compétences sont mises en avant selon les exigences de l'offre.",
+            "Le niveau d'anglais est précisé pour répondre aux recommandations."
         ],
         "coverageMap": {
-            "CI/CD": "Non mentionn\u00c3\u00a9",
-            "System Design": "Non mentionn\u00c3\u00a9",
-            "English proficiency": "Mentionn\u00c3\u00a9 dans les langues"
+            "matchedRequirements": [],
+            "uncoveredRequirements": [
+                "Kubernetes",
+                "Terraform",
+                "System Design"
+            ]
         },
-        "selfCheck": [
-            "Ajout de d\u00c3\u00a9tails sur l'exp\u00c3\u00a9rience avec AWS",
-            "Preuve de l'am\u00c3\u00a9lioration des performances API",
-            "Mention de la ma\u00c3\u00aetrise de l'anglais"
-        ]
+        "selfCheck": {
+            "unsupportedClaimsFound": true,
+            "warnings": [
+                "Mention de 5+ ans d'expérience en développement backend.",
+                "Niveau d'anglais précisé comme professionnel.",
+                "Expérience avec CI/CD mentionnée dans le contexte de collaboration."
+            ]
+        }
     },
     "atsReview": {
-        "id": "ats_45ccf20f",
-        "cvId": "cv_88d3671a",
+        "id": "ats_94ed7ce5",
+        "cvId": "cv_e470a4be",
         "jobPostId": "job_02",
         "score": 0,
         "passed": false,
@@ -80,19 +83,19 @@
         "matchedKeywords": [],
         "missingKeywords": [],
         "formatFlags": [
-            "Manque d'exp\u00c3\u00a9rience en system design",
-            "Pas de mention de Kubernetes ou Terraform",
-            "Anglais non mentionn\u00c3\u00a9"
+            "Absence de 'Experience with system design'",
+            "Pas de mention de '5+ years of experience'",
+            "Pas de preuve de 'English proficiency'"
         ],
         "recommendations": [
-            "Ajouter l'exp\u00c3\u00a9rience en system design",
-            "Indiquer la ma\u00c3\u00aetrise de l'anglais",
-            "Mentionner Kubernetes ou Terraform si possible"
+            "Ajouter l'expérience en 'system design'",
+            "Indiquer le nombre d'années d'expérience",
+            "Mentionner la maîtrise de l'anglais"
         ]
     },
     "recruiterReview": {
-        "id": "rec_a4b20b53",
-        "cvId": "cv_88d3671a",
+        "id": "rec_30ca5a06",
+        "cvId": "cv_e470a4be",
         "jobPostId": "job_02",
         "score": 0,
         "passed": false,
@@ -101,31 +104,33 @@
         "coherenceScore": 0,
         "evidenceScore": 0,
         "strengths": [
-            "Bonne lisibilit\u00c3\u00a9 avec des comp\u00c3\u00a9tences clairement mises en avant",
-            "Exp\u00c3\u00a9rience pertinente avec Node.js, TypeScript, et AWS"
+            "Bonne couverture des mots-clés requis",
+            "Expérience pertinente avec les technologies demandées",
+            "Amélioration des performances API démontrée"
         ],
         "concerns": [
-            "Absence d'exp\u00c3\u00a9rience en CI/CD et en design syst\u00c3\u00a8me",
-            "Pas de mention de Kubernetes ou Terraform"
+            "Absence de détails sur l'expérience totale",
+            "Pas de mention de Kubernetes ou Terraform",
+            "Pas de preuve de compétences en anglais"
         ],
         "recommendations": [
-            "Ajouter des d\u00c3\u00a9tails sur l'exp\u00c3\u00a9rience en CI/CD",
-            "Inclure des preuves de comp\u00c3\u00a9tences en design syst\u00c3\u00a8me",
-            "Mentionner toute exp\u00c3\u00a9rience en mentoring ou dans le domaine Fintech"
+            "Ajouter des détails sur l'expérience totale",
+            "Inclure des exemples de projets avec Kubernetes ou Terraform",
+            "Fournir une preuve de compétences en anglais"
         ]
     },
     "reviewAgreement": {
-        "id": "ra_afde9fa6",
+        "id": "ra_13cbe71d",
         "jobPostId": "job_02",
-        "cvId": "cv_88d3671a",
+        "cvId": "cv_e470a4be",
         "cvGenerationOk": true,
         "atsOk": false,
         "recruiterOk": false,
         "reviewAgreementOk": false,
         "finalStatus": "REJECTED",
         "rejectionReasons": [
-            "ATS review failed (score: 0). Ajouter l'exp\u00c3\u00a9rience en system design; Indiquer la ma\u00c3\u00aetrise de l'anglais; Mentionner Kubernetes ou Terraform si possible",
-            "Recruiter review failed (score: 0). Ajouter des d\u00c3\u00a9tails sur l'exp\u00c3\u00a9rience en CI/CD; Inclure des preuves de comp\u00c3\u00a9tences en design syst\u00c3\u00a8me; Mentionner toute exp\u00c3\u00a9rience en mentoring ou dans le domaine Fintech"
+            "ATS review failed (score: 0). Ajouter l'expérience en 'system design'; Indiquer le nombre d'années d'expérience; Mentionner la maîtrise de l'anglais",
+            "Recruiter review failed (score: 0). Ajouter des détails sur l'expérience totale; Inclure des exemples de projets avec Kubernetes ou Terraform; Fournir une preuve de compétences en anglais"
         ],
         "iterationCount": 2
     },
@@ -137,29 +142,31 @@
             "recruiter_score": 0
         },
         "strengths": [
-            "Bonne lisibilit\u00c3\u00a9 avec des comp\u00c3\u00a9tences clairement mises en avant",
-            "Exp\u00c3\u00a9rience pertinente avec Node.js, TypeScript, et AWS"
+            "Bonne couverture des mots-clés requis",
+            "Expérience pertinente avec les technologies demandées",
+            "Amélioration des performances API démontrée"
         ],
         "weaknesses": [
-            "Manque d'exp\u00c3\u00a9rience en system design",
+            "Absence de 'Experience with system design'",
+            "Pas de mention de '5+ years of experience'",
+            "Pas de preuve de 'English proficiency'",
+            "Absence de détails sur l'expérience totale",
             "Pas de mention de Kubernetes ou Terraform",
-            "Anglais non mentionn\u00c3\u00a9",
-            "Absence d'exp\u00c3\u00a9rience en CI/CD et en design syst\u00c3\u00a8me",
-            "Pas de mention de Kubernetes ou Terraform"
+            "Pas de preuve de compétences en anglais"
         ],
         "recommendations": [
-            "Ajouter l'exp\u00c3\u00a9rience en system design",
-            "Indiquer la ma\u00c3\u00aetrise de l'anglais",
-            "Mentionner Kubernetes ou Terraform si possible",
-            "Ajouter des d\u00c3\u00a9tails sur l'exp\u00c3\u00a9rience en CI/CD",
-            "Inclure des preuves de comp\u00c3\u00a9tences en design syst\u00c3\u00a8me",
-            "Mentionner toute exp\u00c3\u00a9rience en mentoring ou dans le domaine Fintech"
+            "Ajouter l'expérience en 'system design'",
+            "Indiquer le nombre d'années d'expérience",
+            "Mentionner la maîtrise de l'anglais",
+            "Ajouter des détails sur l'expérience totale",
+            "Inclure des exemples de projets avec Kubernetes ou Terraform",
+            "Fournir une preuve de compétences en anglais"
         ],
         "rejection_reasons": [
-            "ATS review failed (score: 0). Ajouter l'exp\u00c3\u00a9rience en system design; Indiquer la ma\u00c3\u00aetrise de l'anglais; Mentionner Kubernetes ou Terraform si possible",
-            "Recruiter review failed (score: 0). Ajouter des d\u00c3\u00a9tails sur l'exp\u00c3\u00a9rience en CI/CD; Inclure des preuves de comp\u00c3\u00a9tences en design syst\u00c3\u00a8me; Mentionner toute exp\u00c3\u00a9rience en mentoring ou dans le domaine Fintech"
+            "ATS review failed (score: 0). Ajouter l'expérience en 'system design'; Indiquer le nombre d'années d'expérience; Mentionner la maîtrise de l'anglais",
+            "Recruiter review failed (score: 0). Ajouter des détails sur l'expérience totale; Inclure des exemples de projets avec Kubernetes ou Terraform; Fournir une preuve de compétences en anglais"
         ],
-        "cv_id": "cv_88d3671a",
+        "cv_id": "cv_e470a4be",
         "job_post_id": "job_02",
         "iteration_count": 2
     }

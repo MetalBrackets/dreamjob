@@ -17,6 +17,7 @@ import {
   REVIEW_AGREEMENTS_PATH,
 } from "../services/paths.js";
 import { orchestrate } from "../services/cv-generator.js";
+import { exportCvToPdf } from "../services/pdf-export.js";
 
 const GenerateBodySchema = Type.Object({
   jobPostId: Type.String({ minLength: 1 }),
@@ -37,6 +38,20 @@ export async function cvsRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: "CV not found" });
     }
     return reply.code(200).send(cv);
+  });
+
+  app.get("/api/cvs/:id/pdf", { schema: { params: IdParamsSchema } }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const cvs = await readCollection<GeneratedCV>(CVS_PATH);
+    const cv = cvs.find((c) => c.id === id);
+    if (!cv) {
+      return reply.code(404).send({ error: "CV not found" });
+    }
+
+    const { buffer } = await exportCvToPdf(cv);
+    reply.header("Content-Type", "application/pdf");
+    reply.header("Content-Disposition", `attachment; filename="${cv.id}.pdf"`);
+    return reply.send(buffer);
   });
 
   app.post("/api/cvs/generate", { schema: { body: GenerateBodySchema } }, async (request, reply) => {
