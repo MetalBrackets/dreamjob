@@ -10,6 +10,7 @@ import {
 } from 'react-router-dom'
 import {
   CheckCircle2,
+  Check,
   Briefcase,
   CircleAlert,
   Clock3,
@@ -2049,7 +2050,7 @@ function SelectedOfferPage() {
     details?: string
   } | null>(null)
   const [dashboardSaveState, setDashboardSaveState] = React.useState<
-    'idle' | 'saved' | 'error'
+    'idle' | 'saving' | 'saved' | 'error'
   >('idle')
   React.useEffect(() => {
     chromeStorage
@@ -2061,6 +2062,18 @@ function SelectedOfferPage() {
         setOffer(null)
       })
   }, [])
+
+  React.useEffect(() => {
+    if (dashboardSaveState !== 'saved') return
+
+    const timeoutId = window.setTimeout(() => {
+      setDashboardSaveState('idle')
+    }, 1800)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [dashboardSaveState])
 
   if (!offer) return <div className="panel">{t.common.loadingJob}</div>
 
@@ -2136,7 +2149,7 @@ function SelectedOfferPage() {
   }
 
   const handleSaveDashboard = async () => {
-    setDashboardSaveState('idle')
+    setDashboardSaveState('saving')
 
     try {
       const title = offer.raw_fields.title || offer.source_url
@@ -2243,13 +2256,19 @@ function SelectedOfferPage() {
             >
               {t.selectedOffer.generateResume}
             </button>
-            <button className="secondary-button" onClick={() => void handleSaveDashboard()}>
+            <button
+              className={`secondary-button save-dashboard-button${
+                dashboardSaveState === 'saved' ? ' is-saved' : ''
+              }`}
+              onClick={() => void handleSaveDashboard()}
+              disabled={dashboardSaveState === 'saving'}
+            >
+              {dashboardSaveState === 'saved' ? (
+                <Check size={16} className="save-dashboard-button-icon" />
+              ) : null}
               {t.selectedOffer.saveDashboard}
             </button>
           </div>
-          {dashboardSaveState === 'saved' ? (
-            <p className="panel-note">{t.selectedOffer.saveDashboardSuccess}</p>
-          ) : null}
           {dashboardSaveState === 'error' ? (
             <p className="panel-note">{t.selectedOffer.saveDashboardError}</p>
           ) : null}
