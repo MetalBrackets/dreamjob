@@ -118,6 +118,10 @@
   min-width: 0;
 }
 
+.item-card-head > div {
+  min-width: 0;
+}
+
 .hero-meta,
 .field,
 .stack-sm,
@@ -670,7 +674,6 @@
 
   .hero-head,
   .section-header,
-  .item-card-head,
   .document-card {
     flex-direction: column;
   }
