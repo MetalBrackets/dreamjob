@@ -469,6 +469,21 @@
 }
 
 .dashboard-follow-up {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #5d6e80;
+}
+
+.dashboard-follow-up-now {
+  color: #b45309;
+}
+
+.dashboard-follow-up-soon {
+  color: #0d6b88;
+}
+
+.dashboard-follow-up-clear {
   color: #5d6e80;
 }
 

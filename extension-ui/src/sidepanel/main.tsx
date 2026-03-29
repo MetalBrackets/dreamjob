@@ -2,7 +2,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { HashRouter, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import {
+  CheckCircle2,
   Briefcase,
+  CircleAlert,
+  Clock3,
   FileText,
   LayoutDashboard,
   Plus,
@@ -94,6 +97,12 @@ function formatFileSize(size: number) {
   if (size < 1024) return `${size} B`
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function getDefaultFollowUpDate(daysFromNow = 3) {
+  const date = new Date()
+  date.setDate(date.getDate() + daysFromNow)
+  return date.toISOString().slice(0, 10)
 }
 
 function buildFallbackGeneratedCv(
@@ -2130,7 +2139,7 @@ function SelectedOfferPage() {
         company,
         status: 'applied',
         appliedAt,
-        followUpAt: '',
+        followUpAt: getDefaultFollowUpDate(),
         matchScore,
       }
 
@@ -2488,8 +2497,13 @@ function DashboardPage() {
 
   if (!applications) return <div className="panel">{t.common.loadingApplications}</div>
 
-  const getFollowUpLabel = (followUpAt: string) => {
-    if (!followUpAt) return t.dashboard.noFollowUp
+  const getFollowUpState = (followUpAt: string) => {
+    if (!followUpAt) {
+      return {
+        tone: 'clear' as const,
+        label: t.dashboard.noFollowUp,
+      }
+    }
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -2501,9 +2515,24 @@ function DashboardPage() {
       (followUpDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
     )
 
-    if (diffDays <= 0) return t.dashboard.followUpNow
-    if (diffDays <= 3) return t.dashboard.followUpSoon
-    return `${t.dashboard.followUpLater} ${followUpAt}`
+    if (diffDays <= 0) {
+      return {
+        tone: 'now' as const,
+        label: t.dashboard.followUpNow,
+      }
+    }
+
+    if (diffDays <= 3) {
+      return {
+        tone: 'soon' as const,
+        label: `${t.dashboard.followUpSoon} ${followUpAt}`,
+      }
+    }
+
+    return {
+      tone: 'clear' as const,
+      label: `${t.dashboard.followUpLater} ${followUpAt}`,
+    }
   }
 
   const handleStatusChange = async (
@@ -2536,44 +2565,61 @@ function DashboardPage() {
           <span>{t.dashboard.actions}</span>
         </div>
         <div className="table-body">
-          {applications.map((application: ApplicationItem) => (
-            <div key={application.id} className="table-row">
-              <div>
-                <strong>{application.title}</strong>
-                <span>{application.company}</span>
-              </div>
-              <label className="dashboard-status-field">
-                <span className="sr-only">{t.dashboard.status}</span>
-                <select
-                  className="dashboard-status-select"
-                  value={application.status}
-                  onChange={(event) =>
-                    void handleStatusChange(
-                      application.id,
-                      event.target.value as ApplicationItem['status'],
-                    )
-                  }
+          {applications.map((application: ApplicationItem) => {
+            const followUpState = getFollowUpState(application.followUpAt)
+
+            return (
+              <div key={application.id} className="table-row">
+                <div>
+                  <strong>{application.title}</strong>
+                  <span>{application.company}</span>
+                </div>
+                <label className="dashboard-status-field">
+                  <span className="sr-only">{t.dashboard.status}</span>
+                  <select
+                    className="dashboard-status-select"
+                    value={application.status}
+                    onChange={(event) =>
+                      void handleStatusChange(
+                        application.id,
+                        event.target.value as ApplicationItem['status'],
+                      )
+                    }
+                  >
+                    <option value="saved">{t.dashboard.statusPending}</option>
+                    <option value="applied">{t.dashboard.statusSent}</option>
+                    <option value="interviewing">
+                      {t.dashboard.statusInterviewSet}
+                    </option>
+                    <option value="offered">{t.dashboard.statusOffer}</option>
+                    <option value="rejected">{t.dashboard.statusRejected}</option>
+                    <option value="withdrawn">
+                      {t.dashboard.statusWithdrawn}
+                    </option>
+                  </select>
+                </label>
+                <span
+                  className={`dashboard-follow-up dashboard-follow-up-${followUpState.tone}`}
                 >
-                  <option value="saved">{t.dashboard.statusPending}</option>
-                  <option value="applied">{t.dashboard.statusSent}</option>
-                  <option value="interviewing">
-                    {t.dashboard.statusInterviewSet}
-                  </option>
-                  <option value="offered">{t.dashboard.statusOffer}</option>
-                  <option value="rejected">{t.dashboard.statusRejected}</option>
-                  <option value="withdrawn">{t.dashboard.statusWithdrawn}</option>
-                </select>
-              </label>
-              <span>{getFollowUpLabel(application.followUpAt)}</span>
-              <button
-                type="button"
-                className="secondary-button dashboard-action-button"
-                onClick={() => navigate('/interview')}
-              >
-                {t.dashboard.openInterviewPrep}
-              </button>
-            </div>
-          ))}
+                  {followUpState.tone === 'now' ? (
+                    <CircleAlert size={16} />
+                  ) : followUpState.tone === 'soon' ? (
+                    <Clock3 size={16} />
+                  ) : (
+                    <CheckCircle2 size={16} />
+                  )}
+                  <span>{followUpState.label}</span>
+                </span>
+                <button
+                  type="button"
+                  className="secondary-button dashboard-action-button"
+                  onClick={() => navigate('/interview')}
+                >
+                  {t.dashboard.openInterviewPrep}
+                </button>
+              </div>
+            )
+          })}
         </div>
       </section>
     </div>

@@ -301,10 +301,10 @@ export const translations = {
       followUp: 'Follow up',
       score: 'Score',
       actions: 'Actions',
-      noFollowUp: 'No follow-up planned',
-      followUpNow: 'Action needed now',
-      followUpSoon: 'Action needed soon',
-      followUpLater: 'Upcoming',
+      noFollowUp: 'Clear',
+      followUpNow: 'Now',
+      followUpSoon: 'Soon',
+      followUpLater: 'Later',
       openInterviewPrep: 'Prep interview',
       statusPending: 'Pending',
       statusSent: 'Sent',
@@ -629,10 +629,10 @@ export const translations = {
       followUp: 'Relance',
       score: 'Score',
       actions: 'Actions',
-      noFollowUp: 'Aucune relance prévue',
-      followUpNow: 'Action à faire maintenant',
-      followUpSoon: 'Action à faire bientôt',
-      followUpLater: 'À venir',
+      noFollowUp: 'Rien à faire',
+      followUpNow: 'Maintenant',
+      followUpSoon: 'Bientôt',
+      followUpLater: 'Plus tard',
       openInterviewPrep: 'Prépa entretien',
       statusPending: 'En attente',
       statusSent: 'Envoyée',
@@ -658,5 +658,6 @@ export const translations = {
     },
   },
 } as const
+
 
 
