@@ -12,7 +12,12 @@ var manifest = {
         type: 'module',
     },
     permissions: ['activeTab', 'scripting', 'sidePanel', 'storage', 'tabs'],
-    host_permissions: ['https://www.linkedin.com/*', 'http://localhost:3000/*'],
+    host_permissions: [
+        "https://www.linkedin.com/*",
+        "http://localhost:3000/*",
+        "http://localhost:5173/*",
+        "http://127.0.0.1:5173/*",
+    ],
     side_panel: {
         default_path: 'sidepanel.html',
     },
