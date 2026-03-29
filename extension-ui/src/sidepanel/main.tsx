@@ -111,6 +111,8 @@ function getDefaultFollowUpDate(daysFromNow = 3) {
   const date = new Date()
   date.setDate(date.getDate() + daysFromNow)
   return date.toISOString().slice(0, 10)
+}
+
 function getScorePillClass(score: number) {
   return score >= 75 ? 'score-pill score-pill-good' : 'score-pill score-pill-bad'
 }
