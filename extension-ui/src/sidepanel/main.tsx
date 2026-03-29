@@ -96,6 +96,76 @@ function formatFileSize(size: number) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
 }
 
+function buildFallbackGeneratedCv(
+  resumeMaster: ResumeMaster,
+  offer: CapturedJobOffer,
+): GeneratedCv {
+  const email =
+    resumeMaster.profiles.find((item) => item.label.toLowerCase() === 'email')
+      ?.value ?? ''
+  const phone =
+    resumeMaster.profiles.find((item) => item.label.toLowerCase() === 'phone')
+      ?.value ?? ''
+  const links = Object.fromEntries(
+    resumeMaster.profiles
+      .filter((item) => {
+        const label = item.label.toLowerCase()
+        return label !== 'email' && label !== 'phone' && item.value.trim().length > 0
+      })
+      .map((item) => [item.label.toLowerCase() || 'link', item.value]),
+  )
+
+  return {
+    cv_id: `cv-fallback-${Date.now()}`,
+    candidate_id: 'local-candidate',
+    job_id: `job-fallback-${offer.captured_at}`,
+    version: 1,
+    language: 'fr',
+    title: `CV cible - ${offer.raw_fields.title || resumeMaster.title || 'Resume'}`,
+    header: {
+      full_name: resumeMaster.fullName,
+      headline: resumeMaster.title,
+      contact: {
+        email,
+        phone,
+      },
+      links,
+    },
+    summary: resumeMaster.summary,
+    skills_highlighted: resumeMaster.skills
+      .map((skill) => skill.name)
+      .filter(Boolean)
+      .slice(0, 8),
+    experiences_selected: resumeMaster.experience.slice(0, 3).map((experience) => ({
+      experience_id: experience.role || experience.company || experience.id,
+      rewritten_bullets: experience.highlights.length > 0
+        ? experience.highlights
+        : experience.description
+          ? [experience.description]
+          : [],
+    })),
+    education_selected: resumeMaster.education.slice(0, 2).map((education) => ({
+      school: education.institution,
+      degree: [education.degree, education.fieldOfStudy].filter(Boolean).join(' - '),
+      year: education.endDate || education.startDate,
+    })),
+    certifications_selected: resumeMaster.certifications
+      .map((certification) => certification.name)
+      .filter(Boolean),
+    keywords_covered: [
+      offer.raw_fields.title,
+      offer.raw_fields.company,
+      offer.raw_fields.location,
+      ...resumeMaster.skills.map((skill) => skill.name),
+    ].filter(Boolean).slice(0, 10),
+    omitted_items: [],
+    generation_notes: [
+      'Fallback generated locally from the saved Master CV.',
+      'This preview uses your local profile data because live generation failed.',
+    ],
+  }
+}
+
 function getResumeCompletion(resumeMaster: ResumeMaster) {
   const checks = [
     resumeMaster.fullName.trim().length > 0,
@@ -2033,6 +2103,8 @@ function SelectedOfferPage() {
     setReviewAgreement(null)
 
     try {
+      const resumeMaster = await chromeStorage.getResumeMaster()
+      await apiClient.saveProfile(resumeMaster)
       const { jobPostId } = await apiClient.postJobRaw(offer!)
       const result = await apiClient.generateCv(jobPostId, 'fr')
       setGeneratedCv(result.cv)
@@ -2041,7 +2113,8 @@ function SelectedOfferPage() {
       setReviewAgreement(result.reviewAgreement)
       setGenerationState('generated')
     } catch {
-      setGeneratedCv(mockGeneratedCv)
+      const resumeMaster = await chromeStorage.getResumeMaster()
+      setGeneratedCv(buildFallbackGeneratedCv(resumeMaster, offer))
       setAtsReview(mockAtsReview)
       setRecruiterReview(mockRecruiterReview)
       setReviewAgreement(mockReviewAgreement)
