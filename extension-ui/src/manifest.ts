@@ -38,6 +38,11 @@ const manifest = {
       js: ['src/content/linkedin-job.ts'],
       run_at: 'document_idle',
     },
+    {
+      matches: ['https://www.linkedin.com/search/results/people/*'],
+      js: ['src/content/linkedin-people.ts'],
+      run_at: 'document_idle',
+    },
   ],
 } satisfies chrome.runtime.ManifestV3
 

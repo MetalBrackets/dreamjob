@@ -289,3 +289,12 @@ export interface InterviewPrepPack {
   storiesToPrepare: string[]
   followUpDraft: string
 }
+
+export interface LinkedInPerson {
+  name: string
+  headline: string
+  profile_url: string
+  location?: string
+  connection_degree?: string
+}
+
