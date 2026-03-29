@@ -1,8 +1,19 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter, NavLink, Route, Routes } from 'react-router-dom'
 import {
+  HashRouter,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
+import {
+  CheckCircle2,
+  Check,
   Briefcase,
+  CircleAlert,
+  Clock3,
   FileText,
   LayoutDashboard,
   Plus,
@@ -94,6 +105,12 @@ function formatFileSize(size: number) {
   if (size < 1024) return `${size} B`
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
   return `${(size / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function getDefaultFollowUpDate(daysFromNow = 3) {
+  const date = new Date()
+  date.setDate(date.getDate() + daysFromNow)
+  return date.toISOString().slice(0, 10)
 }
 
 function getScorePillClass(score: number) {
@@ -217,17 +234,33 @@ function getResumeCompletion(resumeMaster: ResumeMaster) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { locale, setLocale, t } = useI18n()
+  const location = useLocation()
+  const showInterviewNav = location.pathname === '/interview'
 
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
         <div className="sidebar-head">
-          <div>
-            <div className="brand-mark">DJ</div>
-            <span className="brand-copy">
-              <strong>{t.shell.appName}</strong>
-            </span>
-          </div>
+          <nav className="nav-list">
+            <NavLink to="/" end className="nav-link">
+              <LayoutDashboard size={16} />
+              {t.nav.dashboard}
+            </NavLink>
+            <NavLink to="/offer" className="nav-link">
+              <Briefcase size={16} />
+              {t.nav.selectedOffer}
+            </NavLink>
+            <NavLink to="/resume" className="nav-link">
+              <FileText size={16} />
+              {t.nav.masterResume}
+            </NavLink>
+            {showInterviewNav ? (
+              <NavLink to="/interview" className="nav-link">
+                <Sparkles size={16} />
+                {t.nav.interviewPrep}
+              </NavLink>
+            ) : null}
+          </nav>
 
           <div className="locale-switcher">
             <div className="locale-actions">
@@ -248,25 +281,6 @@ function Shell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </div>
-
-        <nav className="nav-list">
-          <NavLink to="/" end className="nav-link">
-            <LayoutDashboard size={16} />
-            {t.nav.dashboard}
-          </NavLink>
-          <NavLink to="/offer" className="nav-link">
-            <Briefcase size={16} />
-            {t.nav.selectedOffer}
-          </NavLink>
-          <NavLink to="/resume" className="nav-link">
-            <FileText size={16} />
-            {t.nav.masterResume}
-          </NavLink>
-          <NavLink to="/interview" className="nav-link">
-            <Sparkles size={16} />
-            {t.nav.interviewPrep}
-          </NavLink>
-        </nav>
       </aside>
 
       <main className="app-main">{children}</main>
@@ -2069,7 +2083,7 @@ function SelectedOfferPage() {
     details?: string
   } | null>(null)
   const [dashboardSaveState, setDashboardSaveState] = React.useState<
-    'idle' | 'saved' | 'error'
+    'idle' | 'saving' | 'saved' | 'error'
   >('idle')
   React.useEffect(() => {
     chromeStorage
@@ -2081,6 +2095,18 @@ function SelectedOfferPage() {
         setOffer(null)
       })
   }, [])
+
+  React.useEffect(() => {
+    if (dashboardSaveState !== 'saved') return
+
+    const timeoutId = window.setTimeout(() => {
+      setDashboardSaveState('idle')
+    }, 1800)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [dashboardSaveState])
 
   if (!offer) return <div className="panel">{t.common.loadingJob}</div>
 
@@ -2156,7 +2182,7 @@ function SelectedOfferPage() {
   }
 
   const handleSaveDashboard = async () => {
-    setDashboardSaveState('idle')
+    setDashboardSaveState('saving')
 
     try {
       const title = offer.raw_fields.title || offer.source_url
@@ -2168,9 +2194,9 @@ function SelectedOfferPage() {
         id: `app-${offer.captured_at || Date.now()}`,
         title,
         company,
-        status: 'saved',
+        status: 'applied',
         appliedAt,
-        followUpAt: '',
+        followUpAt: getDefaultFollowUpDate(),
         matchScore,
       }
 
@@ -2267,13 +2293,19 @@ function SelectedOfferPage() {
             >
               {t.selectedOffer.generateResume}
             </button>
-            <button className="secondary-button" onClick={() => void handleSaveDashboard()}>
+            <button
+              className={`secondary-button save-dashboard-button${
+                dashboardSaveState === 'saved' ? ' is-saved' : ''
+              }`}
+              onClick={() => void handleSaveDashboard()}
+              disabled={dashboardSaveState === 'saving'}
+            >
+              {dashboardSaveState === 'saved' ? (
+                <Check size={16} className="save-dashboard-button-icon" />
+              ) : null}
               {t.selectedOffer.saveDashboard}
             </button>
           </div>
-          {dashboardSaveState === 'saved' ? (
-            <p className="panel-note">{t.selectedOffer.saveDashboardSuccess}</p>
-          ) : null}
           {dashboardSaveState === 'error' ? (
             <p className="panel-note">{t.selectedOffer.saveDashboardError}</p>
           ) : null}
@@ -2524,10 +2556,71 @@ function SelectedOfferPage() {
 
 function DashboardPage() {
   const { t } = useI18n()
-  const applications = useAsyncValue(() => apiClient.getApplications())
+  const navigate = useNavigate()
+  const [applications, setApplications] = React.useState<ApplicationItem[] | null>(
+    null,
+  )
 
-  if (!applications)
-    return <div className="panel">{t.common.loadingApplications}</div>
+  React.useEffect(() => {
+    apiClient
+      .getApplications()
+      .then(setApplications)
+      .catch(() => setApplications([]))
+  }, [])
+
+  if (!applications) return <div className="panel">{t.common.loadingApplications}</div>
+
+  const getFollowUpState = (followUpAt: string) => {
+    if (!followUpAt) {
+      return {
+        tone: 'clear' as const,
+        label: t.dashboard.noFollowUp,
+      }
+    }
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const followUpDate = new Date(followUpAt)
+    followUpDate.setHours(0, 0, 0, 0)
+
+    const diffDays = Math.round(
+      (followUpDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    )
+
+    if (diffDays <= 0) {
+      return {
+        tone: 'now' as const,
+        label: t.dashboard.followUpNow,
+      }
+    }
+
+    if (diffDays <= 3) {
+      return {
+        tone: 'soon' as const,
+        label: `${t.dashboard.followUpSoon} ${followUpAt}`,
+      }
+    }
+
+    return {
+      tone: 'clear' as const,
+      label: `${t.dashboard.followUpLater} ${followUpAt}`,
+    }
+  }
+
+  const handleStatusChange = async (
+    applicationId: string,
+    nextStatus: ApplicationItem['status'],
+  ) => {
+    const nextApplications = applications.map((application) =>
+      application.id === applicationId
+        ? { ...application, status: nextStatus }
+        : application,
+    )
+
+    setApplications(nextApplications)
+    await chromeStorage.saveApplications(nextApplications)
+  }
 
   return (
     <div className="page-stack">
@@ -2542,24 +2635,64 @@ function DashboardPage() {
           <span>{t.dashboard.role}</span>
           <span>{t.dashboard.status}</span>
           <span>{t.dashboard.followUp}</span>
-          <span>{t.dashboard.score}</span>
+          <span>{t.dashboard.actions}</span>
         </div>
         <div className="table-body">
-          {applications.map((application: ApplicationItem) => (
-            <div key={application.id} className="table-row">
-              <div>
-                <strong>{application.title}</strong>
-                <span>{application.company}</span>
+          {applications.map((application: ApplicationItem) => {
+            const followUpState = getFollowUpState(application.followUpAt)
+
+            return (
+              <div key={application.id} className="table-row">
+                <div>
+                  <strong>{application.title}</strong>
+                  <span>{application.company}</span>
+                </div>
+                <label className="dashboard-status-field">
+                  <span className="sr-only">{t.dashboard.status}</span>
+                  <select
+                    className="dashboard-status-select"
+                    value={application.status}
+                    onChange={(event) =>
+                      void handleStatusChange(
+                        application.id,
+                        event.target.value as ApplicationItem['status'],
+                      )
+                    }
+                  >
+                    <option value="saved">{t.dashboard.statusPending}</option>
+                    <option value="applied">{t.dashboard.statusSent}</option>
+                    <option value="interviewing">
+                      {t.dashboard.statusInterviewSet}
+                    </option>
+                    <option value="offered">{t.dashboard.statusOffer}</option>
+                    <option value="rejected">{t.dashboard.statusRejected}</option>
+                    <option value="withdrawn">
+                      {t.dashboard.statusWithdrawn}
+                    </option>
+                  </select>
+                </label>
+                <span
+                  className={`dashboard-follow-up dashboard-follow-up-${followUpState.tone}`}
+                >
+                  {followUpState.tone === 'now' ? (
+                    <CircleAlert size={16} />
+                  ) : followUpState.tone === 'soon' ? (
+                    <Clock3 size={16} />
+                  ) : (
+                    <CheckCircle2 size={16} />
+                  )}
+                  <span>{followUpState.label}</span>
+                </span>
+                <button
+                  type="button"
+                  className="secondary-button dashboard-action-button"
+                  onClick={() => navigate('/interview')}
+                >
+                  {t.dashboard.openInterviewPrep}
+                </button>
               </div>
-              <span className="status-pill">{application.status}</span>
-              <span>{application.followUpAt || '—'}</span>
-              <span>
-                {application.matchScore > 0
-                  ? `${application.matchScore}%`
-                  : '—'}
-              </span>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </section>
     </div>
@@ -2631,3 +2764,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>,
 )
+
+
+
