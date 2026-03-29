@@ -174,6 +174,7 @@ export interface CapturedJobOfferRawFields {
   company: string
   location: string
   employment_type: string
+  description: string
 }
 
 export interface CapturedJobOffer {

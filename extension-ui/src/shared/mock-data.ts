@@ -135,6 +135,8 @@ export const mockCapturedJob: CapturedJobOffer = {
     company: 'NovaTech',
     location: 'Paris',
     employment_type: 'full_time',
+    description:
+      'Recherche 5 ans d experience minimum, maitrise de Figma, design systems, collaboration avec les equipes produit et engineering, animation d ateliers, bonne communication avec les parties prenantes.',
   },
   missing_fields: [],
 }

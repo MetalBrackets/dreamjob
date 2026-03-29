@@ -36,6 +36,7 @@ export const chromeStorage = {
         company: capturedJob.company ?? '',
         location: capturedJob.location ?? '',
         employment_type: '',
+        description: capturedJob.description ?? '',
       },
       missing_fields: (capturedJob.missingFields as CapturedJobOffer['missing_fields']) ?? [],
     }
