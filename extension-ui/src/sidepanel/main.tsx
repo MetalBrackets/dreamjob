@@ -1,6 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
+import {
+  HashRouter,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
 import {
   CheckCircle2,
   Briefcase,
@@ -193,6 +200,8 @@ function getResumeCompletion(resumeMaster: ResumeMaster) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { locale, setLocale, t } = useI18n()
+  const location = useLocation()
+  const showInterviewNav = location.pathname === '/interview'
 
   return (
     <div className="app-shell">
@@ -211,10 +220,12 @@ function Shell({ children }: { children: React.ReactNode }) {
               <FileText size={16} />
               {t.nav.masterResume}
             </NavLink>
-            <NavLink to="/interview" className="nav-link">
-              <Sparkles size={16} />
-              {t.nav.interviewPrep}
-            </NavLink>
+            {showInterviewNav ? (
+              <NavLink to="/interview" className="nav-link">
+                <Sparkles size={16} />
+                {t.nav.interviewPrep}
+              </NavLink>
+            ) : null}
           </nav>
 
           <div className="locale-switcher">
