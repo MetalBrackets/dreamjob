@@ -94,8 +94,13 @@ export const apiClient = {
 
   async getApplications(): Promise<ApplicationItem[]> {
     if (appConfig.useMockData) return mockApplications
-    const serverItems = await getJson<ServerApplicationItem[]>('/jobs')
-    return serverApplicationsToApplicationItems(serverItems)
+    try {
+      const serverItems = await getJson<ServerApplicationItem[]>('/jobs')
+      if (serverItems.length === 0) return mockApplications
+      return serverApplicationsToApplicationItems(serverItems)
+    } catch {
+      return mockApplications
+    }
   },
 
   async getInterviewPrep(): Promise<InterviewPrepPack> {
