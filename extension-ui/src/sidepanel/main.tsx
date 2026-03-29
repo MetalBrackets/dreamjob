@@ -22,9 +22,11 @@ import {
   mockGeneratedCv,
   mockRecruiterReview,
   mockReviewAgreement,
+  mockResumeMaster,
 } from '../shared/mock-data'
 import '../shared/styles/global.css'
 import '../shared/styles/sidepanel.css'
+import { appConfig } from '../lib/config'
 import type {
   ApplicationItem,
   AtsReview,
@@ -110,6 +112,27 @@ function getResumeCompletion(resumeMaster: ResumeMaster) {
 
   const completed = checks.filter(Boolean).length
   return Math.round((completed / checks.length) * 100)
+}
+
+function createEmptyResumeMaster(): ResumeMaster {
+  return {
+    fullName: '',
+    title: '',
+    location: '',
+    summary: '',
+    profiles: [],
+    experience: [],
+    education: [],
+    projects: [],
+    skills: [],
+    languages: [],
+    interests: [],
+    awards: [],
+    certifications: [],
+    publications: [],
+    volunteering: [],
+    references: [],
+  }
 }
 
 function mapExtractionToResumeMaster(
@@ -437,7 +460,54 @@ function MasterResumePage() {
   const lastUploadedFileRef = React.useRef<File | null>(null)
 
   React.useEffect(() => {
-    chromeStorage.getResumeMaster().then(setResumeMaster)
+    let active = true
+
+    const loadResumeMaster = async () => {
+      if (appConfig.useMockData) {
+        if (active) {
+          setResumeMaster(mockResumeMaster)
+        }
+        return
+      }
+
+      const cachedResumeMaster = await chromeStorage.getResumeMaster({
+        fallbackToMock: false,
+      })
+
+      if (cachedResumeMaster && active) {
+        setResumeMaster(cachedResumeMaster)
+      }
+
+      try {
+        const remoteResumeMaster = await apiClient.getResumeMaster()
+
+        if (!active) {
+          return
+        }
+
+        setResumeMaster((current) => ({
+          ...remoteResumeMaster,
+          sourceDocument:
+            current?.sourceDocument ??
+            cachedResumeMaster?.sourceDocument ??
+            remoteResumeMaster.sourceDocument,
+        }))
+      } catch {
+        if (!active) {
+          return
+        }
+
+        setResumeMaster(
+          cachedResumeMaster ?? createEmptyResumeMaster(),
+        )
+      }
+    }
+
+    void loadResumeMaster()
+
+    return () => {
+      active = false
+    }
   }, [])
 
   React.useEffect(() => {

@@ -41,9 +41,17 @@ export const chromeStorage = {
     }
   },
 
-  async getResumeMaster(): Promise<ResumeMaster> {
+  async getResumeMaster(options?: {
+    fallbackToMock?: boolean
+  }): Promise<ResumeMaster | null> {
     const result = await chrome.storage.local.get(RESUME_MASTER_KEY)
-    return (result[RESUME_MASTER_KEY] as ResumeMaster | undefined) ?? mockResumeMaster
+    const resumeMaster = result[RESUME_MASTER_KEY] as ResumeMaster | undefined
+
+    if (resumeMaster) {
+      return resumeMaster
+    }
+
+    return options?.fallbackToMock === false ? null : mockResumeMaster
   },
 
   async saveResumeMaster(resumeMaster: ResumeMaster): Promise<void> {
