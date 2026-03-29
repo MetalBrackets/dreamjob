@@ -116,6 +116,38 @@ export interface ResumeSourceDocument {
   dataUrl: string
 }
 
+export interface ServerProfileExtras {
+  profileId?: string
+  targetRoles?: string[]
+  constraints?: {
+    preferredCvLanguage?: string
+    maxCvPages?: number
+    mustNotClaim?: string[]
+  }
+  experienceMap?: Record<
+    string,
+    {
+      serverExperienceId: string
+      achievements: Array<{ text: string; metric?: string; proofLevel?: string }>
+      skillsUsed: string[]
+    }
+  >
+  skillExtras?: Record<
+    string,
+    {
+      category?: string
+      years?: number
+      evidenceRefs?: string[]
+    }
+  >
+  identity?: {
+    email: string
+    phone?: string
+  }
+  createdAt?: string
+  updatedAt?: string
+}
+
 export interface ResumeMaster {
   fullName: string
   title: string
@@ -134,6 +166,7 @@ export interface ResumeMaster {
   volunteering: ResumeVolunteeringItem[]
   references: ResumeReferenceItem[]
   sourceDocument?: ResumeSourceDocument
+  _serverExtras?: ServerProfileExtras
 }
 
 export interface CapturedJobOfferRawFields {

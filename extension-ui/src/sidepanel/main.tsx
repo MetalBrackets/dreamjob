@@ -10,7 +10,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react'
-import { apiClient, type ResumeUploadResponse } from '../lib/api/client'
+import { apiClient, extractionToResumeMaster } from '../lib/api/client'
 import {
   captureCurrentJob,
   type CaptureCurrentJobFailureReason,
@@ -584,8 +584,8 @@ function MasterResumePage() {
     setExtractionError('')
     try {
       const result = await apiClient.uploadResume(file)
-      const mapped = mapExtractionToResumeMaster(result.extractedData.data)
-      setResumeMaster((current) => (current ? { ...current, ...mapped } : current))
+      const mapped = extractionToResumeMaster(result.extractedData.data, resumeMaster ?? undefined)
+      setResumeMaster(mapped)
       setExtractionState('done')
     } catch (err) {
       setExtractionState('error')
@@ -2103,8 +2103,6 @@ function SelectedOfferPage() {
     reason: CaptureCurrentJobFailureReason
     details?: string
   } | null>(null)
-  const generationTimeoutRef = React.useRef<number | null>(null)
-
   React.useEffect(() => {
     chromeStorage
       .getCapturedJob()
@@ -2114,14 +2112,6 @@ function SelectedOfferPage() {
       .catch(() => {
         setOffer(null)
       })
-  }, [])
-
-  React.useEffect(() => {
-    return () => {
-      if (generationTimeoutRef.current) {
-        window.clearTimeout(generationTimeoutRef.current)
-      }
-    }
   }, [])
 
   if (!offer) return <div className="panel">{t.common.loadingJob}</div>
@@ -2167,7 +2157,7 @@ function SelectedOfferPage() {
     setIsSaving(false)
   }
 
-  const handleGenerateResume = () => {
+  const handleGenerateResume = async () => {
     if (generationState === 'generating') return
 
     setGenerationState('generating')
@@ -2176,17 +2166,17 @@ function SelectedOfferPage() {
     setGeneratedCv(null)
     setReviewAgreement(null)
 
-    if (generationTimeoutRef.current) {
-      window.clearTimeout(generationTimeoutRef.current)
-    }
-
-    generationTimeoutRef.current = window.setTimeout(() => {
-      setAtsReview(mockAtsReview)
-      setRecruiterReview(mockRecruiterReview)
-      setGeneratedCv(mockGeneratedCv)
-      setReviewAgreement(mockReviewAgreement)
+    try {
+      const { jobPostId } = await apiClient.postJobRaw(offer!)
+      const result = await apiClient.generateCv(jobPostId, 'fr')
+      setGeneratedCv(result.cv)
+      setAtsReview(result.atsReview)
+      setRecruiterReview(result.recruiterReview)
+      setReviewAgreement(result.reviewAgreement)
       setGenerationState('generated')
-    }, 2000)
+    } catch {
+      setGenerationState('idle')
+    }
   }
 
   const renderList = (items: string[], emptyLabel?: string) => {
@@ -2560,8 +2550,8 @@ function DashboardPage() {
                 <span>{application.company}</span>
               </div>
               <span className="status-pill">{application.status}</span>
-              <span>{application.followUpAt}</span>
-              <span>{application.matchScore}%</span>
+              <span>{application.followUpAt || '—'}</span>
+              <span>{application.matchScore > 0 ? `${application.matchScore}%` : '—'}</span>
             </div>
           ))}
         </div>
